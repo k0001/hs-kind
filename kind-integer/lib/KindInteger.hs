@@ -255,7 +255,7 @@ type family Quot_ (a :: Integer) (b :: Integer) :: Integer where
   Quot_ (P a) (N b) = Negate (Quot_ (P a) (P b))
   Quot_ (N a) (P b) = Quot_ (P a) (N b)
 
--- | Remulus ('truncate'd division) of type-level 'Integer's.
+-- | Remainder ('truncate'd division) of type-level 'Integer's.
 --
 -- @
 -- forall (a :: 'Integer') (b :: 'Integer').
@@ -263,7 +263,7 @@ type family Quot_ (a :: Integer) (b :: Integer) :: Integer where
 --     a  '=='  'Quot' a b '*' 'Negate' b '+' 'Rem' a b
 -- @
 --
--- * Remulus by /zero/ doesn't type-check.
+-- * Remainder by /zero/ doesn't type-check.
 type Rem (a :: Integer) (b :: Integer) = Quot a b * Negate b + a :: Integer
 
 -- | Log base 2 ('floor'ed) of type-level 'Integer's.
