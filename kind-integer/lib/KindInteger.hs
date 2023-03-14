@@ -266,7 +266,7 @@ type family Quot_ (a :: Integer) (b :: Integer) :: Integer where
 -- * Remulus by /zero/ doesn't type-check.
 type Rem (a :: Integer) (b :: Integer) = Quot a b * Negate b + a :: Integer
 
--- | Log base 2 ('floor'ed) of integer numbers.
+-- | Log base 2 ('floor'ed) of type-level 'Integer's.
 --
 -- * Logarithm of /zero/ doesn't type-check.
 --
@@ -277,7 +277,7 @@ type family Log2_ (a :: Integer) :: Integer where
   Log2_ (P a) = P (L.Log2 a)
   Log2_ (N a) = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of negative number")
 
--- | Comparison of type-level integers, as a function.
+-- | Comparison of type-level 'Integer's, as a function.
 type CmpInteger (a :: Integer) (b :: Integer) = CmpInteger_ (Normalize a) (Normalize b) :: Ordering
 type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
   CmpInteger_ a a = 'EQ
