@@ -390,15 +390,15 @@ withSomeSInteger n k = k (UnsafeSInteger n)
 
 infixr 4 /=, /=?, ==, ==?
 
--- | This should be exported by 'Data.Type.Ord'.
+-- | This should be exported by "Data.Type.Ord".
 type (a :: k) ==? (b :: k) = OrdCond (Compare a b) 'False 'True 'False :: Bool
 
--- | This should be exported by 'Data.Type.Ord'.
+-- | This should be exported by "Data.Type.Ord".
 type (a :: k) == (b :: k) = (a ==? b) ~ 'True :: Constraint
 
--- | This should be exported by 'Data.Type.Ord'.
+-- | This should be exported by "Data.Type.Ord".
 type (a :: k) /=? (b :: k) = OrdCond (Compare a b) 'True 'False 'True :: Bool
 
--- | This should be exported by 'Data.Type.Ord'.
+-- | This should be exported by "Data.Type.Ord".
 type (a :: k) /= (b :: k) = (a /=? b) ~ 'True :: Constraint
 
