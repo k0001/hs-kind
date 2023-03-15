@@ -6,7 +6,7 @@
 -- So import this module qualified to avoid name conflicts.
 --
 -- @
--- import "KindInteger" qualified as K
+-- import "KindInteger" qualified as KI
 -- @
 --
 -- The implementation details are the same as the ones for type-level 'Natural's
@@ -14,13 +14,15 @@
 -- with @base@, trying to follow its API as much as possible until the day
 -- @base@ provides its own type-level integer, making this module redundant.
 module KindInteger
-  ( -- * Integer Kind
+  ( -- * Integer kind
     Integer
   , type P
   , type N
   , Normalize
+  , toPrelude
+  , fromPrelude
 
-    -- * Linking type and value level
+    -- * Types and values
   , KnownInteger(integerSing), integerVal, integerVal'
   , SomeInteger(..)
   , someIntegerVal
@@ -35,7 +37,7 @@ module KindInteger
 
     -- * Arithmethic
   , type (+), type (*), type (^), type (-)
-  , Negate, Div, Mod, Quot, Rem, Log2
+  , Odd, Even, Abs, Negate, GCD, LCM, Div, Mod, Quot, Rem, Log2
 
     -- * Comparisons
   , CmpInteger
@@ -76,6 +78,11 @@ data Integer
   = Positive Natural
   | Negative Natural
 
+showsPrecInteger :: Int -> Integer -> ShowS
+showsPrecInteger p i = showParen (p > appPrec) $ case i of
+  Positive x -> showString "P " . shows x
+  Negative x -> showString "N " . shows x
+
 -- | * A positive number /+x/ is represented as @'P' x@.
 --
 -- * /Zero/ can be represented as @'P' 0@ (see notes at 'Integer').
@@ -86,22 +93,33 @@ type P (x :: Natural) = 'Positive x :: Integer
 -- * /Zero/ can be represented as @'N' 0@ (but often isn't, see notes at 'Integer').
 type N (x :: Natural) = 'Negative x :: Integer
 
--- Not used:
+-- | Convert a term-level "KindRational" 'Rational' into a term-level
+-- "Prelude" 'P.Rational'.
 --
--- typeIntegerToTermInteger :: Integer -> P.Integer
--- typeIntegerToTermInteger (P n) = toInteger n
--- typeIntegerToTermInteger (N n) = negate (toInteger n)
+-- @
+-- 'fromPrelude' . 'toPrelude' == 'id'
+-- 'toPrelude' . 'fromPrelude' == 'id'
+-- @
+toPrelude :: Integer -> P.Integer
+toPrelude (Positive n) = toInteger n
+toPrelude (Negative n) = negate (toInteger n)
 
-termIntegerToTypeInteger :: P.Integer -> Integer
-termIntegerToTypeInteger i = let n = fromInteger i
-                             in  if i >= 0 then Positive n else Negative n
-
--- | We are not interested in giving any instance to type-level 'Integer's,
--- so we implement 'showsPrec' here.
-showsPrecInteger :: Int -> Integer -> ShowS
-showsPrecInteger p i = showParen (p > appPrec) $ case i of
-  Positive x -> showString "P " . shows x
-  Negative x -> showString "N " . shows x
+-- | Obtain a term-level "KindInteger" 'Integer' from a term-level
+-- "Prelude" 'P.Integer'. This can fail if the "Prelude" 'P.Integer' is
+-- infinite, or if it is so big that it would exhaust system resources.
+--
+-- @
+-- 'fromPrelude' . 'toPrelude' == 'id'
+-- 'toPrelude' . 'fromPrelude' == 'id'
+-- @
+--
+-- This function can be handy if you are passing "KindInteger"'s 'Integer'
+-- around for some reason. But, other than this, "KindInteger" doesn't offer
+-- any tool to deal with the internals of its 'Integer'.
+fromPrelude :: P.Integer -> Integer
+fromPrelude i = let n = fromInteger i
+                in  if i >= 0 then Positive n
+                              else Negative n
 
 --------------------------------------------------------------------------------
 
@@ -176,11 +194,22 @@ infixl 6 +, -
 infixl 7 *, `Div`, `Mod`, `Quot`, `Rem`
 infixr 8 ^
 
+-- | Whether a type-level 'Natural' is odd. /Zero/ is not considered odd.
+type Odd (x :: Integer) = L.Mod (Abs x) 2 ==? 1 :: Bool
+
+-- | Whether a type-level 'Natural' is even. /Zero/ is considered even.
+type Even (x :: Integer) = L.Mod (Abs x) 2 ==? 0 :: Bool
+
 -- | Negation of type-level 'Integer's.
 type family Negate (x :: Integer) :: Integer where
   Negate (P 0) = P 0
   Negate (P x) = N x
   Negate (N x) = P x
+
+-- | Absolute value of a type-level 'Integer', as a type-level 'Natural'.
+type family Abs (x :: Integer) :: Natural where
+  Abs (P x) = x
+  Abs (N x) = x
 
 -- | Addition of type-level 'Integer's.
 type (a :: Integer) + (b :: Integer) = Add_ (Normalize a) (Normalize b) :: Integer
@@ -277,6 +306,27 @@ type family Log2_ (a :: Integer) :: Integer where
   Log2_ (P a) = P (L.Log2 a)
   Log2_ (N a) = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of negative number")
 
+-- | Greatest Common Divisor of type-level 'Integer' numbers @a@ and @b@.
+--
+-- Returns a 'Natural', since the Greatest Common Divisor is always positive.
+type GCD (a :: Integer) (b :: Integer) = NaturalGCD (Abs a) (Abs b) :: Natural
+
+-- | Greatest Common Divisor of type-level 'Natural's @a@ and @b@.
+type family NaturalGCD (a :: Natural) (b :: Natural) :: Natural where
+  NaturalGCD a 0 = a
+  NaturalGCD a b = NaturalGCD b (L.Mod a b)
+
+-- | Least Common Multiple of type-level 'Integer' numbers @a@ and @b@.
+--
+-- Returns a 'Natural', since the Least Common Multiple is always positive.
+type LCM (a :: Integer) (b :: Integer) = NaturalLCM (Abs a) (Abs b) :: Natural
+
+-- | Least Common Multiple of type-level 'Natural's @a@ and @b@.
+type NaturalLCM (a :: Natural) (b :: Natural) =
+  L.Div a (NaturalGCD a b) L.* b :: Natural
+
+--------------------------------------------------------------------------------
+
 -- | Comparison of type-level 'Integer's, as a function.
 type CmpInteger (a :: Integer) (b :: Integer) = CmpInteger_ (Normalize a) (Normalize b) :: Ordering
 type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
@@ -356,7 +406,7 @@ knownIntegerInstance si = withKnownInteger si KnownIntegeregerInstance
 instance Show (SInteger i) where
   showsPrec p (UnsafeSInteger i) = showParen (p > appPrec) $
     showString "SInteger @" .
-    showsPrecInteger appPrec1 (termIntegerToTypeInteger i)
+    showsPrecInteger appPrec1 (fromPrelude i)
 
 instance TestEquality SInteger where
   testEquality (UnsafeSInteger x) (UnsafeSInteger y)
@@ -366,7 +416,7 @@ instance TestEquality SInteger where
 instance TestCoercion SInteger where
   testCoercion x y = fmap (\Refl -> Coercion) (testEquality x y)
 
--- | Return the type-level 'P.Integer' number corresponding to @i@ in
+-- | Return the term-level 'P.Integer' number corresponding to @i@ in
 -- a @'SInteger' i@ value.
 fromSInteger :: SInteger i -> P.Integer
 fromSInteger (UnsafeSInteger i) = i
