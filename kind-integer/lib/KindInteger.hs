@@ -13,7 +13,7 @@
 -- in "GHC.TypeNats" as of @base-4.18@, and it will continue to evolve together
 -- with @base@, trying to follow its API as much as possible until the day
 -- @base@ provides its own type-level integer, making this module redundant.
-module KindInteger
+module KindInteger {--}
   ( -- * Integer kind
     Integer
   , type P
@@ -40,7 +40,17 @@ module KindInteger
 
     -- * Arithmethic
   , type (+), type (*), type (^), type (-)
-  , Odd, Even, Abs, Negate, GCD, LCM, Div, Mod, Quot, Rem, Log2
+  , Odd, Even, Abs, Sign, Negate, GCD, LCM, Log2
+
+    -- ** Division
+  , Div
+  , Mod
+  , DivMod
+  , Round(..)
+    -- *** Term-level
+  , div
+  , mod
+  , divMod
 
     -- * Comparisons
   , CmpInteger
@@ -48,20 +58,24 @@ module KindInteger
 
     -- * Extra
   , type (==?), type (==), type (/=?), type (/=)
-  ) where
+  ) --}
+  where
 
-import GHC.Base (WithDict(..))
-import GHC.Types (TYPE, Constraint)
-import GHC.Show (appPrec, appPrec1)
-import GHC.Prim (Proxy#)
-import GHC.TypeLits qualified as L
+import Control.Exception qualified as Ex
+import Data.Bits
 import Data.Proxy
+import Data.Type.Bool (If)
 import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
-import Data.Type.Bool (If)
 import Data.Type.Ord
+import GHC.Base (WithDict(..))
+import GHC.Prim (Proxy#)
+import GHC.Real qualified as P
+import GHC.Show (appPrec, appPrec1)
+import GHC.TypeLits qualified as L
+import GHC.Types (TYPE, Constraint)
 import Numeric.Natural (Natural)
-import Prelude hiding (Integer, (==), (/=))
+import Prelude hiding (Integer, (==), (/=), divMod, div, mod)
 import Prelude qualified as P
 import Unsafe.Coerce(unsafeCoerce)
 
@@ -228,7 +242,7 @@ type NN (a :: Natural) = Normalize (N a) :: Integer
 --------------------------------------------------------------------------------
 
 infixl 6 +, -
-infixl 7 *, `Div`, `Mod`, `Quot`, `Rem`
+infixl 7 *, `Div`, `Mod`
 infixr 8 ^
 
 -- | Whether a type-level 'Natural' is odd. /Zero/ is not considered odd.
@@ -242,6 +256,19 @@ type family Negate (x :: Integer) :: Integer where
   Negate (P 0) = P 0
   Negate (P x) = N x
   Negate (N x) = P x
+
+-- | Sign of type-level 'Integer's.
+--
+-- * @'P' 0@ if zero.
+--
+-- * @'P' 1@ if positive.
+--
+-- * @'N' 1@ if negative.
+type family Sign (x :: Integer) :: Integer where
+  Sign (P 0) = P 0
+  Sign (N 0) = P 0
+  Sign (P _) = P 1
+  Sign (N _) = N 1
 
 -- | Absolute value of a type-level 'Integer', as a type-level 'Natural'.
 type family Abs (x :: Integer) :: Natural where
@@ -276,61 +303,89 @@ type family Pow_ (a :: Integer) (b :: Integer) :: Integer where
 -- | Subtraction of type-level 'Integer's.
 type (a :: Integer) - (b :: Integer) = a + Negate b :: Integer
 
--- | Division ('floor'ed) of type-level 'Integer's.
+-- | Get both the quotient and the 'Mod'ulus of the 'Div'ision of
+-- type-level 'Integer's @a@ and @b@ using the specified 'Round'ing @r@.
+type DivMod (r :: Round) (a :: Integer) (b :: Integer) =
+  '( Div r a b, Mod r a b ) :: (Integer, Integer)
+
+-- | Modulus of the division of type-level 'Integer' @a@ by @b@,
+-- using the specified 'Round'ing @r@.
 --
 -- @
--- forall (a :: 'Integer') (b :: 'Integer').
---   /such that/ (b '/=' 0).
---     a  '=='  'Div' a b '*' 'Negate' b '+' 'Mod' a b
+-- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer'). (b '/=' 0) =>
+--    'Mod' r a b  '=='  a '-' b '*' 'Div' r a b
 -- @
 --
 -- * Division by /zero/ doesn't type-check.
-type Div (a :: Integer) (b :: Integer) = Div_ (Normalize a) (Normalize b) :: Integer
-type family Div_ (a :: Integer) (b :: Integer) :: Integer where
-  Div_ _ (P 0) = L.TypeError ('L.Text "KindInteger.Div: Division by zero")
-  Div_ (P a) (P b) = P (L.Div a b)
-  Div_ (N a) (N b) = Div_ (P a) (P b)
-  Div_ (P a) (N b) = NN (If (b L.* (L.Div a b) ==? a) (L.Div a b) (L.Div a b L.+ 1))
-  Div_ (N a) (P b) = Div_ (P a) (N b)
+type Mod (r :: Round) (a :: Integer) (b :: Integer) =
+  a - b * Div r a b :: Integer
 
--- | Modulus ('floor'ed division) of type-level 'Integer's.
---
--- @
--- forall (a :: 'Integer') (b :: 'Integer').
---   /such that/ (b '/=' 0).
---     a  '=='  'Div' a b '*' 'Negate' b '+' 'Mod' a b
--- @
---
--- * Modulus by /zero/ doesn't type-check.
-type Mod (a :: Integer) (b :: Integer) = Div a b * Negate b + a :: Integer
-
--- | Division ('truncate'd) of type-level 'Integer's.
---
--- @
--- forall (a :: 'Integer') (b :: 'Integer').
---   /such that/ (b '/=' 0).
---     a  '=='  'Quot' a b '*' 'Negate' b '+' 'Rem' a b
--- @
+-- | Divide of type-level 'Integer' @a@ by @b@,
+-- using the specified 'Round'ing @r@.
 --
 -- * Division by /zero/ doesn't type-check.
-type Quot (a :: Integer) (b :: Integer) = Quot_ (Normalize a) (Normalize b) :: Integer
-type family Quot_ (a :: Integer) (b :: Integer) :: Integer where
-  Quot_ _ (P 0) = L.TypeError ('L.Text "KindInteger.Quot: Division by zero")
-  Quot_ (P a) (P b) = P (L.Div a b)
-  Quot_ (N a) (N b) = Quot_ (P a) (P b)
-  Quot_ (P a) (N b) = Negate (Quot_ (P a) (P b))
-  Quot_ (N a) (P b) = Quot_ (P a) (N b)
+type Div (r :: Round) (a :: Integer) (b :: Integer) =
+  Div_ r (Normalize a) (Normalize b) :: Integer
 
--- | Remainder ('truncate'd division) of type-level 'Integer's.
---
--- @
--- forall (a :: 'Integer') (b :: 'Integer').
---   /such that/ (b '/=' 0).
---     a  '=='  'Quot' a b '*' 'Negate' b '+' 'Rem' a b
--- @
---
--- * Remainder by /zero/ doesn't type-check.
-type Rem (a :: Integer) (b :: Integer) = Quot a b * Negate b + a :: Integer
+type family Div_ (r :: Round) (a :: Integer) (b :: Integer) :: Integer where
+  Div_ r (P a) (P b) = Div__ r (P a) b
+  Div_ r (N a) (N b) = Div__ r (P a) b
+  Div_ r (P a) (N b) = Div__ r (N a) b
+  Div_ r (N a) (P b) = Div__ r (N a) b
+
+type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
+  Div__ _ _ 0 = L.TypeError ('L.Text "KindInteger.Div: Division by zero")
+  Div__ _ (P 0) _ = P 0
+  Div__ _ (N 0) _ = P 0
+
+  Div__ 'RoundDown (P a) b = P (L.Div a b)
+  Div__ 'RoundDown (N a) b = NN (If (b L.* L.Div a b ==? a)
+                                    (L.Div a b)
+                                    (L.Div a b L.+ 1))
+
+  Div__ 'RoundUp a b = Negate (Div__ 'RoundDown (Negate a) b)
+--  Div__ 'RoundUp (P a) b = Negate (Div__ 'RoundDown (N a) b)
+--  Div__ 'RoundUp (N a) b = Negate (Div__ 'RoundDown (P a) b)
+
+  Div__ 'RoundZero (P a) b = Div__ 'RoundDown (P a) b
+  Div__ 'RoundZero (N a) b = Negate (Div__ 'RoundDown (P a) b)
+
+  Div__ 'RoundAway (P a) b = Div__ 'RoundUp (P a) b
+  Div__ 'RoundAway (N a) b = Div__ 'RoundDown (N a) b
+
+  Div__ 'RoundHalfDown a b = If (HalfLT (R a b) (Div__ 'RoundUp a b))
+                                (Div__ 'RoundUp a b)
+                                (Div__ 'RoundDown a b)
+
+  Div__ 'RoundHalfUp a b = If (HalfLT (R a b) (Div__ 'RoundDown a b))
+                              (Div__ 'RoundDown a b)
+                              (Div__ 'RoundUp a b)
+
+  Div__ 'RoundHalfEven a b = If (HalfLT (R a b) (Div__ 'RoundDown a b))
+                                (Div__ 'RoundDown a b)
+                                (If (HalfLT (R a b) (Div__ 'RoundUp a b))
+                                    (Div__ 'RoundUp a b)
+                                    (If (Even (Div__ 'RoundDown a b))
+                                        (Div__ 'RoundDown a b)
+                                        (Div__ 'RoundUp a b)))
+
+  Div__ 'RoundHalfOdd a b = If (HalfLT (R a b) (Div__ 'RoundDown a b))
+                               (Div__ 'RoundDown a b)
+                               (If (HalfLT (R a b) (Div__ 'RoundUp a b))
+                                   (Div__ 'RoundUp a b)
+                                   (If (Odd (Div__ 'RoundDown a b))
+                                       (Div__ 'RoundDown a b)
+                                       (Div__ 'RoundUp a b)))
+
+  Div__ 'RoundHalfZero a b = If (HalfLT (R a b) (Div__ 'RoundDown a b))
+                                (Div__ 'RoundDown a b)
+                                (If (HalfLT (R a b) (Div__ 'RoundUp a b))
+                                    (Div__ 'RoundUp a b)
+                                    (Div__ 'RoundZero a b))
+
+  Div__ 'RoundHalfAway (P a) b = Div__ 'RoundHalfUp   (P a) b
+  Div__ 'RoundHalfAway (N a) b = Div__ 'RoundHalfDown (N a) b
+
 
 -- | Log base 2 ('floor'ed) of type-level 'Integer's.
 --
@@ -346,26 +401,27 @@ type family Log2_ (a :: Integer) :: Integer where
 -- | Greatest Common Divisor of type-level 'Integer' numbers @a@ and @b@.
 --
 -- Returns a 'Natural', since the Greatest Common Divisor is always positive.
-type GCD (a :: Integer) (b :: Integer) = NaturalGCD (Abs a) (Abs b) :: Natural
+type GCD (a :: Integer) (b :: Integer) = NatGCD (Abs a) (Abs b) :: Natural
 
 -- | Greatest Common Divisor of type-level 'Natural's @a@ and @b@.
-type family NaturalGCD (a :: Natural) (b :: Natural) :: Natural where
-  NaturalGCD a 0 = a
-  NaturalGCD a b = NaturalGCD b (L.Mod a b)
+type family NatGCD (a :: Natural) (b :: Natural) :: Natural where
+  NatGCD a 0 = a
+  NatGCD a b = NatGCD b (L.Mod a b)
 
 -- | Least Common Multiple of type-level 'Integer' numbers @a@ and @b@.
 --
 -- Returns a 'Natural', since the Least Common Multiple is always positive.
-type LCM (a :: Integer) (b :: Integer) = NaturalLCM (Abs a) (Abs b) :: Natural
+type LCM (a :: Integer) (b :: Integer) = NatLCM (Abs a) (Abs b) :: Natural
 
 -- | Least Common Multiple of type-level 'Natural's @a@ and @b@.
-type NaturalLCM (a :: Natural) (b :: Natural) =
-  L.Div a (NaturalGCD a b) L.* b :: Natural
+type NatLCM (a :: Natural) (b :: Natural) =
+  L.Div a (NatGCD a b) L.* b :: Natural
 
 --------------------------------------------------------------------------------
 
 -- | Comparison of type-level 'Integer's, as a function.
-type CmpInteger (a :: Integer) (b :: Integer) = CmpInteger_ (Normalize a) (Normalize b) :: Ordering
+type CmpInteger (a :: Integer) (b :: Integer) =
+  CmpInteger_ (Normalize a) (Normalize b) :: Ordering
 type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
   CmpInteger_ a a = 'EQ
   CmpInteger_ (P a) (P b) = Compare a b
@@ -374,7 +430,8 @@ type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
   CmpInteger_ (P _) (N _) = 'GT
 
 -- | "Data.Type.Ord" support for type-level 'Integer's.
-type instance Compare (a :: Integer) (b :: Integer) = CmpInteger a b :: Ordering
+type instance Compare (a :: Integer) (b :: Integer) =
+  CmpInteger a b :: Ordering
 
 --------------------------------------------------------------------------------
 
@@ -397,8 +454,9 @@ cmpInteger
   -> proxy2 b
   -> OrderingI a b
 cmpInteger x y = case compare (integerVal x) (integerVal y) of
-  EQ -> case unsafeCoerce (Refl, Refl) :: (CmpInteger a b :~: 'EQ, a :~: b) of
-    (Refl, Refl) -> EQI
+  EQ -> case unsafeCoerce Refl :: CmpInteger a b :~: 'EQ of
+    Refl -> case unsafeCoerce Refl :: a :~: b of
+      Refl -> EQI
   LT -> case unsafeCoerce Refl :: (CmpInteger a b :~: 'LT) of
     Refl -> LTI
   GT -> case unsafeCoerce Refl :: (CmpInteger a b :~: 'GT) of
@@ -473,6 +531,113 @@ withSomeSInteger n k = k (UnsafeSInteger n)
 {-# NOINLINE withSomeSInteger #-}
 
 --------------------------------------------------------------------------------
+
+data Round
+  = RoundUp
+  -- ^ Round __up__ towards positive infinity.
+  | RoundDown
+  -- ^ Round __down__ towards negative infinity.  Also known as "Prelude"'s
+  -- 'P.floor'. This is the type of rounding used by "Prelude"'s 'P.div' and
+  -- 'P.mod'.
+  | RoundZero
+  -- ^ Round towards __zero__.  Also known as "Prelude"'s 'P.truncate'. This is
+  -- the type of rounding used by "Prelude"'s 'P.quot' and 'P.rem'.
+  | RoundAway
+  -- ^ Round __away__ from zero.
+  | RoundHalfUp
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round __up__ towards positive infinity.
+  | RoundHalfDown
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round __down__ towards negative infinity.
+  | RoundHalfZero
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round towards __zero__.
+  | RoundHalfAway
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round __away__ from zero.
+  | RoundHalfEven
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round towards the closest __even__ integer. Also known as "Prelude"'s
+  -- 'P.round'.
+  | RoundHalfOdd
+  -- ^ Round towards the closest integer. If __half__way between two integers,
+  -- round towards the closest __odd__ integer.
+  deriving (Eq, Ord, Show, Read, Enum, Bounded)
+
+
+-- | Divide @a@ by @a@ using the specified 'Round'ing.
+-- Return the quotient @q@. See 'divMod'.
+div :: Round
+    -> P.Integer  -- ^ Dividend @a@.
+    -> P.Integer  -- ^ Divisor @b@.
+    -> P.Integer  -- ^ Quotient @q@.
+div r = let f = divMod r in \a b -> fst (f a b)
+
+-- | Divide @a@ by @a@ using the specified 'Round'ing.
+-- Return the modulus @m@. See 'divMod'.
+mod :: Round
+    -> P.Integer  -- ^ Dividend @a@.
+    -> P.Integer  -- ^ Divisor @b@.
+    -> P.Integer  -- ^ Modulus @m@.
+mod r = let f = divMod r in \a b -> snd (f a b)
+
+-- | Divide @a@ by @a@ using the specified 'Round'ing.
+-- Return the quotient @q@ and the modulus @m@.
+--
+-- @
+-- forall (r :: 'Round') (a :: 'P.Integer') (b :: 'P.Integer'). /such that/ (b 'P./=' 0) =>
+--   case 'divMod' r a b of
+--     (q, m) -> m 'P.==' a 'P.-' b 'P.*' q
+-- @
+divMod
+  :: Round
+  -> P.Integer  -- ^ Dividend @a@.
+  -> P.Integer  -- ^ Divisor @b@.
+  -> (P.Integer, P.Integer)  -- ^ Quotient @q@ and modulus @m@.
+{-# NOINLINE divMod #-}
+divMod RoundZero = \a (errDiv0 -> b) -> P.quotRem a b
+divMod RoundDown = \a (errDiv0 -> b) -> P.divMod a b
+divMod RoundUp = \a (errDiv0 -> b) -> _divModRoundUpNoCheck a b
+divMod RoundAway = \a (errDiv0 -> b) ->
+  if xor (a < 0) (b < 0)
+     then P.divMod a b
+     else _divModRoundUpNoCheck a b
+divMod RoundHalfUp = _divModHalf $ \_ _ up -> up
+divMod RoundHalfDown = _divModHalf $ \_ down _ -> down
+divMod RoundHalfZero = _divModHalf $ \neg down up ->
+  if neg then up else down
+divMod RoundHalfAway = _divModHalf $ \neg down up ->
+  if neg then down else up
+divMod RoundHalfEven = _divModHalf $ \_ down up ->
+  if even (fst down) then down else up
+divMod RoundHalfOdd = _divModHalf $ \_ down up ->
+  if odd (fst down) then down else up
+
+_divModRoundUpNoCheck :: P.Integer -> P.Integer -> (P.Integer, P.Integer)
+_divModRoundUpNoCheck a b =
+  let q = negate (P.div (negate a) b)
+  in (q, a - b * q)
+
+_divModHalf
+  :: (Bool ->
+      (P.Integer, P.Integer) ->
+      (P.Integer, P.Integer) ->
+      (P.Integer, P.Integer))
+  -- ^ Negative -> divMod RoundDown -> divMod RoundDown -> Result
+  -> P.Integer  -- ^ Dividend
+  -> P.Integer  -- ^ Divisor
+  -> (P.Integer, P.Integer)
+_divModHalf f = \a (errDiv0 -> b) ->
+  let neg  = xor (a < 0) (b < 0)
+      rat  = a P.% b
+      up   = _divModRoundUpNoCheck a b
+      down = P.divMod a b
+  in  if | rat - toRational (fst down) < 1 P.:% 2 -> down
+         | toRational (fst up) - rat   < 1 P.:% 2 -> up
+         | otherwise -> f neg down up
+
+--------------------------------------------------------------------------------
 -- Extras
 
 infixr 4 /=, /=?, ==, ==?
@@ -488,4 +653,51 @@ type (a :: k) /=? (b :: k) = OrdCond (Compare a b) 'True 'False 'True :: Bool
 
 -- | This should be exported by "Data.Type.Ord".
 type (a :: k) /= (b :: k) = (a /=? b) ~ 'True :: Constraint
+
+--------------------------------------------------------------------------------
+-- Rational tools
+
+data Rat = Rat Integer Natural
+
+type family R (n :: Integer) (d :: Natural) :: Rat where
+  R (P n) d = RatNormalize ('Rat (P n) d)
+  R (N n) d = RatNormalize ('Rat (N n) d)
+
+type family RatNormalize (r :: Rat) :: Rat where
+  RatNormalize ('Rat _ 0) =
+    L.TypeError ('L.Text "KindInteger: Denominator is 0")
+  RatNormalize ('Rat (P 0) _) = 'Rat (P 0) 1
+  RatNormalize ('Rat (N 0) _) = 'Rat (P 0) 1
+  RatNormalize ('Rat (P n) d) = 'Rat (P (L.Div n (NatGCD n d)))
+                                     (L.Div d (NatGCD n d))
+  RatNormalize ('Rat (N n) d) = 'Rat (N (L.Div n (NatGCD n d)))
+                                     (L.Div d (NatGCD n d))
+
+type family RatAbs (a :: Rat) :: Rat where
+  RatAbs ('Rat n d) = RatNormalize ('Rat (P (Abs n)) d)
+
+type RatAdd (a :: Rat) (b :: Rat) =
+  RatNormalize (RatAdd_ (RatNormalize a) (RatNormalize b)) :: Rat
+type family RatAdd_ (a :: Rat) (b :: Rat) :: Rat where
+  RatAdd_ ('Rat an ad) ('Rat bn bd) = 'Rat (an * P bd + bn * P ad) (ad L.* bd)
+
+type family RatNegate (a :: Rat) :: Rat where
+  RatNegate ('Rat n d) = RatNormalize ('Rat (Negate n) d)
+
+type RatMinus (a :: Rat) (b :: Rat) = RatAdd a (RatNegate b)
+
+type instance Compare (a :: Rat) (b :: Rat) = RatCmp a b
+type RatCmp (a :: Rat) (b :: Rat) =
+  RatCmp_ (RatNormalize a) (RatNormalize b) :: Ordering
+type family RatCmp_ (a :: Rat) (b :: Rat) :: Ordering where
+  RatCmp_ a a = 'EQ
+  RatCmp_ ('Rat an ad) ('Rat bn bd) = CmpInteger (an * P bd) (bn * P ad)
+
+-- | ''True' if the distance between @a@ and @b@ is less than /0.5/.
+type HalfLT (a :: Rat) (b :: Integer) =
+  (RatAbs (RatMinus a ('Rat b 1))) <? ('Rat (P 1) 2) :: Bool
+
+errDiv0 :: P.Integer -> P.Integer
+errDiv0 0 = Ex.throw Ex.DivideByZero
+errDiv0 i = i
 

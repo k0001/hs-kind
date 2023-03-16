@@ -1,8 +1,13 @@
 {-# LANGUAGE MagicHash #-}
-module Main (main) where
+module Main {--
+  ( main
+  ) --}
+  where
 
 import Control.Applicative
+import Control.Monad
 import Data.Maybe
+import Data.List qualified as List
 import Data.Proxy
 import Data.Type.Ord (type (<=))
 import GHC.Exts (Constraint, proxy#)
@@ -112,158 +117,6 @@ _testMul :: Dict
   , N 6 ~ N 2 K.* P 3
   )
 
-_testDiv  = Dict
-_testDiv :: Dict
-  ( P 0 ~ P 0 `K.Div` P 1
-  , P 0 ~ N 0 `K.Div` N 1
-  , P 0 ~ P 0 `K.Div` N 1
-  , P 0 ~ N 0 `K.Div` P 1
-
-  , P 1 ~ P 1 `K.Div` P 1
-  , P 1 ~ N 1 `K.Div` N 1
-  , N 1 ~ P 1 `K.Div` N 1
-  , N 1 ~ N 1 `K.Div` P 1
-
-  , P 2 ~ P 2 `K.Div` P 1
-  , P 2 ~ N 2 `K.Div` N 1
-  , N 2 ~ P 2 `K.Div` N 1
-  , N 2 ~ N 2 `K.Div` P 1
-
-  , P 1 ~ P 2 `K.Div` P 2
-  , P 1 ~ N 2 `K.Div` N 2
-  , N 1 ~ P 2 `K.Div` N 2
-  , N 1 ~ N 2 `K.Div` P 2
-
-  , P 1 ~ P 3 `K.Div` P 2
-  , P 1 ~ N 3 `K.Div` N 2
-  , N 2 ~ P 3 `K.Div` N 2
-  , N 2 ~ N 3 `K.Div` P 2
-
-  , P 0 ~ P 0 `K.Div` P 1
-  , P 0 ~ N 0 `K.Div` N 1
-  , P 0 ~ P 0 `K.Div` N 1
-  , P 0 ~ N 0 `K.Div` P 1
-
-  , P 0 ~ P 1 `K.Div` P 2
-  , P 0 ~ N 1 `K.Div` N 2
-  , N 1 ~ P 1 `K.Div` N 2
-  , N 1 ~ N 1 `K.Div` P 2
-  )
-
-_testMod  = Dict
-_testMod :: Dict
-  ( P 0 ~ P 0 `K.Mod` P 1
-  , P 0 ~ N 0 `K.Mod` N 1
-  , P 0 ~ P 0 `K.Mod` N 1
-  , P 0 ~ N 0 `K.Mod` P 1
-
-  , P 0 ~ P 1 `K.Mod` P 1
-  , P 0 ~ N 1 `K.Mod` N 1
-  , P 0 ~ P 1 `K.Mod` N 1
-  , P 0 ~ N 1 `K.Mod` P 1
-
-  , P 0 ~ P 2 `K.Mod` P 1
-  , P 0 ~ N 2 `K.Mod` N 1
-  , P 0 ~ P 2 `K.Mod` N 1
-  , P 0 ~ N 2 `K.Mod` P 1
-
-  , P 0 ~ P 2 `K.Mod` P 2
-  , P 0 ~ N 2 `K.Mod` N 2
-  , P 0 ~ P 2 `K.Mod` N 2
-  , P 0 ~ N 2 `K.Mod` P 2
-
-  , P 1 ~ P 3 `K.Mod` P 2
-  , N 1 ~ N 3 `K.Mod` N 2
-  , N 1 ~ P 3 `K.Mod` N 2
-  , P 1 ~ N 3 `K.Mod` P 2
-
-  , P 0 ~ P 0 `K.Mod` P 1
-  , P 0 ~ N 0 `K.Mod` N 1
-  , P 0 ~ P 0 `K.Mod` N 1
-  , P 0 ~ N 0 `K.Mod` P 1
-
-  , P 1 ~ P 1 `K.Mod` P 2
-  , N 1 ~ N 1 `K.Mod` N 2
-  , N 1 ~ P 1 `K.Mod` N 2
-  , P 1 ~ N 1 `K.Mod` P 2
-  )
-
-_testQuot  = Dict
-_testQuot :: Dict
-  ( P 0 ~ P 0 `K.Quot` P 1
-  , P 0 ~ N 0 `K.Quot` N 1
-  , P 0 ~ P 0 `K.Quot` N 1
-  , P 0 ~ N 0 `K.Quot` P 1
-
-  , P 1 ~ P 1 `K.Quot` P 1
-  , P 1 ~ N 1 `K.Quot` N 1
-  , N 1 ~ P 1 `K.Quot` N 1
-  , N 1 ~ N 1 `K.Quot` P 1
-
-  , P 2 ~ P 2 `K.Quot` P 1
-  , P 2 ~ N 2 `K.Quot` N 1
-  , N 2 ~ P 2 `K.Quot` N 1
-  , N 2 ~ N 2 `K.Quot` P 1
-
-  , P 1 ~ P 2 `K.Quot` P 2
-  , P 1 ~ N 2 `K.Quot` N 2
-  , N 1 ~ P 2 `K.Quot` N 2
-  , N 1 ~ N 2 `K.Quot` P 2
-
-  , P 1 ~ P 3 `K.Quot` P 2
-  , P 1 ~ N 3 `K.Quot` N 2
-  , N 1 ~ P 3 `K.Quot` N 2
-  , N 1 ~ N 3 `K.Quot` P 2
-
-  , P 0 ~ P 0 `K.Quot` P 1
-  , P 0 ~ N 0 `K.Quot` N 1
-  , P 0 ~ P 0 `K.Quot` N 1
-  , P 0 ~ N 0 `K.Quot` P 1
-
-  , P 0 ~ P 1 `K.Quot` P 2
-  , P 0 ~ N 1 `K.Quot` N 2
-  , P 0 ~ P 1 `K.Quot` N 2
-  , P 0 ~ N 1 `K.Quot` P 2
-  )
-
-_testRem  = Dict
-_testRem :: Dict
-  ( P 0 ~ P 0 `K.Rem` P 1
-  , P 0 ~ N 0 `K.Rem` N 1
-  , P 0 ~ P 0 `K.Rem` N 1
-  , P 0 ~ N 0 `K.Rem` P 1
-
-  , P 0 ~ P 1 `K.Rem` P 1
-  , P 0 ~ N 1 `K.Rem` N 1
-  , P 0 ~ P 1 `K.Rem` N 1
-  , P 0 ~ N 1 `K.Rem` P 1
-
-  , P 0 ~ P 2 `K.Rem` P 1
-  , P 0 ~ N 2 `K.Rem` N 1
-  , P 0 ~ P 2 `K.Rem` N 1
-  , P 0 ~ N 2 `K.Rem` P 1
-
-  , P 0 ~ P 2 `K.Rem` P 2
-  , P 0 ~ N 2 `K.Rem` N 2
-  , P 0 ~ P 2 `K.Rem` N 2
-  , P 0 ~ N 2 `K.Rem` P 2
-
-  , P 1 ~ P 3 `K.Rem` P 2
-  , N 1 ~ N 3 `K.Rem` N 2
-  , P 1 ~ P 3 `K.Rem` N 2
-  , N 1 ~ N 3 `K.Rem` P 2
-
-  , P 0 ~ P 0 `K.Rem` P 1
-  , P 0 ~ N 0 `K.Rem` N 1
-  , P 0 ~ P 0 `K.Rem` N 1
-  , P 0 ~ N 0 `K.Rem` P 1
-
-  , P 1 ~ P 1 `K.Rem` P 2
-  , N 1 ~ N 1 `K.Rem` N 2
-  , P 1 ~ P 1 `K.Rem` N 2
-  , N 1 ~ N 1 `K.Rem` P 2
-  )
-
 _testLog2 =  Dict
 _testLog2 :: Dict
   ( P 0 ~ K.Log2 (P 1)
@@ -300,10 +153,30 @@ _testLog2 :: Dict
   , P 5 ~ K.Log2 (P 32)
   )
 
+_testNegate =  Dict
+_testNegate :: Dict
+  ( P 0 ~ K.Negate (P 0)
+  , P 0 ~ K.Negate (N 0)
+  , N 1 ~ K.Negate (P 1)
+  , P 1 ~ K.Negate (N 1)
+  , N 2 ~ K.Negate (P 2)
+  , P 2 ~ K.Negate (N 2)
+  )
+
+_testSign =  Dict
+_testSign :: Dict
+  ( P 0 ~ K.Sign (P 0)
+  , P 0 ~ K.Sign (N 0)
+  , P 1 ~ K.Sign (P 1)
+  , N 1 ~ K.Sign (N 1)
+  , P 1 ~ K.Sign (P 2)
+  , N 1 ~ K.Sign (N 2)
+  )
+
 _testAbs =  Dict
 _testAbs :: Dict
   ( 0 ~ K.Abs (P 0)
-  , 0 ~ K.Abs (P 0)
+  , 0 ~ K.Abs (N 0)
   , 1 ~ K.Abs (P 1)
   , 1 ~ K.Abs (N 1)
   , 2 ~ K.Abs (P 2)
@@ -313,7 +186,7 @@ _testAbs :: Dict
 _testEven =  Dict
 _testEven :: Dict
   ( 'True  ~ K.Even (P 0)
-  , 'True  ~ K.Even (P 0)
+  , 'True  ~ K.Even (N 0)
   , 'False ~ K.Even (P 1)
   , 'False ~ K.Even (N 1)
   , 'True  ~ K.Even (P 2)
@@ -323,7 +196,7 @@ _testEven :: Dict
 _testOdd =  Dict
 _testOdd :: Dict
   ( 'False  ~ K.Odd (P 0)
-  , 'False  ~ K.Odd (P 0)
+  , 'False  ~ K.Odd (N 0)
   , 'True   ~ K.Odd (P 1)
   , 'True   ~ K.Odd (N 1)
   , 'False  ~ K.Odd (P 2)
@@ -418,15 +291,16 @@ assert n x = do
 
 testsMain :: [IO Bool] -> IO a
 testsMain xs = do
-  oks <- sequence xs
-  if and oks
-     then do putStrLn "All tests passed successfully."
-             exitSuccess
-     else do putStrLn "Some tests failed."
-             exitFailure
+  res <- sequence xs
+  let (oks, bads) = List.partition id res
+  putStrLn ("[TOTAL] OK: " <> show (length oks) <>
+            ". FAIL: " <> show (length bads) <> ".")
+  case bads of
+    [] -> exitSuccess
+    _  -> exitFailure
 
 main :: IO ()
-main = testsMain
+main = testsMain $
   [ assert "integerVal . someIntegerVal == id" $
     flip all [-5 .. 5] $ \a ->
       case K.someIntegerVal a of
@@ -495,6 +369,4473 @@ main = testsMain
             == fmap (\(K.SomeInteger p) -> K.integerVal p)
                     (readMaybe @K.SomeInteger str)
 
-  ]
+  ] <> testsDivMod
 
+testsDivMod :: [IO Bool]
+testsDivMod = do
+  b :: P.Integer <- [-5 .. 5]
+  guard (b P./= 0)
+  a :: P.Integer <- [-5 .. 5]
+  r :: K.Round <- [minBound .. maxBound]
+  let tname :: ShowS
+      tname = showString "divMod " . shows r . showChar ' '
+            . shows a . showChar ' ' . shows b
+  pure $ assert (tname "") $
+    case K.divMod r a b of
+      (q, m) -> m == a - b * q
+
+--------------------------------------------------------------------------------
+
+-- The following tests are generated by `divModTestCode` in this module.
+-- Copy and paste by hand.
+_test_Div_RoundAway_N1_N1 :: Dict (K.Div 'K.RoundAway (N 1) (N 1) ~ P 1)
+_test_Div_RoundAway_N1_N1 =  Dict
+_test_Mod_RoundAway_N1_N1 :: Dict (K.Mod 'K.RoundAway (N 1) (N 1) ~ P 0)
+_test_Mod_RoundAway_N1_N1 =  Dict
+_test_Div_RoundAway_N1_N2 :: Dict (K.Div 'K.RoundAway (N 1) (N 2) ~ P 1)
+_test_Div_RoundAway_N1_N2 =  Dict
+_test_Mod_RoundAway_N1_N2 :: Dict (K.Mod 'K.RoundAway (N 1) (N 2) ~ P 1)
+_test_Mod_RoundAway_N1_N2 =  Dict
+_test_Div_RoundAway_N1_N3 :: Dict (K.Div 'K.RoundAway (N 1) (N 3) ~ P 1)
+_test_Div_RoundAway_N1_N3 =  Dict
+_test_Mod_RoundAway_N1_N3 :: Dict (K.Mod 'K.RoundAway (N 1) (N 3) ~ P 2)
+_test_Mod_RoundAway_N1_N3 =  Dict
+_test_Div_RoundAway_N1_N4 :: Dict (K.Div 'K.RoundAway (N 1) (N 4) ~ P 1)
+_test_Div_RoundAway_N1_N4 =  Dict
+_test_Mod_RoundAway_N1_N4 :: Dict (K.Mod 'K.RoundAway (N 1) (N 4) ~ P 3)
+_test_Mod_RoundAway_N1_N4 =  Dict
+_test_Div_RoundAway_N1_N5 :: Dict (K.Div 'K.RoundAway (N 1) (N 5) ~ P 1)
+_test_Div_RoundAway_N1_N5 =  Dict
+_test_Mod_RoundAway_N1_N5 :: Dict (K.Mod 'K.RoundAway (N 1) (N 5) ~ P 4)
+_test_Mod_RoundAway_N1_N5 =  Dict
+_test_Div_RoundAway_N1_P1 :: Dict (K.Div 'K.RoundAway (N 1) (P 1) ~ N 1)
+_test_Div_RoundAway_N1_P1 =  Dict
+_test_Mod_RoundAway_N1_P1 :: Dict (K.Mod 'K.RoundAway (N 1) (P 1) ~ P 0)
+_test_Mod_RoundAway_N1_P1 =  Dict
+_test_Div_RoundAway_N1_P2 :: Dict (K.Div 'K.RoundAway (N 1) (P 2) ~ N 1)
+_test_Div_RoundAway_N1_P2 =  Dict
+_test_Mod_RoundAway_N1_P2 :: Dict (K.Mod 'K.RoundAway (N 1) (P 2) ~ P 1)
+_test_Mod_RoundAway_N1_P2 =  Dict
+_test_Div_RoundAway_N1_P3 :: Dict (K.Div 'K.RoundAway (N 1) (P 3) ~ N 1)
+_test_Div_RoundAway_N1_P3 =  Dict
+_test_Mod_RoundAway_N1_P3 :: Dict (K.Mod 'K.RoundAway (N 1) (P 3) ~ P 2)
+_test_Mod_RoundAway_N1_P3 =  Dict
+_test_Div_RoundAway_N1_P4 :: Dict (K.Div 'K.RoundAway (N 1) (P 4) ~ N 1)
+_test_Div_RoundAway_N1_P4 =  Dict
+_test_Mod_RoundAway_N1_P4 :: Dict (K.Mod 'K.RoundAway (N 1) (P 4) ~ P 3)
+_test_Mod_RoundAway_N1_P4 =  Dict
+_test_Div_RoundAway_N1_P5 :: Dict (K.Div 'K.RoundAway (N 1) (P 5) ~ N 1)
+_test_Div_RoundAway_N1_P5 =  Dict
+_test_Mod_RoundAway_N1_P5 :: Dict (K.Mod 'K.RoundAway (N 1) (P 5) ~ P 4)
+_test_Mod_RoundAway_N1_P5 =  Dict
+_test_Div_RoundAway_N2_N1 :: Dict (K.Div 'K.RoundAway (N 2) (N 1) ~ P 2)
+_test_Div_RoundAway_N2_N1 =  Dict
+_test_Mod_RoundAway_N2_N1 :: Dict (K.Mod 'K.RoundAway (N 2) (N 1) ~ P 0)
+_test_Mod_RoundAway_N2_N1 =  Dict
+_test_Div_RoundAway_N2_N2 :: Dict (K.Div 'K.RoundAway (N 2) (N 2) ~ P 1)
+_test_Div_RoundAway_N2_N2 =  Dict
+_test_Mod_RoundAway_N2_N2 :: Dict (K.Mod 'K.RoundAway (N 2) (N 2) ~ P 0)
+_test_Mod_RoundAway_N2_N2 =  Dict
+_test_Div_RoundAway_N2_N3 :: Dict (K.Div 'K.RoundAway (N 2) (N 3) ~ P 1)
+_test_Div_RoundAway_N2_N3 =  Dict
+_test_Mod_RoundAway_N2_N3 :: Dict (K.Mod 'K.RoundAway (N 2) (N 3) ~ P 1)
+_test_Mod_RoundAway_N2_N3 =  Dict
+_test_Div_RoundAway_N2_N4 :: Dict (K.Div 'K.RoundAway (N 2) (N 4) ~ P 1)
+_test_Div_RoundAway_N2_N4 =  Dict
+_test_Mod_RoundAway_N2_N4 :: Dict (K.Mod 'K.RoundAway (N 2) (N 4) ~ P 2)
+_test_Mod_RoundAway_N2_N4 =  Dict
+_test_Div_RoundAway_N2_N5 :: Dict (K.Div 'K.RoundAway (N 2) (N 5) ~ P 1)
+_test_Div_RoundAway_N2_N5 =  Dict
+_test_Mod_RoundAway_N2_N5 :: Dict (K.Mod 'K.RoundAway (N 2) (N 5) ~ P 3)
+_test_Mod_RoundAway_N2_N5 =  Dict
+_test_Div_RoundAway_N2_P1 :: Dict (K.Div 'K.RoundAway (N 2) (P 1) ~ N 2)
+_test_Div_RoundAway_N2_P1 =  Dict
+_test_Mod_RoundAway_N2_P1 :: Dict (K.Mod 'K.RoundAway (N 2) (P 1) ~ P 0)
+_test_Mod_RoundAway_N2_P1 =  Dict
+_test_Div_RoundAway_N2_P2 :: Dict (K.Div 'K.RoundAway (N 2) (P 2) ~ N 1)
+_test_Div_RoundAway_N2_P2 =  Dict
+_test_Mod_RoundAway_N2_P2 :: Dict (K.Mod 'K.RoundAway (N 2) (P 2) ~ P 0)
+_test_Mod_RoundAway_N2_P2 =  Dict
+_test_Div_RoundAway_N2_P3 :: Dict (K.Div 'K.RoundAway (N 2) (P 3) ~ N 1)
+_test_Div_RoundAway_N2_P3 =  Dict
+_test_Mod_RoundAway_N2_P3 :: Dict (K.Mod 'K.RoundAway (N 2) (P 3) ~ P 1)
+_test_Mod_RoundAway_N2_P3 =  Dict
+_test_Div_RoundAway_N2_P4 :: Dict (K.Div 'K.RoundAway (N 2) (P 4) ~ N 1)
+_test_Div_RoundAway_N2_P4 =  Dict
+_test_Mod_RoundAway_N2_P4 :: Dict (K.Mod 'K.RoundAway (N 2) (P 4) ~ P 2)
+_test_Mod_RoundAway_N2_P4 =  Dict
+_test_Div_RoundAway_N2_P5 :: Dict (K.Div 'K.RoundAway (N 2) (P 5) ~ N 1)
+_test_Div_RoundAway_N2_P5 =  Dict
+_test_Mod_RoundAway_N2_P5 :: Dict (K.Mod 'K.RoundAway (N 2) (P 5) ~ P 3)
+_test_Mod_RoundAway_N2_P5 =  Dict
+_test_Div_RoundAway_N3_N1 :: Dict (K.Div 'K.RoundAway (N 3) (N 1) ~ P 3)
+_test_Div_RoundAway_N3_N1 =  Dict
+_test_Mod_RoundAway_N3_N1 :: Dict (K.Mod 'K.RoundAway (N 3) (N 1) ~ P 0)
+_test_Mod_RoundAway_N3_N1 =  Dict
+_test_Div_RoundAway_N3_N2 :: Dict (K.Div 'K.RoundAway (N 3) (N 2) ~ P 2)
+_test_Div_RoundAway_N3_N2 =  Dict
+_test_Mod_RoundAway_N3_N2 :: Dict (K.Mod 'K.RoundAway (N 3) (N 2) ~ P 1)
+_test_Mod_RoundAway_N3_N2 =  Dict
+_test_Div_RoundAway_N3_N3 :: Dict (K.Div 'K.RoundAway (N 3) (N 3) ~ P 1)
+_test_Div_RoundAway_N3_N3 =  Dict
+_test_Mod_RoundAway_N3_N3 :: Dict (K.Mod 'K.RoundAway (N 3) (N 3) ~ P 0)
+_test_Mod_RoundAway_N3_N3 =  Dict
+_test_Div_RoundAway_N3_N4 :: Dict (K.Div 'K.RoundAway (N 3) (N 4) ~ P 1)
+_test_Div_RoundAway_N3_N4 =  Dict
+_test_Mod_RoundAway_N3_N4 :: Dict (K.Mod 'K.RoundAway (N 3) (N 4) ~ P 1)
+_test_Mod_RoundAway_N3_N4 =  Dict
+_test_Div_RoundAway_N3_N5 :: Dict (K.Div 'K.RoundAway (N 3) (N 5) ~ P 1)
+_test_Div_RoundAway_N3_N5 =  Dict
+_test_Mod_RoundAway_N3_N5 :: Dict (K.Mod 'K.RoundAway (N 3) (N 5) ~ P 2)
+_test_Mod_RoundAway_N3_N5 =  Dict
+_test_Div_RoundAway_N3_P1 :: Dict (K.Div 'K.RoundAway (N 3) (P 1) ~ N 3)
+_test_Div_RoundAway_N3_P1 =  Dict
+_test_Mod_RoundAway_N3_P1 :: Dict (K.Mod 'K.RoundAway (N 3) (P 1) ~ P 0)
+_test_Mod_RoundAway_N3_P1 =  Dict
+_test_Div_RoundAway_N3_P2 :: Dict (K.Div 'K.RoundAway (N 3) (P 2) ~ N 2)
+_test_Div_RoundAway_N3_P2 =  Dict
+_test_Mod_RoundAway_N3_P2 :: Dict (K.Mod 'K.RoundAway (N 3) (P 2) ~ P 1)
+_test_Mod_RoundAway_N3_P2 =  Dict
+_test_Div_RoundAway_N3_P3 :: Dict (K.Div 'K.RoundAway (N 3) (P 3) ~ N 1)
+_test_Div_RoundAway_N3_P3 =  Dict
+_test_Mod_RoundAway_N3_P3 :: Dict (K.Mod 'K.RoundAway (N 3) (P 3) ~ P 0)
+_test_Mod_RoundAway_N3_P3 =  Dict
+_test_Div_RoundAway_N3_P4 :: Dict (K.Div 'K.RoundAway (N 3) (P 4) ~ N 1)
+_test_Div_RoundAway_N3_P4 =  Dict
+_test_Mod_RoundAway_N3_P4 :: Dict (K.Mod 'K.RoundAway (N 3) (P 4) ~ P 1)
+_test_Mod_RoundAway_N3_P4 =  Dict
+_test_Div_RoundAway_N3_P5 :: Dict (K.Div 'K.RoundAway (N 3) (P 5) ~ N 1)
+_test_Div_RoundAway_N3_P5 =  Dict
+_test_Mod_RoundAway_N3_P5 :: Dict (K.Mod 'K.RoundAway (N 3) (P 5) ~ P 2)
+_test_Mod_RoundAway_N3_P5 =  Dict
+_test_Div_RoundAway_N4_N1 :: Dict (K.Div 'K.RoundAway (N 4) (N 1) ~ P 4)
+_test_Div_RoundAway_N4_N1 =  Dict
+_test_Mod_RoundAway_N4_N1 :: Dict (K.Mod 'K.RoundAway (N 4) (N 1) ~ P 0)
+_test_Mod_RoundAway_N4_N1 =  Dict
+_test_Div_RoundAway_N4_N2 :: Dict (K.Div 'K.RoundAway (N 4) (N 2) ~ P 2)
+_test_Div_RoundAway_N4_N2 =  Dict
+_test_Mod_RoundAway_N4_N2 :: Dict (K.Mod 'K.RoundAway (N 4) (N 2) ~ P 0)
+_test_Mod_RoundAway_N4_N2 =  Dict
+_test_Div_RoundAway_N4_N3 :: Dict (K.Div 'K.RoundAway (N 4) (N 3) ~ P 2)
+_test_Div_RoundAway_N4_N3 =  Dict
+_test_Mod_RoundAway_N4_N3 :: Dict (K.Mod 'K.RoundAway (N 4) (N 3) ~ P 2)
+_test_Mod_RoundAway_N4_N3 =  Dict
+_test_Div_RoundAway_N4_N4 :: Dict (K.Div 'K.RoundAway (N 4) (N 4) ~ P 1)
+_test_Div_RoundAway_N4_N4 =  Dict
+_test_Mod_RoundAway_N4_N4 :: Dict (K.Mod 'K.RoundAway (N 4) (N 4) ~ P 0)
+_test_Mod_RoundAway_N4_N4 =  Dict
+_test_Div_RoundAway_N4_N5 :: Dict (K.Div 'K.RoundAway (N 4) (N 5) ~ P 1)
+_test_Div_RoundAway_N4_N5 =  Dict
+_test_Mod_RoundAway_N4_N5 :: Dict (K.Mod 'K.RoundAway (N 4) (N 5) ~ P 1)
+_test_Mod_RoundAway_N4_N5 =  Dict
+_test_Div_RoundAway_N4_P1 :: Dict (K.Div 'K.RoundAway (N 4) (P 1) ~ N 4)
+_test_Div_RoundAway_N4_P1 =  Dict
+_test_Mod_RoundAway_N4_P1 :: Dict (K.Mod 'K.RoundAway (N 4) (P 1) ~ P 0)
+_test_Mod_RoundAway_N4_P1 =  Dict
+_test_Div_RoundAway_N4_P2 :: Dict (K.Div 'K.RoundAway (N 4) (P 2) ~ N 2)
+_test_Div_RoundAway_N4_P2 =  Dict
+_test_Mod_RoundAway_N4_P2 :: Dict (K.Mod 'K.RoundAway (N 4) (P 2) ~ P 0)
+_test_Mod_RoundAway_N4_P2 =  Dict
+_test_Div_RoundAway_N4_P3 :: Dict (K.Div 'K.RoundAway (N 4) (P 3) ~ N 2)
+_test_Div_RoundAway_N4_P3 =  Dict
+_test_Mod_RoundAway_N4_P3 :: Dict (K.Mod 'K.RoundAway (N 4) (P 3) ~ P 2)
+_test_Mod_RoundAway_N4_P3 =  Dict
+_test_Div_RoundAway_N4_P4 :: Dict (K.Div 'K.RoundAway (N 4) (P 4) ~ N 1)
+_test_Div_RoundAway_N4_P4 =  Dict
+_test_Mod_RoundAway_N4_P4 :: Dict (K.Mod 'K.RoundAway (N 4) (P 4) ~ P 0)
+_test_Mod_RoundAway_N4_P4 =  Dict
+_test_Div_RoundAway_N4_P5 :: Dict (K.Div 'K.RoundAway (N 4) (P 5) ~ N 1)
+_test_Div_RoundAway_N4_P5 =  Dict
+_test_Mod_RoundAway_N4_P5 :: Dict (K.Mod 'K.RoundAway (N 4) (P 5) ~ P 1)
+_test_Mod_RoundAway_N4_P5 =  Dict
+_test_Div_RoundAway_N5_N1 :: Dict (K.Div 'K.RoundAway (N 5) (N 1) ~ P 5)
+_test_Div_RoundAway_N5_N1 =  Dict
+_test_Mod_RoundAway_N5_N1 :: Dict (K.Mod 'K.RoundAway (N 5) (N 1) ~ P 0)
+_test_Mod_RoundAway_N5_N1 =  Dict
+_test_Div_RoundAway_N5_N2 :: Dict (K.Div 'K.RoundAway (N 5) (N 2) ~ P 3)
+_test_Div_RoundAway_N5_N2 =  Dict
+_test_Mod_RoundAway_N5_N2 :: Dict (K.Mod 'K.RoundAway (N 5) (N 2) ~ P 1)
+_test_Mod_RoundAway_N5_N2 =  Dict
+_test_Div_RoundAway_N5_N3 :: Dict (K.Div 'K.RoundAway (N 5) (N 3) ~ P 2)
+_test_Div_RoundAway_N5_N3 =  Dict
+_test_Mod_RoundAway_N5_N3 :: Dict (K.Mod 'K.RoundAway (N 5) (N 3) ~ P 1)
+_test_Mod_RoundAway_N5_N3 =  Dict
+_test_Div_RoundAway_N5_N4 :: Dict (K.Div 'K.RoundAway (N 5) (N 4) ~ P 2)
+_test_Div_RoundAway_N5_N4 =  Dict
+_test_Mod_RoundAway_N5_N4 :: Dict (K.Mod 'K.RoundAway (N 5) (N 4) ~ P 3)
+_test_Mod_RoundAway_N5_N4 =  Dict
+_test_Div_RoundAway_N5_N5 :: Dict (K.Div 'K.RoundAway (N 5) (N 5) ~ P 1)
+_test_Div_RoundAway_N5_N5 =  Dict
+_test_Mod_RoundAway_N5_N5 :: Dict (K.Mod 'K.RoundAway (N 5) (N 5) ~ P 0)
+_test_Mod_RoundAway_N5_N5 =  Dict
+_test_Div_RoundAway_N5_P1 :: Dict (K.Div 'K.RoundAway (N 5) (P 1) ~ N 5)
+_test_Div_RoundAway_N5_P1 =  Dict
+_test_Mod_RoundAway_N5_P1 :: Dict (K.Mod 'K.RoundAway (N 5) (P 1) ~ P 0)
+_test_Mod_RoundAway_N5_P1 =  Dict
+_test_Div_RoundAway_N5_P2 :: Dict (K.Div 'K.RoundAway (N 5) (P 2) ~ N 3)
+_test_Div_RoundAway_N5_P2 =  Dict
+_test_Mod_RoundAway_N5_P2 :: Dict (K.Mod 'K.RoundAway (N 5) (P 2) ~ P 1)
+_test_Mod_RoundAway_N5_P2 =  Dict
+_test_Div_RoundAway_N5_P3 :: Dict (K.Div 'K.RoundAway (N 5) (P 3) ~ N 2)
+_test_Div_RoundAway_N5_P3 =  Dict
+_test_Mod_RoundAway_N5_P3 :: Dict (K.Mod 'K.RoundAway (N 5) (P 3) ~ P 1)
+_test_Mod_RoundAway_N5_P3 =  Dict
+_test_Div_RoundAway_N5_P4 :: Dict (K.Div 'K.RoundAway (N 5) (P 4) ~ N 2)
+_test_Div_RoundAway_N5_P4 =  Dict
+_test_Mod_RoundAway_N5_P4 :: Dict (K.Mod 'K.RoundAway (N 5) (P 4) ~ P 3)
+_test_Mod_RoundAway_N5_P4 =  Dict
+_test_Div_RoundAway_N5_P5 :: Dict (K.Div 'K.RoundAway (N 5) (P 5) ~ N 1)
+_test_Div_RoundAway_N5_P5 =  Dict
+_test_Mod_RoundAway_N5_P5 :: Dict (K.Mod 'K.RoundAway (N 5) (P 5) ~ P 0)
+_test_Mod_RoundAway_N5_P5 =  Dict
+_test_Div_RoundAway_P0_N1 :: Dict (K.Div 'K.RoundAway (P 0) (N 1) ~ P 0)
+_test_Div_RoundAway_P0_N1 =  Dict
+_test_Mod_RoundAway_P0_N1 :: Dict (K.Mod 'K.RoundAway (P 0) (N 1) ~ P 0)
+_test_Mod_RoundAway_P0_N1 =  Dict
+_test_Div_RoundAway_P0_N2 :: Dict (K.Div 'K.RoundAway (P 0) (N 2) ~ P 0)
+_test_Div_RoundAway_P0_N2 =  Dict
+_test_Mod_RoundAway_P0_N2 :: Dict (K.Mod 'K.RoundAway (P 0) (N 2) ~ P 0)
+_test_Mod_RoundAway_P0_N2 =  Dict
+_test_Div_RoundAway_P0_N3 :: Dict (K.Div 'K.RoundAway (P 0) (N 3) ~ P 0)
+_test_Div_RoundAway_P0_N3 =  Dict
+_test_Mod_RoundAway_P0_N3 :: Dict (K.Mod 'K.RoundAway (P 0) (N 3) ~ P 0)
+_test_Mod_RoundAway_P0_N3 =  Dict
+_test_Div_RoundAway_P0_N4 :: Dict (K.Div 'K.RoundAway (P 0) (N 4) ~ P 0)
+_test_Div_RoundAway_P0_N4 =  Dict
+_test_Mod_RoundAway_P0_N4 :: Dict (K.Mod 'K.RoundAway (P 0) (N 4) ~ P 0)
+_test_Mod_RoundAway_P0_N4 =  Dict
+_test_Div_RoundAway_P0_N5 :: Dict (K.Div 'K.RoundAway (P 0) (N 5) ~ P 0)
+_test_Div_RoundAway_P0_N5 =  Dict
+_test_Mod_RoundAway_P0_N5 :: Dict (K.Mod 'K.RoundAway (P 0) (N 5) ~ P 0)
+_test_Mod_RoundAway_P0_N5 =  Dict
+_test_Div_RoundAway_P0_P1 :: Dict (K.Div 'K.RoundAway (P 0) (P 1) ~ P 0)
+_test_Div_RoundAway_P0_P1 =  Dict
+_test_Mod_RoundAway_P0_P1 :: Dict (K.Mod 'K.RoundAway (P 0) (P 1) ~ P 0)
+_test_Mod_RoundAway_P0_P1 =  Dict
+_test_Div_RoundAway_P0_P2 :: Dict (K.Div 'K.RoundAway (P 0) (P 2) ~ P 0)
+_test_Div_RoundAway_P0_P2 =  Dict
+_test_Mod_RoundAway_P0_P2 :: Dict (K.Mod 'K.RoundAway (P 0) (P 2) ~ P 0)
+_test_Mod_RoundAway_P0_P2 =  Dict
+_test_Div_RoundAway_P0_P3 :: Dict (K.Div 'K.RoundAway (P 0) (P 3) ~ P 0)
+_test_Div_RoundAway_P0_P3 =  Dict
+_test_Mod_RoundAway_P0_P3 :: Dict (K.Mod 'K.RoundAway (P 0) (P 3) ~ P 0)
+_test_Mod_RoundAway_P0_P3 =  Dict
+_test_Div_RoundAway_P0_P4 :: Dict (K.Div 'K.RoundAway (P 0) (P 4) ~ P 0)
+_test_Div_RoundAway_P0_P4 =  Dict
+_test_Mod_RoundAway_P0_P4 :: Dict (K.Mod 'K.RoundAway (P 0) (P 4) ~ P 0)
+_test_Mod_RoundAway_P0_P4 =  Dict
+_test_Div_RoundAway_P0_P5 :: Dict (K.Div 'K.RoundAway (P 0) (P 5) ~ P 0)
+_test_Div_RoundAway_P0_P5 =  Dict
+_test_Mod_RoundAway_P0_P5 :: Dict (K.Mod 'K.RoundAway (P 0) (P 5) ~ P 0)
+_test_Mod_RoundAway_P0_P5 =  Dict
+_test_Div_RoundAway_P1_N1 :: Dict (K.Div 'K.RoundAway (P 1) (N 1) ~ N 1)
+_test_Div_RoundAway_P1_N1 =  Dict
+_test_Mod_RoundAway_P1_N1 :: Dict (K.Mod 'K.RoundAway (P 1) (N 1) ~ P 0)
+_test_Mod_RoundAway_P1_N1 =  Dict
+_test_Div_RoundAway_P1_N2 :: Dict (K.Div 'K.RoundAway (P 1) (N 2) ~ N 1)
+_test_Div_RoundAway_P1_N2 =  Dict
+_test_Mod_RoundAway_P1_N2 :: Dict (K.Mod 'K.RoundAway (P 1) (N 2) ~ N 1)
+_test_Mod_RoundAway_P1_N2 =  Dict
+_test_Div_RoundAway_P1_N3 :: Dict (K.Div 'K.RoundAway (P 1) (N 3) ~ N 1)
+_test_Div_RoundAway_P1_N3 =  Dict
+_test_Mod_RoundAway_P1_N3 :: Dict (K.Mod 'K.RoundAway (P 1) (N 3) ~ N 2)
+_test_Mod_RoundAway_P1_N3 =  Dict
+_test_Div_RoundAway_P1_N4 :: Dict (K.Div 'K.RoundAway (P 1) (N 4) ~ N 1)
+_test_Div_RoundAway_P1_N4 =  Dict
+_test_Mod_RoundAway_P1_N4 :: Dict (K.Mod 'K.RoundAway (P 1) (N 4) ~ N 3)
+_test_Mod_RoundAway_P1_N4 =  Dict
+_test_Div_RoundAway_P1_N5 :: Dict (K.Div 'K.RoundAway (P 1) (N 5) ~ N 1)
+_test_Div_RoundAway_P1_N5 =  Dict
+_test_Mod_RoundAway_P1_N5 :: Dict (K.Mod 'K.RoundAway (P 1) (N 5) ~ N 4)
+_test_Mod_RoundAway_P1_N5 =  Dict
+_test_Div_RoundAway_P1_P1 :: Dict (K.Div 'K.RoundAway (P 1) (P 1) ~ P 1)
+_test_Div_RoundAway_P1_P1 =  Dict
+_test_Mod_RoundAway_P1_P1 :: Dict (K.Mod 'K.RoundAway (P 1) (P 1) ~ P 0)
+_test_Mod_RoundAway_P1_P1 =  Dict
+_test_Div_RoundAway_P1_P2 :: Dict (K.Div 'K.RoundAway (P 1) (P 2) ~ P 1)
+_test_Div_RoundAway_P1_P2 =  Dict
+_test_Mod_RoundAway_P1_P2 :: Dict (K.Mod 'K.RoundAway (P 1) (P 2) ~ N 1)
+_test_Mod_RoundAway_P1_P2 =  Dict
+_test_Div_RoundAway_P1_P3 :: Dict (K.Div 'K.RoundAway (P 1) (P 3) ~ P 1)
+_test_Div_RoundAway_P1_P3 =  Dict
+_test_Mod_RoundAway_P1_P3 :: Dict (K.Mod 'K.RoundAway (P 1) (P 3) ~ N 2)
+_test_Mod_RoundAway_P1_P3 =  Dict
+_test_Div_RoundAway_P1_P4 :: Dict (K.Div 'K.RoundAway (P 1) (P 4) ~ P 1)
+_test_Div_RoundAway_P1_P4 =  Dict
+_test_Mod_RoundAway_P1_P4 :: Dict (K.Mod 'K.RoundAway (P 1) (P 4) ~ N 3)
+_test_Mod_RoundAway_P1_P4 =  Dict
+_test_Div_RoundAway_P1_P5 :: Dict (K.Div 'K.RoundAway (P 1) (P 5) ~ P 1)
+_test_Div_RoundAway_P1_P5 =  Dict
+_test_Mod_RoundAway_P1_P5 :: Dict (K.Mod 'K.RoundAway (P 1) (P 5) ~ N 4)
+_test_Mod_RoundAway_P1_P5 =  Dict
+_test_Div_RoundAway_P2_N1 :: Dict (K.Div 'K.RoundAway (P 2) (N 1) ~ N 2)
+_test_Div_RoundAway_P2_N1 =  Dict
+_test_Mod_RoundAway_P2_N1 :: Dict (K.Mod 'K.RoundAway (P 2) (N 1) ~ P 0)
+_test_Mod_RoundAway_P2_N1 =  Dict
+_test_Div_RoundAway_P2_N2 :: Dict (K.Div 'K.RoundAway (P 2) (N 2) ~ N 1)
+_test_Div_RoundAway_P2_N2 =  Dict
+_test_Mod_RoundAway_P2_N2 :: Dict (K.Mod 'K.RoundAway (P 2) (N 2) ~ P 0)
+_test_Mod_RoundAway_P2_N2 =  Dict
+_test_Div_RoundAway_P2_N3 :: Dict (K.Div 'K.RoundAway (P 2) (N 3) ~ N 1)
+_test_Div_RoundAway_P2_N3 =  Dict
+_test_Mod_RoundAway_P2_N3 :: Dict (K.Mod 'K.RoundAway (P 2) (N 3) ~ N 1)
+_test_Mod_RoundAway_P2_N3 =  Dict
+_test_Div_RoundAway_P2_N4 :: Dict (K.Div 'K.RoundAway (P 2) (N 4) ~ N 1)
+_test_Div_RoundAway_P2_N4 =  Dict
+_test_Mod_RoundAway_P2_N4 :: Dict (K.Mod 'K.RoundAway (P 2) (N 4) ~ N 2)
+_test_Mod_RoundAway_P2_N4 =  Dict
+_test_Div_RoundAway_P2_N5 :: Dict (K.Div 'K.RoundAway (P 2) (N 5) ~ N 1)
+_test_Div_RoundAway_P2_N5 =  Dict
+_test_Mod_RoundAway_P2_N5 :: Dict (K.Mod 'K.RoundAway (P 2) (N 5) ~ N 3)
+_test_Mod_RoundAway_P2_N5 =  Dict
+_test_Div_RoundAway_P2_P1 :: Dict (K.Div 'K.RoundAway (P 2) (P 1) ~ P 2)
+_test_Div_RoundAway_P2_P1 =  Dict
+_test_Mod_RoundAway_P2_P1 :: Dict (K.Mod 'K.RoundAway (P 2) (P 1) ~ P 0)
+_test_Mod_RoundAway_P2_P1 =  Dict
+_test_Div_RoundAway_P2_P2 :: Dict (K.Div 'K.RoundAway (P 2) (P 2) ~ P 1)
+_test_Div_RoundAway_P2_P2 =  Dict
+_test_Mod_RoundAway_P2_P2 :: Dict (K.Mod 'K.RoundAway (P 2) (P 2) ~ P 0)
+_test_Mod_RoundAway_P2_P2 =  Dict
+_test_Div_RoundAway_P2_P3 :: Dict (K.Div 'K.RoundAway (P 2) (P 3) ~ P 1)
+_test_Div_RoundAway_P2_P3 =  Dict
+_test_Mod_RoundAway_P2_P3 :: Dict (K.Mod 'K.RoundAway (P 2) (P 3) ~ N 1)
+_test_Mod_RoundAway_P2_P3 =  Dict
+_test_Div_RoundAway_P2_P4 :: Dict (K.Div 'K.RoundAway (P 2) (P 4) ~ P 1)
+_test_Div_RoundAway_P2_P4 =  Dict
+_test_Mod_RoundAway_P2_P4 :: Dict (K.Mod 'K.RoundAway (P 2) (P 4) ~ N 2)
+_test_Mod_RoundAway_P2_P4 =  Dict
+_test_Div_RoundAway_P2_P5 :: Dict (K.Div 'K.RoundAway (P 2) (P 5) ~ P 1)
+_test_Div_RoundAway_P2_P5 =  Dict
+_test_Mod_RoundAway_P2_P5 :: Dict (K.Mod 'K.RoundAway (P 2) (P 5) ~ N 3)
+_test_Mod_RoundAway_P2_P5 =  Dict
+_test_Div_RoundAway_P3_N1 :: Dict (K.Div 'K.RoundAway (P 3) (N 1) ~ N 3)
+_test_Div_RoundAway_P3_N1 =  Dict
+_test_Mod_RoundAway_P3_N1 :: Dict (K.Mod 'K.RoundAway (P 3) (N 1) ~ P 0)
+_test_Mod_RoundAway_P3_N1 =  Dict
+_test_Div_RoundAway_P3_N2 :: Dict (K.Div 'K.RoundAway (P 3) (N 2) ~ N 2)
+_test_Div_RoundAway_P3_N2 =  Dict
+_test_Mod_RoundAway_P3_N2 :: Dict (K.Mod 'K.RoundAway (P 3) (N 2) ~ N 1)
+_test_Mod_RoundAway_P3_N2 =  Dict
+_test_Div_RoundAway_P3_N3 :: Dict (K.Div 'K.RoundAway (P 3) (N 3) ~ N 1)
+_test_Div_RoundAway_P3_N3 =  Dict
+_test_Mod_RoundAway_P3_N3 :: Dict (K.Mod 'K.RoundAway (P 3) (N 3) ~ P 0)
+_test_Mod_RoundAway_P3_N3 =  Dict
+_test_Div_RoundAway_P3_N4 :: Dict (K.Div 'K.RoundAway (P 3) (N 4) ~ N 1)
+_test_Div_RoundAway_P3_N4 =  Dict
+_test_Mod_RoundAway_P3_N4 :: Dict (K.Mod 'K.RoundAway (P 3) (N 4) ~ N 1)
+_test_Mod_RoundAway_P3_N4 =  Dict
+_test_Div_RoundAway_P3_N5 :: Dict (K.Div 'K.RoundAway (P 3) (N 5) ~ N 1)
+_test_Div_RoundAway_P3_N5 =  Dict
+_test_Mod_RoundAway_P3_N5 :: Dict (K.Mod 'K.RoundAway (P 3) (N 5) ~ N 2)
+_test_Mod_RoundAway_P3_N5 =  Dict
+_test_Div_RoundAway_P3_P1 :: Dict (K.Div 'K.RoundAway (P 3) (P 1) ~ P 3)
+_test_Div_RoundAway_P3_P1 =  Dict
+_test_Mod_RoundAway_P3_P1 :: Dict (K.Mod 'K.RoundAway (P 3) (P 1) ~ P 0)
+_test_Mod_RoundAway_P3_P1 =  Dict
+_test_Div_RoundAway_P3_P2 :: Dict (K.Div 'K.RoundAway (P 3) (P 2) ~ P 2)
+_test_Div_RoundAway_P3_P2 =  Dict
+_test_Mod_RoundAway_P3_P2 :: Dict (K.Mod 'K.RoundAway (P 3) (P 2) ~ N 1)
+_test_Mod_RoundAway_P3_P2 =  Dict
+_test_Div_RoundAway_P3_P3 :: Dict (K.Div 'K.RoundAway (P 3) (P 3) ~ P 1)
+_test_Div_RoundAway_P3_P3 =  Dict
+_test_Mod_RoundAway_P3_P3 :: Dict (K.Mod 'K.RoundAway (P 3) (P 3) ~ P 0)
+_test_Mod_RoundAway_P3_P3 =  Dict
+_test_Div_RoundAway_P3_P4 :: Dict (K.Div 'K.RoundAway (P 3) (P 4) ~ P 1)
+_test_Div_RoundAway_P3_P4 =  Dict
+_test_Mod_RoundAway_P3_P4 :: Dict (K.Mod 'K.RoundAway (P 3) (P 4) ~ N 1)
+_test_Mod_RoundAway_P3_P4 =  Dict
+_test_Div_RoundAway_P3_P5 :: Dict (K.Div 'K.RoundAway (P 3) (P 5) ~ P 1)
+_test_Div_RoundAway_P3_P5 =  Dict
+_test_Mod_RoundAway_P3_P5 :: Dict (K.Mod 'K.RoundAway (P 3) (P 5) ~ N 2)
+_test_Mod_RoundAway_P3_P5 =  Dict
+_test_Div_RoundAway_P4_N1 :: Dict (K.Div 'K.RoundAway (P 4) (N 1) ~ N 4)
+_test_Div_RoundAway_P4_N1 =  Dict
+_test_Mod_RoundAway_P4_N1 :: Dict (K.Mod 'K.RoundAway (P 4) (N 1) ~ P 0)
+_test_Mod_RoundAway_P4_N1 =  Dict
+_test_Div_RoundAway_P4_N2 :: Dict (K.Div 'K.RoundAway (P 4) (N 2) ~ N 2)
+_test_Div_RoundAway_P4_N2 =  Dict
+_test_Mod_RoundAway_P4_N2 :: Dict (K.Mod 'K.RoundAway (P 4) (N 2) ~ P 0)
+_test_Mod_RoundAway_P4_N2 =  Dict
+_test_Div_RoundAway_P4_N3 :: Dict (K.Div 'K.RoundAway (P 4) (N 3) ~ N 2)
+_test_Div_RoundAway_P4_N3 =  Dict
+_test_Mod_RoundAway_P4_N3 :: Dict (K.Mod 'K.RoundAway (P 4) (N 3) ~ N 2)
+_test_Mod_RoundAway_P4_N3 =  Dict
+_test_Div_RoundAway_P4_N4 :: Dict (K.Div 'K.RoundAway (P 4) (N 4) ~ N 1)
+_test_Div_RoundAway_P4_N4 =  Dict
+_test_Mod_RoundAway_P4_N4 :: Dict (K.Mod 'K.RoundAway (P 4) (N 4) ~ P 0)
+_test_Mod_RoundAway_P4_N4 =  Dict
+_test_Div_RoundAway_P4_N5 :: Dict (K.Div 'K.RoundAway (P 4) (N 5) ~ N 1)
+_test_Div_RoundAway_P4_N5 =  Dict
+_test_Mod_RoundAway_P4_N5 :: Dict (K.Mod 'K.RoundAway (P 4) (N 5) ~ N 1)
+_test_Mod_RoundAway_P4_N5 =  Dict
+_test_Div_RoundAway_P4_P1 :: Dict (K.Div 'K.RoundAway (P 4) (P 1) ~ P 4)
+_test_Div_RoundAway_P4_P1 =  Dict
+_test_Mod_RoundAway_P4_P1 :: Dict (K.Mod 'K.RoundAway (P 4) (P 1) ~ P 0)
+_test_Mod_RoundAway_P4_P1 =  Dict
+_test_Div_RoundAway_P4_P2 :: Dict (K.Div 'K.RoundAway (P 4) (P 2) ~ P 2)
+_test_Div_RoundAway_P4_P2 =  Dict
+_test_Mod_RoundAway_P4_P2 :: Dict (K.Mod 'K.RoundAway (P 4) (P 2) ~ P 0)
+_test_Mod_RoundAway_P4_P2 =  Dict
+_test_Div_RoundAway_P4_P3 :: Dict (K.Div 'K.RoundAway (P 4) (P 3) ~ P 2)
+_test_Div_RoundAway_P4_P3 =  Dict
+_test_Mod_RoundAway_P4_P3 :: Dict (K.Mod 'K.RoundAway (P 4) (P 3) ~ N 2)
+_test_Mod_RoundAway_P4_P3 =  Dict
+_test_Div_RoundAway_P4_P4 :: Dict (K.Div 'K.RoundAway (P 4) (P 4) ~ P 1)
+_test_Div_RoundAway_P4_P4 =  Dict
+_test_Mod_RoundAway_P4_P4 :: Dict (K.Mod 'K.RoundAway (P 4) (P 4) ~ P 0)
+_test_Mod_RoundAway_P4_P4 =  Dict
+_test_Div_RoundAway_P4_P5 :: Dict (K.Div 'K.RoundAway (P 4) (P 5) ~ P 1)
+_test_Div_RoundAway_P4_P5 =  Dict
+_test_Mod_RoundAway_P4_P5 :: Dict (K.Mod 'K.RoundAway (P 4) (P 5) ~ N 1)
+_test_Mod_RoundAway_P4_P5 =  Dict
+_test_Div_RoundAway_P5_N1 :: Dict (K.Div 'K.RoundAway (P 5) (N 1) ~ N 5)
+_test_Div_RoundAway_P5_N1 =  Dict
+_test_Mod_RoundAway_P5_N1 :: Dict (K.Mod 'K.RoundAway (P 5) (N 1) ~ P 0)
+_test_Mod_RoundAway_P5_N1 =  Dict
+_test_Div_RoundAway_P5_N2 :: Dict (K.Div 'K.RoundAway (P 5) (N 2) ~ N 3)
+_test_Div_RoundAway_P5_N2 =  Dict
+_test_Mod_RoundAway_P5_N2 :: Dict (K.Mod 'K.RoundAway (P 5) (N 2) ~ N 1)
+_test_Mod_RoundAway_P5_N2 =  Dict
+_test_Div_RoundAway_P5_N3 :: Dict (K.Div 'K.RoundAway (P 5) (N 3) ~ N 2)
+_test_Div_RoundAway_P5_N3 =  Dict
+_test_Mod_RoundAway_P5_N3 :: Dict (K.Mod 'K.RoundAway (P 5) (N 3) ~ N 1)
+_test_Mod_RoundAway_P5_N3 =  Dict
+_test_Div_RoundAway_P5_N4 :: Dict (K.Div 'K.RoundAway (P 5) (N 4) ~ N 2)
+_test_Div_RoundAway_P5_N4 =  Dict
+_test_Mod_RoundAway_P5_N4 :: Dict (K.Mod 'K.RoundAway (P 5) (N 4) ~ N 3)
+_test_Mod_RoundAway_P5_N4 =  Dict
+_test_Div_RoundAway_P5_N5 :: Dict (K.Div 'K.RoundAway (P 5) (N 5) ~ N 1)
+_test_Div_RoundAway_P5_N5 =  Dict
+_test_Mod_RoundAway_P5_N5 :: Dict (K.Mod 'K.RoundAway (P 5) (N 5) ~ P 0)
+_test_Mod_RoundAway_P5_N5 =  Dict
+_test_Div_RoundAway_P5_P1 :: Dict (K.Div 'K.RoundAway (P 5) (P 1) ~ P 5)
+_test_Div_RoundAway_P5_P1 =  Dict
+_test_Mod_RoundAway_P5_P1 :: Dict (K.Mod 'K.RoundAway (P 5) (P 1) ~ P 0)
+_test_Mod_RoundAway_P5_P1 =  Dict
+_test_Div_RoundAway_P5_P2 :: Dict (K.Div 'K.RoundAway (P 5) (P 2) ~ P 3)
+_test_Div_RoundAway_P5_P2 =  Dict
+_test_Mod_RoundAway_P5_P2 :: Dict (K.Mod 'K.RoundAway (P 5) (P 2) ~ N 1)
+_test_Mod_RoundAway_P5_P2 =  Dict
+_test_Div_RoundAway_P5_P3 :: Dict (K.Div 'K.RoundAway (P 5) (P 3) ~ P 2)
+_test_Div_RoundAway_P5_P3 =  Dict
+_test_Mod_RoundAway_P5_P3 :: Dict (K.Mod 'K.RoundAway (P 5) (P 3) ~ N 1)
+_test_Mod_RoundAway_P5_P3 =  Dict
+_test_Div_RoundAway_P5_P4 :: Dict (K.Div 'K.RoundAway (P 5) (P 4) ~ P 2)
+_test_Div_RoundAway_P5_P4 =  Dict
+_test_Mod_RoundAway_P5_P4 :: Dict (K.Mod 'K.RoundAway (P 5) (P 4) ~ N 3)
+_test_Mod_RoundAway_P5_P4 =  Dict
+_test_Div_RoundAway_P5_P5 :: Dict (K.Div 'K.RoundAway (P 5) (P 5) ~ P 1)
+_test_Div_RoundAway_P5_P5 =  Dict
+_test_Mod_RoundAway_P5_P5 :: Dict (K.Mod 'K.RoundAway (P 5) (P 5) ~ P 0)
+_test_Mod_RoundAway_P5_P5 =  Dict
+_test_Div_RoundDown_N1_N1 :: Dict (K.Div 'K.RoundDown (N 1) (N 1) ~ P 1)
+_test_Div_RoundDown_N1_N1 =  Dict
+_test_Mod_RoundDown_N1_N1 :: Dict (K.Mod 'K.RoundDown (N 1) (N 1) ~ P 0)
+_test_Mod_RoundDown_N1_N1 =  Dict
+_test_Div_RoundDown_N1_N2 :: Dict (K.Div 'K.RoundDown (N 1) (N 2) ~ P 0)
+_test_Div_RoundDown_N1_N2 =  Dict
+_test_Mod_RoundDown_N1_N2 :: Dict (K.Mod 'K.RoundDown (N 1) (N 2) ~ N 1)
+_test_Mod_RoundDown_N1_N2 =  Dict
+_test_Div_RoundDown_N1_N3 :: Dict (K.Div 'K.RoundDown (N 1) (N 3) ~ P 0)
+_test_Div_RoundDown_N1_N3 =  Dict
+_test_Mod_RoundDown_N1_N3 :: Dict (K.Mod 'K.RoundDown (N 1) (N 3) ~ N 1)
+_test_Mod_RoundDown_N1_N3 =  Dict
+_test_Div_RoundDown_N1_N4 :: Dict (K.Div 'K.RoundDown (N 1) (N 4) ~ P 0)
+_test_Div_RoundDown_N1_N4 =  Dict
+_test_Mod_RoundDown_N1_N4 :: Dict (K.Mod 'K.RoundDown (N 1) (N 4) ~ N 1)
+_test_Mod_RoundDown_N1_N4 =  Dict
+_test_Div_RoundDown_N1_N5 :: Dict (K.Div 'K.RoundDown (N 1) (N 5) ~ P 0)
+_test_Div_RoundDown_N1_N5 =  Dict
+_test_Mod_RoundDown_N1_N5 :: Dict (K.Mod 'K.RoundDown (N 1) (N 5) ~ N 1)
+_test_Mod_RoundDown_N1_N5 =  Dict
+_test_Div_RoundDown_N1_P1 :: Dict (K.Div 'K.RoundDown (N 1) (P 1) ~ N 1)
+_test_Div_RoundDown_N1_P1 =  Dict
+_test_Mod_RoundDown_N1_P1 :: Dict (K.Mod 'K.RoundDown (N 1) (P 1) ~ P 0)
+_test_Mod_RoundDown_N1_P1 =  Dict
+_test_Div_RoundDown_N1_P2 :: Dict (K.Div 'K.RoundDown (N 1) (P 2) ~ N 1)
+_test_Div_RoundDown_N1_P2 =  Dict
+_test_Mod_RoundDown_N1_P2 :: Dict (K.Mod 'K.RoundDown (N 1) (P 2) ~ P 1)
+_test_Mod_RoundDown_N1_P2 =  Dict
+_test_Div_RoundDown_N1_P3 :: Dict (K.Div 'K.RoundDown (N 1) (P 3) ~ N 1)
+_test_Div_RoundDown_N1_P3 =  Dict
+_test_Mod_RoundDown_N1_P3 :: Dict (K.Mod 'K.RoundDown (N 1) (P 3) ~ P 2)
+_test_Mod_RoundDown_N1_P3 =  Dict
+_test_Div_RoundDown_N1_P4 :: Dict (K.Div 'K.RoundDown (N 1) (P 4) ~ N 1)
+_test_Div_RoundDown_N1_P4 =  Dict
+_test_Mod_RoundDown_N1_P4 :: Dict (K.Mod 'K.RoundDown (N 1) (P 4) ~ P 3)
+_test_Mod_RoundDown_N1_P4 =  Dict
+_test_Div_RoundDown_N1_P5 :: Dict (K.Div 'K.RoundDown (N 1) (P 5) ~ N 1)
+_test_Div_RoundDown_N1_P5 =  Dict
+_test_Mod_RoundDown_N1_P5 :: Dict (K.Mod 'K.RoundDown (N 1) (P 5) ~ P 4)
+_test_Mod_RoundDown_N1_P5 =  Dict
+_test_Div_RoundDown_N2_N1 :: Dict (K.Div 'K.RoundDown (N 2) (N 1) ~ P 2)
+_test_Div_RoundDown_N2_N1 =  Dict
+_test_Mod_RoundDown_N2_N1 :: Dict (K.Mod 'K.RoundDown (N 2) (N 1) ~ P 0)
+_test_Mod_RoundDown_N2_N1 =  Dict
+_test_Div_RoundDown_N2_N2 :: Dict (K.Div 'K.RoundDown (N 2) (N 2) ~ P 1)
+_test_Div_RoundDown_N2_N2 =  Dict
+_test_Mod_RoundDown_N2_N2 :: Dict (K.Mod 'K.RoundDown (N 2) (N 2) ~ P 0)
+_test_Mod_RoundDown_N2_N2 =  Dict
+_test_Div_RoundDown_N2_N3 :: Dict (K.Div 'K.RoundDown (N 2) (N 3) ~ P 0)
+_test_Div_RoundDown_N2_N3 =  Dict
+_test_Mod_RoundDown_N2_N3 :: Dict (K.Mod 'K.RoundDown (N 2) (N 3) ~ N 2)
+_test_Mod_RoundDown_N2_N3 =  Dict
+_test_Div_RoundDown_N2_N4 :: Dict (K.Div 'K.RoundDown (N 2) (N 4) ~ P 0)
+_test_Div_RoundDown_N2_N4 =  Dict
+_test_Mod_RoundDown_N2_N4 :: Dict (K.Mod 'K.RoundDown (N 2) (N 4) ~ N 2)
+_test_Mod_RoundDown_N2_N4 =  Dict
+_test_Div_RoundDown_N2_N5 :: Dict (K.Div 'K.RoundDown (N 2) (N 5) ~ P 0)
+_test_Div_RoundDown_N2_N5 =  Dict
+_test_Mod_RoundDown_N2_N5 :: Dict (K.Mod 'K.RoundDown (N 2) (N 5) ~ N 2)
+_test_Mod_RoundDown_N2_N5 =  Dict
+_test_Div_RoundDown_N2_P1 :: Dict (K.Div 'K.RoundDown (N 2) (P 1) ~ N 2)
+_test_Div_RoundDown_N2_P1 =  Dict
+_test_Mod_RoundDown_N2_P1 :: Dict (K.Mod 'K.RoundDown (N 2) (P 1) ~ P 0)
+_test_Mod_RoundDown_N2_P1 =  Dict
+_test_Div_RoundDown_N2_P2 :: Dict (K.Div 'K.RoundDown (N 2) (P 2) ~ N 1)
+_test_Div_RoundDown_N2_P2 =  Dict
+_test_Mod_RoundDown_N2_P2 :: Dict (K.Mod 'K.RoundDown (N 2) (P 2) ~ P 0)
+_test_Mod_RoundDown_N2_P2 =  Dict
+_test_Div_RoundDown_N2_P3 :: Dict (K.Div 'K.RoundDown (N 2) (P 3) ~ N 1)
+_test_Div_RoundDown_N2_P3 =  Dict
+_test_Mod_RoundDown_N2_P3 :: Dict (K.Mod 'K.RoundDown (N 2) (P 3) ~ P 1)
+_test_Mod_RoundDown_N2_P3 =  Dict
+_test_Div_RoundDown_N2_P4 :: Dict (K.Div 'K.RoundDown (N 2) (P 4) ~ N 1)
+_test_Div_RoundDown_N2_P4 =  Dict
+_test_Mod_RoundDown_N2_P4 :: Dict (K.Mod 'K.RoundDown (N 2) (P 4) ~ P 2)
+_test_Mod_RoundDown_N2_P4 =  Dict
+_test_Div_RoundDown_N2_P5 :: Dict (K.Div 'K.RoundDown (N 2) (P 5) ~ N 1)
+_test_Div_RoundDown_N2_P5 =  Dict
+_test_Mod_RoundDown_N2_P5 :: Dict (K.Mod 'K.RoundDown (N 2) (P 5) ~ P 3)
+_test_Mod_RoundDown_N2_P5 =  Dict
+_test_Div_RoundDown_N3_N1 :: Dict (K.Div 'K.RoundDown (N 3) (N 1) ~ P 3)
+_test_Div_RoundDown_N3_N1 =  Dict
+_test_Mod_RoundDown_N3_N1 :: Dict (K.Mod 'K.RoundDown (N 3) (N 1) ~ P 0)
+_test_Mod_RoundDown_N3_N1 =  Dict
+_test_Div_RoundDown_N3_N2 :: Dict (K.Div 'K.RoundDown (N 3) (N 2) ~ P 1)
+_test_Div_RoundDown_N3_N2 =  Dict
+_test_Mod_RoundDown_N3_N2 :: Dict (K.Mod 'K.RoundDown (N 3) (N 2) ~ N 1)
+_test_Mod_RoundDown_N3_N2 =  Dict
+_test_Div_RoundDown_N3_N3 :: Dict (K.Div 'K.RoundDown (N 3) (N 3) ~ P 1)
+_test_Div_RoundDown_N3_N3 =  Dict
+_test_Mod_RoundDown_N3_N3 :: Dict (K.Mod 'K.RoundDown (N 3) (N 3) ~ P 0)
+_test_Mod_RoundDown_N3_N3 =  Dict
+_test_Div_RoundDown_N3_N4 :: Dict (K.Div 'K.RoundDown (N 3) (N 4) ~ P 0)
+_test_Div_RoundDown_N3_N4 =  Dict
+_test_Mod_RoundDown_N3_N4 :: Dict (K.Mod 'K.RoundDown (N 3) (N 4) ~ N 3)
+_test_Mod_RoundDown_N3_N4 =  Dict
+_test_Div_RoundDown_N3_N5 :: Dict (K.Div 'K.RoundDown (N 3) (N 5) ~ P 0)
+_test_Div_RoundDown_N3_N5 =  Dict
+_test_Mod_RoundDown_N3_N5 :: Dict (K.Mod 'K.RoundDown (N 3) (N 5) ~ N 3)
+_test_Mod_RoundDown_N3_N5 =  Dict
+_test_Div_RoundDown_N3_P1 :: Dict (K.Div 'K.RoundDown (N 3) (P 1) ~ N 3)
+_test_Div_RoundDown_N3_P1 =  Dict
+_test_Mod_RoundDown_N3_P1 :: Dict (K.Mod 'K.RoundDown (N 3) (P 1) ~ P 0)
+_test_Mod_RoundDown_N3_P1 =  Dict
+_test_Div_RoundDown_N3_P2 :: Dict (K.Div 'K.RoundDown (N 3) (P 2) ~ N 2)
+_test_Div_RoundDown_N3_P2 =  Dict
+_test_Mod_RoundDown_N3_P2 :: Dict (K.Mod 'K.RoundDown (N 3) (P 2) ~ P 1)
+_test_Mod_RoundDown_N3_P2 =  Dict
+_test_Div_RoundDown_N3_P3 :: Dict (K.Div 'K.RoundDown (N 3) (P 3) ~ N 1)
+_test_Div_RoundDown_N3_P3 =  Dict
+_test_Mod_RoundDown_N3_P3 :: Dict (K.Mod 'K.RoundDown (N 3) (P 3) ~ P 0)
+_test_Mod_RoundDown_N3_P3 =  Dict
+_test_Div_RoundDown_N3_P4 :: Dict (K.Div 'K.RoundDown (N 3) (P 4) ~ N 1)
+_test_Div_RoundDown_N3_P4 =  Dict
+_test_Mod_RoundDown_N3_P4 :: Dict (K.Mod 'K.RoundDown (N 3) (P 4) ~ P 1)
+_test_Mod_RoundDown_N3_P4 =  Dict
+_test_Div_RoundDown_N3_P5 :: Dict (K.Div 'K.RoundDown (N 3) (P 5) ~ N 1)
+_test_Div_RoundDown_N3_P5 =  Dict
+_test_Mod_RoundDown_N3_P5 :: Dict (K.Mod 'K.RoundDown (N 3) (P 5) ~ P 2)
+_test_Mod_RoundDown_N3_P5 =  Dict
+_test_Div_RoundDown_N4_N1 :: Dict (K.Div 'K.RoundDown (N 4) (N 1) ~ P 4)
+_test_Div_RoundDown_N4_N1 =  Dict
+_test_Mod_RoundDown_N4_N1 :: Dict (K.Mod 'K.RoundDown (N 4) (N 1) ~ P 0)
+_test_Mod_RoundDown_N4_N1 =  Dict
+_test_Div_RoundDown_N4_N2 :: Dict (K.Div 'K.RoundDown (N 4) (N 2) ~ P 2)
+_test_Div_RoundDown_N4_N2 =  Dict
+_test_Mod_RoundDown_N4_N2 :: Dict (K.Mod 'K.RoundDown (N 4) (N 2) ~ P 0)
+_test_Mod_RoundDown_N4_N2 =  Dict
+_test_Div_RoundDown_N4_N3 :: Dict (K.Div 'K.RoundDown (N 4) (N 3) ~ P 1)
+_test_Div_RoundDown_N4_N3 =  Dict
+_test_Mod_RoundDown_N4_N3 :: Dict (K.Mod 'K.RoundDown (N 4) (N 3) ~ N 1)
+_test_Mod_RoundDown_N4_N3 =  Dict
+_test_Div_RoundDown_N4_N4 :: Dict (K.Div 'K.RoundDown (N 4) (N 4) ~ P 1)
+_test_Div_RoundDown_N4_N4 =  Dict
+_test_Mod_RoundDown_N4_N4 :: Dict (K.Mod 'K.RoundDown (N 4) (N 4) ~ P 0)
+_test_Mod_RoundDown_N4_N4 =  Dict
+_test_Div_RoundDown_N4_N5 :: Dict (K.Div 'K.RoundDown (N 4) (N 5) ~ P 0)
+_test_Div_RoundDown_N4_N5 =  Dict
+_test_Mod_RoundDown_N4_N5 :: Dict (K.Mod 'K.RoundDown (N 4) (N 5) ~ N 4)
+_test_Mod_RoundDown_N4_N5 =  Dict
+_test_Div_RoundDown_N4_P1 :: Dict (K.Div 'K.RoundDown (N 4) (P 1) ~ N 4)
+_test_Div_RoundDown_N4_P1 =  Dict
+_test_Mod_RoundDown_N4_P1 :: Dict (K.Mod 'K.RoundDown (N 4) (P 1) ~ P 0)
+_test_Mod_RoundDown_N4_P1 =  Dict
+_test_Div_RoundDown_N4_P2 :: Dict (K.Div 'K.RoundDown (N 4) (P 2) ~ N 2)
+_test_Div_RoundDown_N4_P2 =  Dict
+_test_Mod_RoundDown_N4_P2 :: Dict (K.Mod 'K.RoundDown (N 4) (P 2) ~ P 0)
+_test_Mod_RoundDown_N4_P2 =  Dict
+_test_Div_RoundDown_N4_P3 :: Dict (K.Div 'K.RoundDown (N 4) (P 3) ~ N 2)
+_test_Div_RoundDown_N4_P3 =  Dict
+_test_Mod_RoundDown_N4_P3 :: Dict (K.Mod 'K.RoundDown (N 4) (P 3) ~ P 2)
+_test_Mod_RoundDown_N4_P3 =  Dict
+_test_Div_RoundDown_N4_P4 :: Dict (K.Div 'K.RoundDown (N 4) (P 4) ~ N 1)
+_test_Div_RoundDown_N4_P4 =  Dict
+_test_Mod_RoundDown_N4_P4 :: Dict (K.Mod 'K.RoundDown (N 4) (P 4) ~ P 0)
+_test_Mod_RoundDown_N4_P4 =  Dict
+_test_Div_RoundDown_N4_P5 :: Dict (K.Div 'K.RoundDown (N 4) (P 5) ~ N 1)
+_test_Div_RoundDown_N4_P5 =  Dict
+_test_Mod_RoundDown_N4_P5 :: Dict (K.Mod 'K.RoundDown (N 4) (P 5) ~ P 1)
+_test_Mod_RoundDown_N4_P5 =  Dict
+_test_Div_RoundDown_N5_N1 :: Dict (K.Div 'K.RoundDown (N 5) (N 1) ~ P 5)
+_test_Div_RoundDown_N5_N1 =  Dict
+_test_Mod_RoundDown_N5_N1 :: Dict (K.Mod 'K.RoundDown (N 5) (N 1) ~ P 0)
+_test_Mod_RoundDown_N5_N1 =  Dict
+_test_Div_RoundDown_N5_N2 :: Dict (K.Div 'K.RoundDown (N 5) (N 2) ~ P 2)
+_test_Div_RoundDown_N5_N2 =  Dict
+_test_Mod_RoundDown_N5_N2 :: Dict (K.Mod 'K.RoundDown (N 5) (N 2) ~ N 1)
+_test_Mod_RoundDown_N5_N2 =  Dict
+_test_Div_RoundDown_N5_N3 :: Dict (K.Div 'K.RoundDown (N 5) (N 3) ~ P 1)
+_test_Div_RoundDown_N5_N3 =  Dict
+_test_Mod_RoundDown_N5_N3 :: Dict (K.Mod 'K.RoundDown (N 5) (N 3) ~ N 2)
+_test_Mod_RoundDown_N5_N3 =  Dict
+_test_Div_RoundDown_N5_N4 :: Dict (K.Div 'K.RoundDown (N 5) (N 4) ~ P 1)
+_test_Div_RoundDown_N5_N4 =  Dict
+_test_Mod_RoundDown_N5_N4 :: Dict (K.Mod 'K.RoundDown (N 5) (N 4) ~ N 1)
+_test_Mod_RoundDown_N5_N4 =  Dict
+_test_Div_RoundDown_N5_N5 :: Dict (K.Div 'K.RoundDown (N 5) (N 5) ~ P 1)
+_test_Div_RoundDown_N5_N5 =  Dict
+_test_Mod_RoundDown_N5_N5 :: Dict (K.Mod 'K.RoundDown (N 5) (N 5) ~ P 0)
+_test_Mod_RoundDown_N5_N5 =  Dict
+_test_Div_RoundDown_N5_P1 :: Dict (K.Div 'K.RoundDown (N 5) (P 1) ~ N 5)
+_test_Div_RoundDown_N5_P1 =  Dict
+_test_Mod_RoundDown_N5_P1 :: Dict (K.Mod 'K.RoundDown (N 5) (P 1) ~ P 0)
+_test_Mod_RoundDown_N5_P1 =  Dict
+_test_Div_RoundDown_N5_P2 :: Dict (K.Div 'K.RoundDown (N 5) (P 2) ~ N 3)
+_test_Div_RoundDown_N5_P2 =  Dict
+_test_Mod_RoundDown_N5_P2 :: Dict (K.Mod 'K.RoundDown (N 5) (P 2) ~ P 1)
+_test_Mod_RoundDown_N5_P2 =  Dict
+_test_Div_RoundDown_N5_P3 :: Dict (K.Div 'K.RoundDown (N 5) (P 3) ~ N 2)
+_test_Div_RoundDown_N5_P3 =  Dict
+_test_Mod_RoundDown_N5_P3 :: Dict (K.Mod 'K.RoundDown (N 5) (P 3) ~ P 1)
+_test_Mod_RoundDown_N5_P3 =  Dict
+_test_Div_RoundDown_N5_P4 :: Dict (K.Div 'K.RoundDown (N 5) (P 4) ~ N 2)
+_test_Div_RoundDown_N5_P4 =  Dict
+_test_Mod_RoundDown_N5_P4 :: Dict (K.Mod 'K.RoundDown (N 5) (P 4) ~ P 3)
+_test_Mod_RoundDown_N5_P4 =  Dict
+_test_Div_RoundDown_N5_P5 :: Dict (K.Div 'K.RoundDown (N 5) (P 5) ~ N 1)
+_test_Div_RoundDown_N5_P5 =  Dict
+_test_Mod_RoundDown_N5_P5 :: Dict (K.Mod 'K.RoundDown (N 5) (P 5) ~ P 0)
+_test_Mod_RoundDown_N5_P5 =  Dict
+_test_Div_RoundDown_P0_N1 :: Dict (K.Div 'K.RoundDown (P 0) (N 1) ~ P 0)
+_test_Div_RoundDown_P0_N1 =  Dict
+_test_Mod_RoundDown_P0_N1 :: Dict (K.Mod 'K.RoundDown (P 0) (N 1) ~ P 0)
+_test_Mod_RoundDown_P0_N1 =  Dict
+_test_Div_RoundDown_P0_N2 :: Dict (K.Div 'K.RoundDown (P 0) (N 2) ~ P 0)
+_test_Div_RoundDown_P0_N2 =  Dict
+_test_Mod_RoundDown_P0_N2 :: Dict (K.Mod 'K.RoundDown (P 0) (N 2) ~ P 0)
+_test_Mod_RoundDown_P0_N2 =  Dict
+_test_Div_RoundDown_P0_N3 :: Dict (K.Div 'K.RoundDown (P 0) (N 3) ~ P 0)
+_test_Div_RoundDown_P0_N3 =  Dict
+_test_Mod_RoundDown_P0_N3 :: Dict (K.Mod 'K.RoundDown (P 0) (N 3) ~ P 0)
+_test_Mod_RoundDown_P0_N3 =  Dict
+_test_Div_RoundDown_P0_N4 :: Dict (K.Div 'K.RoundDown (P 0) (N 4) ~ P 0)
+_test_Div_RoundDown_P0_N4 =  Dict
+_test_Mod_RoundDown_P0_N4 :: Dict (K.Mod 'K.RoundDown (P 0) (N 4) ~ P 0)
+_test_Mod_RoundDown_P0_N4 =  Dict
+_test_Div_RoundDown_P0_N5 :: Dict (K.Div 'K.RoundDown (P 0) (N 5) ~ P 0)
+_test_Div_RoundDown_P0_N5 =  Dict
+_test_Mod_RoundDown_P0_N5 :: Dict (K.Mod 'K.RoundDown (P 0) (N 5) ~ P 0)
+_test_Mod_RoundDown_P0_N5 =  Dict
+_test_Div_RoundDown_P0_P1 :: Dict (K.Div 'K.RoundDown (P 0) (P 1) ~ P 0)
+_test_Div_RoundDown_P0_P1 =  Dict
+_test_Mod_RoundDown_P0_P1 :: Dict (K.Mod 'K.RoundDown (P 0) (P 1) ~ P 0)
+_test_Mod_RoundDown_P0_P1 =  Dict
+_test_Div_RoundDown_P0_P2 :: Dict (K.Div 'K.RoundDown (P 0) (P 2) ~ P 0)
+_test_Div_RoundDown_P0_P2 =  Dict
+_test_Mod_RoundDown_P0_P2 :: Dict (K.Mod 'K.RoundDown (P 0) (P 2) ~ P 0)
+_test_Mod_RoundDown_P0_P2 =  Dict
+_test_Div_RoundDown_P0_P3 :: Dict (K.Div 'K.RoundDown (P 0) (P 3) ~ P 0)
+_test_Div_RoundDown_P0_P3 =  Dict
+_test_Mod_RoundDown_P0_P3 :: Dict (K.Mod 'K.RoundDown (P 0) (P 3) ~ P 0)
+_test_Mod_RoundDown_P0_P3 =  Dict
+_test_Div_RoundDown_P0_P4 :: Dict (K.Div 'K.RoundDown (P 0) (P 4) ~ P 0)
+_test_Div_RoundDown_P0_P4 =  Dict
+_test_Mod_RoundDown_P0_P4 :: Dict (K.Mod 'K.RoundDown (P 0) (P 4) ~ P 0)
+_test_Mod_RoundDown_P0_P4 =  Dict
+_test_Div_RoundDown_P0_P5 :: Dict (K.Div 'K.RoundDown (P 0) (P 5) ~ P 0)
+_test_Div_RoundDown_P0_P5 =  Dict
+_test_Mod_RoundDown_P0_P5 :: Dict (K.Mod 'K.RoundDown (P 0) (P 5) ~ P 0)
+_test_Mod_RoundDown_P0_P5 =  Dict
+_test_Div_RoundDown_P1_N1 :: Dict (K.Div 'K.RoundDown (P 1) (N 1) ~ N 1)
+_test_Div_RoundDown_P1_N1 =  Dict
+_test_Mod_RoundDown_P1_N1 :: Dict (K.Mod 'K.RoundDown (P 1) (N 1) ~ P 0)
+_test_Mod_RoundDown_P1_N1 =  Dict
+_test_Div_RoundDown_P1_N2 :: Dict (K.Div 'K.RoundDown (P 1) (N 2) ~ N 1)
+_test_Div_RoundDown_P1_N2 =  Dict
+_test_Mod_RoundDown_P1_N2 :: Dict (K.Mod 'K.RoundDown (P 1) (N 2) ~ N 1)
+_test_Mod_RoundDown_P1_N2 =  Dict
+_test_Div_RoundDown_P1_N3 :: Dict (K.Div 'K.RoundDown (P 1) (N 3) ~ N 1)
+_test_Div_RoundDown_P1_N3 =  Dict
+_test_Mod_RoundDown_P1_N3 :: Dict (K.Mod 'K.RoundDown (P 1) (N 3) ~ N 2)
+_test_Mod_RoundDown_P1_N3 =  Dict
+_test_Div_RoundDown_P1_N4 :: Dict (K.Div 'K.RoundDown (P 1) (N 4) ~ N 1)
+_test_Div_RoundDown_P1_N4 =  Dict
+_test_Mod_RoundDown_P1_N4 :: Dict (K.Mod 'K.RoundDown (P 1) (N 4) ~ N 3)
+_test_Mod_RoundDown_P1_N4 =  Dict
+_test_Div_RoundDown_P1_N5 :: Dict (K.Div 'K.RoundDown (P 1) (N 5) ~ N 1)
+_test_Div_RoundDown_P1_N5 =  Dict
+_test_Mod_RoundDown_P1_N5 :: Dict (K.Mod 'K.RoundDown (P 1) (N 5) ~ N 4)
+_test_Mod_RoundDown_P1_N5 =  Dict
+_test_Div_RoundDown_P1_P1 :: Dict (K.Div 'K.RoundDown (P 1) (P 1) ~ P 1)
+_test_Div_RoundDown_P1_P1 =  Dict
+_test_Mod_RoundDown_P1_P1 :: Dict (K.Mod 'K.RoundDown (P 1) (P 1) ~ P 0)
+_test_Mod_RoundDown_P1_P1 =  Dict
+_test_Div_RoundDown_P1_P2 :: Dict (K.Div 'K.RoundDown (P 1) (P 2) ~ P 0)
+_test_Div_RoundDown_P1_P2 =  Dict
+_test_Mod_RoundDown_P1_P2 :: Dict (K.Mod 'K.RoundDown (P 1) (P 2) ~ P 1)
+_test_Mod_RoundDown_P1_P2 =  Dict
+_test_Div_RoundDown_P1_P3 :: Dict (K.Div 'K.RoundDown (P 1) (P 3) ~ P 0)
+_test_Div_RoundDown_P1_P3 =  Dict
+_test_Mod_RoundDown_P1_P3 :: Dict (K.Mod 'K.RoundDown (P 1) (P 3) ~ P 1)
+_test_Mod_RoundDown_P1_P3 =  Dict
+_test_Div_RoundDown_P1_P4 :: Dict (K.Div 'K.RoundDown (P 1) (P 4) ~ P 0)
+_test_Div_RoundDown_P1_P4 =  Dict
+_test_Mod_RoundDown_P1_P4 :: Dict (K.Mod 'K.RoundDown (P 1) (P 4) ~ P 1)
+_test_Mod_RoundDown_P1_P4 =  Dict
+_test_Div_RoundDown_P1_P5 :: Dict (K.Div 'K.RoundDown (P 1) (P 5) ~ P 0)
+_test_Div_RoundDown_P1_P5 =  Dict
+_test_Mod_RoundDown_P1_P5 :: Dict (K.Mod 'K.RoundDown (P 1) (P 5) ~ P 1)
+_test_Mod_RoundDown_P1_P5 =  Dict
+_test_Div_RoundDown_P2_N1 :: Dict (K.Div 'K.RoundDown (P 2) (N 1) ~ N 2)
+_test_Div_RoundDown_P2_N1 =  Dict
+_test_Mod_RoundDown_P2_N1 :: Dict (K.Mod 'K.RoundDown (P 2) (N 1) ~ P 0)
+_test_Mod_RoundDown_P2_N1 =  Dict
+_test_Div_RoundDown_P2_N2 :: Dict (K.Div 'K.RoundDown (P 2) (N 2) ~ N 1)
+_test_Div_RoundDown_P2_N2 =  Dict
+_test_Mod_RoundDown_P2_N2 :: Dict (K.Mod 'K.RoundDown (P 2) (N 2) ~ P 0)
+_test_Mod_RoundDown_P2_N2 =  Dict
+_test_Div_RoundDown_P2_N3 :: Dict (K.Div 'K.RoundDown (P 2) (N 3) ~ N 1)
+_test_Div_RoundDown_P2_N3 =  Dict
+_test_Mod_RoundDown_P2_N3 :: Dict (K.Mod 'K.RoundDown (P 2) (N 3) ~ N 1)
+_test_Mod_RoundDown_P2_N3 =  Dict
+_test_Div_RoundDown_P2_N4 :: Dict (K.Div 'K.RoundDown (P 2) (N 4) ~ N 1)
+_test_Div_RoundDown_P2_N4 =  Dict
+_test_Mod_RoundDown_P2_N4 :: Dict (K.Mod 'K.RoundDown (P 2) (N 4) ~ N 2)
+_test_Mod_RoundDown_P2_N4 =  Dict
+_test_Div_RoundDown_P2_N5 :: Dict (K.Div 'K.RoundDown (P 2) (N 5) ~ N 1)
+_test_Div_RoundDown_P2_N5 =  Dict
+_test_Mod_RoundDown_P2_N5 :: Dict (K.Mod 'K.RoundDown (P 2) (N 5) ~ N 3)
+_test_Mod_RoundDown_P2_N5 =  Dict
+_test_Div_RoundDown_P2_P1 :: Dict (K.Div 'K.RoundDown (P 2) (P 1) ~ P 2)
+_test_Div_RoundDown_P2_P1 =  Dict
+_test_Mod_RoundDown_P2_P1 :: Dict (K.Mod 'K.RoundDown (P 2) (P 1) ~ P 0)
+_test_Mod_RoundDown_P2_P1 =  Dict
+_test_Div_RoundDown_P2_P2 :: Dict (K.Div 'K.RoundDown (P 2) (P 2) ~ P 1)
+_test_Div_RoundDown_P2_P2 =  Dict
+_test_Mod_RoundDown_P2_P2 :: Dict (K.Mod 'K.RoundDown (P 2) (P 2) ~ P 0)
+_test_Mod_RoundDown_P2_P2 =  Dict
+_test_Div_RoundDown_P2_P3 :: Dict (K.Div 'K.RoundDown (P 2) (P 3) ~ P 0)
+_test_Div_RoundDown_P2_P3 =  Dict
+_test_Mod_RoundDown_P2_P3 :: Dict (K.Mod 'K.RoundDown (P 2) (P 3) ~ P 2)
+_test_Mod_RoundDown_P2_P3 =  Dict
+_test_Div_RoundDown_P2_P4 :: Dict (K.Div 'K.RoundDown (P 2) (P 4) ~ P 0)
+_test_Div_RoundDown_P2_P4 =  Dict
+_test_Mod_RoundDown_P2_P4 :: Dict (K.Mod 'K.RoundDown (P 2) (P 4) ~ P 2)
+_test_Mod_RoundDown_P2_P4 =  Dict
+_test_Div_RoundDown_P2_P5 :: Dict (K.Div 'K.RoundDown (P 2) (P 5) ~ P 0)
+_test_Div_RoundDown_P2_P5 =  Dict
+_test_Mod_RoundDown_P2_P5 :: Dict (K.Mod 'K.RoundDown (P 2) (P 5) ~ P 2)
+_test_Mod_RoundDown_P2_P5 =  Dict
+_test_Div_RoundDown_P3_N1 :: Dict (K.Div 'K.RoundDown (P 3) (N 1) ~ N 3)
+_test_Div_RoundDown_P3_N1 =  Dict
+_test_Mod_RoundDown_P3_N1 :: Dict (K.Mod 'K.RoundDown (P 3) (N 1) ~ P 0)
+_test_Mod_RoundDown_P3_N1 =  Dict
+_test_Div_RoundDown_P3_N2 :: Dict (K.Div 'K.RoundDown (P 3) (N 2) ~ N 2)
+_test_Div_RoundDown_P3_N2 =  Dict
+_test_Mod_RoundDown_P3_N2 :: Dict (K.Mod 'K.RoundDown (P 3) (N 2) ~ N 1)
+_test_Mod_RoundDown_P3_N2 =  Dict
+_test_Div_RoundDown_P3_N3 :: Dict (K.Div 'K.RoundDown (P 3) (N 3) ~ N 1)
+_test_Div_RoundDown_P3_N3 =  Dict
+_test_Mod_RoundDown_P3_N3 :: Dict (K.Mod 'K.RoundDown (P 3) (N 3) ~ P 0)
+_test_Mod_RoundDown_P3_N3 =  Dict
+_test_Div_RoundDown_P3_N4 :: Dict (K.Div 'K.RoundDown (P 3) (N 4) ~ N 1)
+_test_Div_RoundDown_P3_N4 =  Dict
+_test_Mod_RoundDown_P3_N4 :: Dict (K.Mod 'K.RoundDown (P 3) (N 4) ~ N 1)
+_test_Mod_RoundDown_P3_N4 =  Dict
+_test_Div_RoundDown_P3_N5 :: Dict (K.Div 'K.RoundDown (P 3) (N 5) ~ N 1)
+_test_Div_RoundDown_P3_N5 =  Dict
+_test_Mod_RoundDown_P3_N5 :: Dict (K.Mod 'K.RoundDown (P 3) (N 5) ~ N 2)
+_test_Mod_RoundDown_P3_N5 =  Dict
+_test_Div_RoundDown_P3_P1 :: Dict (K.Div 'K.RoundDown (P 3) (P 1) ~ P 3)
+_test_Div_RoundDown_P3_P1 =  Dict
+_test_Mod_RoundDown_P3_P1 :: Dict (K.Mod 'K.RoundDown (P 3) (P 1) ~ P 0)
+_test_Mod_RoundDown_P3_P1 =  Dict
+_test_Div_RoundDown_P3_P2 :: Dict (K.Div 'K.RoundDown (P 3) (P 2) ~ P 1)
+_test_Div_RoundDown_P3_P2 =  Dict
+_test_Mod_RoundDown_P3_P2 :: Dict (K.Mod 'K.RoundDown (P 3) (P 2) ~ P 1)
+_test_Mod_RoundDown_P3_P2 =  Dict
+_test_Div_RoundDown_P3_P3 :: Dict (K.Div 'K.RoundDown (P 3) (P 3) ~ P 1)
+_test_Div_RoundDown_P3_P3 =  Dict
+_test_Mod_RoundDown_P3_P3 :: Dict (K.Mod 'K.RoundDown (P 3) (P 3) ~ P 0)
+_test_Mod_RoundDown_P3_P3 =  Dict
+_test_Div_RoundDown_P3_P4 :: Dict (K.Div 'K.RoundDown (P 3) (P 4) ~ P 0)
+_test_Div_RoundDown_P3_P4 =  Dict
+_test_Mod_RoundDown_P3_P4 :: Dict (K.Mod 'K.RoundDown (P 3) (P 4) ~ P 3)
+_test_Mod_RoundDown_P3_P4 =  Dict
+_test_Div_RoundDown_P3_P5 :: Dict (K.Div 'K.RoundDown (P 3) (P 5) ~ P 0)
+_test_Div_RoundDown_P3_P5 =  Dict
+_test_Mod_RoundDown_P3_P5 :: Dict (K.Mod 'K.RoundDown (P 3) (P 5) ~ P 3)
+_test_Mod_RoundDown_P3_P5 =  Dict
+_test_Div_RoundDown_P4_N1 :: Dict (K.Div 'K.RoundDown (P 4) (N 1) ~ N 4)
+_test_Div_RoundDown_P4_N1 =  Dict
+_test_Mod_RoundDown_P4_N1 :: Dict (K.Mod 'K.RoundDown (P 4) (N 1) ~ P 0)
+_test_Mod_RoundDown_P4_N1 =  Dict
+_test_Div_RoundDown_P4_N2 :: Dict (K.Div 'K.RoundDown (P 4) (N 2) ~ N 2)
+_test_Div_RoundDown_P4_N2 =  Dict
+_test_Mod_RoundDown_P4_N2 :: Dict (K.Mod 'K.RoundDown (P 4) (N 2) ~ P 0)
+_test_Mod_RoundDown_P4_N2 =  Dict
+_test_Div_RoundDown_P4_N3 :: Dict (K.Div 'K.RoundDown (P 4) (N 3) ~ N 2)
+_test_Div_RoundDown_P4_N3 =  Dict
+_test_Mod_RoundDown_P4_N3 :: Dict (K.Mod 'K.RoundDown (P 4) (N 3) ~ N 2)
+_test_Mod_RoundDown_P4_N3 =  Dict
+_test_Div_RoundDown_P4_N4 :: Dict (K.Div 'K.RoundDown (P 4) (N 4) ~ N 1)
+_test_Div_RoundDown_P4_N4 =  Dict
+_test_Mod_RoundDown_P4_N4 :: Dict (K.Mod 'K.RoundDown (P 4) (N 4) ~ P 0)
+_test_Mod_RoundDown_P4_N4 =  Dict
+_test_Div_RoundDown_P4_N5 :: Dict (K.Div 'K.RoundDown (P 4) (N 5) ~ N 1)
+_test_Div_RoundDown_P4_N5 =  Dict
+_test_Mod_RoundDown_P4_N5 :: Dict (K.Mod 'K.RoundDown (P 4) (N 5) ~ N 1)
+_test_Mod_RoundDown_P4_N5 =  Dict
+_test_Div_RoundDown_P4_P1 :: Dict (K.Div 'K.RoundDown (P 4) (P 1) ~ P 4)
+_test_Div_RoundDown_P4_P1 =  Dict
+_test_Mod_RoundDown_P4_P1 :: Dict (K.Mod 'K.RoundDown (P 4) (P 1) ~ P 0)
+_test_Mod_RoundDown_P4_P1 =  Dict
+_test_Div_RoundDown_P4_P2 :: Dict (K.Div 'K.RoundDown (P 4) (P 2) ~ P 2)
+_test_Div_RoundDown_P4_P2 =  Dict
+_test_Mod_RoundDown_P4_P2 :: Dict (K.Mod 'K.RoundDown (P 4) (P 2) ~ P 0)
+_test_Mod_RoundDown_P4_P2 =  Dict
+_test_Div_RoundDown_P4_P3 :: Dict (K.Div 'K.RoundDown (P 4) (P 3) ~ P 1)
+_test_Div_RoundDown_P4_P3 =  Dict
+_test_Mod_RoundDown_P4_P3 :: Dict (K.Mod 'K.RoundDown (P 4) (P 3) ~ P 1)
+_test_Mod_RoundDown_P4_P3 =  Dict
+_test_Div_RoundDown_P4_P4 :: Dict (K.Div 'K.RoundDown (P 4) (P 4) ~ P 1)
+_test_Div_RoundDown_P4_P4 =  Dict
+_test_Mod_RoundDown_P4_P4 :: Dict (K.Mod 'K.RoundDown (P 4) (P 4) ~ P 0)
+_test_Mod_RoundDown_P4_P4 =  Dict
+_test_Div_RoundDown_P4_P5 :: Dict (K.Div 'K.RoundDown (P 4) (P 5) ~ P 0)
+_test_Div_RoundDown_P4_P5 =  Dict
+_test_Mod_RoundDown_P4_P5 :: Dict (K.Mod 'K.RoundDown (P 4) (P 5) ~ P 4)
+_test_Mod_RoundDown_P4_P5 =  Dict
+_test_Div_RoundDown_P5_N1 :: Dict (K.Div 'K.RoundDown (P 5) (N 1) ~ N 5)
+_test_Div_RoundDown_P5_N1 =  Dict
+_test_Mod_RoundDown_P5_N1 :: Dict (K.Mod 'K.RoundDown (P 5) (N 1) ~ P 0)
+_test_Mod_RoundDown_P5_N1 =  Dict
+_test_Div_RoundDown_P5_N2 :: Dict (K.Div 'K.RoundDown (P 5) (N 2) ~ N 3)
+_test_Div_RoundDown_P5_N2 =  Dict
+_test_Mod_RoundDown_P5_N2 :: Dict (K.Mod 'K.RoundDown (P 5) (N 2) ~ N 1)
+_test_Mod_RoundDown_P5_N2 =  Dict
+_test_Div_RoundDown_P5_N3 :: Dict (K.Div 'K.RoundDown (P 5) (N 3) ~ N 2)
+_test_Div_RoundDown_P5_N3 =  Dict
+_test_Mod_RoundDown_P5_N3 :: Dict (K.Mod 'K.RoundDown (P 5) (N 3) ~ N 1)
+_test_Mod_RoundDown_P5_N3 =  Dict
+_test_Div_RoundDown_P5_N4 :: Dict (K.Div 'K.RoundDown (P 5) (N 4) ~ N 2)
+_test_Div_RoundDown_P5_N4 =  Dict
+_test_Mod_RoundDown_P5_N4 :: Dict (K.Mod 'K.RoundDown (P 5) (N 4) ~ N 3)
+_test_Mod_RoundDown_P5_N4 =  Dict
+_test_Div_RoundDown_P5_N5 :: Dict (K.Div 'K.RoundDown (P 5) (N 5) ~ N 1)
+_test_Div_RoundDown_P5_N5 =  Dict
+_test_Mod_RoundDown_P5_N5 :: Dict (K.Mod 'K.RoundDown (P 5) (N 5) ~ P 0)
+_test_Mod_RoundDown_P5_N5 =  Dict
+_test_Div_RoundDown_P5_P1 :: Dict (K.Div 'K.RoundDown (P 5) (P 1) ~ P 5)
+_test_Div_RoundDown_P5_P1 =  Dict
+_test_Mod_RoundDown_P5_P1 :: Dict (K.Mod 'K.RoundDown (P 5) (P 1) ~ P 0)
+_test_Mod_RoundDown_P5_P1 =  Dict
+_test_Div_RoundDown_P5_P2 :: Dict (K.Div 'K.RoundDown (P 5) (P 2) ~ P 2)
+_test_Div_RoundDown_P5_P2 =  Dict
+_test_Mod_RoundDown_P5_P2 :: Dict (K.Mod 'K.RoundDown (P 5) (P 2) ~ P 1)
+_test_Mod_RoundDown_P5_P2 =  Dict
+_test_Div_RoundDown_P5_P3 :: Dict (K.Div 'K.RoundDown (P 5) (P 3) ~ P 1)
+_test_Div_RoundDown_P5_P3 =  Dict
+_test_Mod_RoundDown_P5_P3 :: Dict (K.Mod 'K.RoundDown (P 5) (P 3) ~ P 2)
+_test_Mod_RoundDown_P5_P3 =  Dict
+_test_Div_RoundDown_P5_P4 :: Dict (K.Div 'K.RoundDown (P 5) (P 4) ~ P 1)
+_test_Div_RoundDown_P5_P4 =  Dict
+_test_Mod_RoundDown_P5_P4 :: Dict (K.Mod 'K.RoundDown (P 5) (P 4) ~ P 1)
+_test_Mod_RoundDown_P5_P4 =  Dict
+_test_Div_RoundDown_P5_P5 :: Dict (K.Div 'K.RoundDown (P 5) (P 5) ~ P 1)
+_test_Div_RoundDown_P5_P5 =  Dict
+_test_Mod_RoundDown_P5_P5 :: Dict (K.Mod 'K.RoundDown (P 5) (P 5) ~ P 0)
+_test_Mod_RoundDown_P5_P5 =  Dict
+_test_Div_RoundHalfAway_N1_N1 :: Dict (K.Div 'K.RoundHalfAway (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfAway_N1_N1 =  Dict
+_test_Mod_RoundHalfAway_N1_N1 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_N1_N1 =  Dict
+_test_Div_RoundHalfAway_N1_N2 :: Dict (K.Div 'K.RoundHalfAway (N 1) (N 2) ~ P 1)
+_test_Div_RoundHalfAway_N1_N2 =  Dict
+_test_Mod_RoundHalfAway_N1_N2 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfAway_N1_N2 =  Dict
+_test_Div_RoundHalfAway_N1_N3 :: Dict (K.Div 'K.RoundHalfAway (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfAway_N1_N3 =  Dict
+_test_Mod_RoundHalfAway_N1_N3 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfAway_N1_N3 =  Dict
+_test_Div_RoundHalfAway_N1_N4 :: Dict (K.Div 'K.RoundHalfAway (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfAway_N1_N4 =  Dict
+_test_Mod_RoundHalfAway_N1_N4 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfAway_N1_N4 =  Dict
+_test_Div_RoundHalfAway_N1_N5 :: Dict (K.Div 'K.RoundHalfAway (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfAway_N1_N5 =  Dict
+_test_Mod_RoundHalfAway_N1_N5 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfAway_N1_N5 =  Dict
+_test_Div_RoundHalfAway_N1_P1 :: Dict (K.Div 'K.RoundHalfAway (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfAway_N1_P1 =  Dict
+_test_Mod_RoundHalfAway_N1_P1 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_N1_P1 =  Dict
+_test_Div_RoundHalfAway_N1_P2 :: Dict (K.Div 'K.RoundHalfAway (N 1) (P 2) ~ N 1)
+_test_Div_RoundHalfAway_N1_P2 =  Dict
+_test_Mod_RoundHalfAway_N1_P2 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfAway_N1_P2 =  Dict
+_test_Div_RoundHalfAway_N1_P3 :: Dict (K.Div 'K.RoundHalfAway (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfAway_N1_P3 =  Dict
+_test_Mod_RoundHalfAway_N1_P3 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfAway_N1_P3 =  Dict
+_test_Div_RoundHalfAway_N1_P4 :: Dict (K.Div 'K.RoundHalfAway (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfAway_N1_P4 =  Dict
+_test_Mod_RoundHalfAway_N1_P4 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfAway_N1_P4 =  Dict
+_test_Div_RoundHalfAway_N1_P5 :: Dict (K.Div 'K.RoundHalfAway (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfAway_N1_P5 =  Dict
+_test_Mod_RoundHalfAway_N1_P5 :: Dict (K.Mod 'K.RoundHalfAway (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfAway_N1_P5 =  Dict
+_test_Div_RoundHalfAway_N2_N1 :: Dict (K.Div 'K.RoundHalfAway (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfAway_N2_N1 =  Dict
+_test_Mod_RoundHalfAway_N2_N1 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_N2_N1 =  Dict
+_test_Div_RoundHalfAway_N2_N2 :: Dict (K.Div 'K.RoundHalfAway (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfAway_N2_N2 =  Dict
+_test_Mod_RoundHalfAway_N2_N2 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfAway_N2_N2 =  Dict
+_test_Div_RoundHalfAway_N2_N3 :: Dict (K.Div 'K.RoundHalfAway (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfAway_N2_N3 =  Dict
+_test_Mod_RoundHalfAway_N2_N3 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfAway_N2_N3 =  Dict
+_test_Div_RoundHalfAway_N2_N4 :: Dict (K.Div 'K.RoundHalfAway (N 2) (N 4) ~ P 1)
+_test_Div_RoundHalfAway_N2_N4 =  Dict
+_test_Mod_RoundHalfAway_N2_N4 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfAway_N2_N4 =  Dict
+_test_Div_RoundHalfAway_N2_N5 :: Dict (K.Div 'K.RoundHalfAway (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfAway_N2_N5 =  Dict
+_test_Mod_RoundHalfAway_N2_N5 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfAway_N2_N5 =  Dict
+_test_Div_RoundHalfAway_N2_P1 :: Dict (K.Div 'K.RoundHalfAway (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfAway_N2_P1 =  Dict
+_test_Mod_RoundHalfAway_N2_P1 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_N2_P1 =  Dict
+_test_Div_RoundHalfAway_N2_P2 :: Dict (K.Div 'K.RoundHalfAway (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfAway_N2_P2 =  Dict
+_test_Mod_RoundHalfAway_N2_P2 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfAway_N2_P2 =  Dict
+_test_Div_RoundHalfAway_N2_P3 :: Dict (K.Div 'K.RoundHalfAway (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfAway_N2_P3 =  Dict
+_test_Mod_RoundHalfAway_N2_P3 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfAway_N2_P3 =  Dict
+_test_Div_RoundHalfAway_N2_P4 :: Dict (K.Div 'K.RoundHalfAway (N 2) (P 4) ~ N 1)
+_test_Div_RoundHalfAway_N2_P4 =  Dict
+_test_Mod_RoundHalfAway_N2_P4 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfAway_N2_P4 =  Dict
+_test_Div_RoundHalfAway_N2_P5 :: Dict (K.Div 'K.RoundHalfAway (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfAway_N2_P5 =  Dict
+_test_Mod_RoundHalfAway_N2_P5 :: Dict (K.Mod 'K.RoundHalfAway (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfAway_N2_P5 =  Dict
+_test_Div_RoundHalfAway_N3_N1 :: Dict (K.Div 'K.RoundHalfAway (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfAway_N3_N1 =  Dict
+_test_Mod_RoundHalfAway_N3_N1 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_N3_N1 =  Dict
+_test_Div_RoundHalfAway_N3_N2 :: Dict (K.Div 'K.RoundHalfAway (N 3) (N 2) ~ P 2)
+_test_Div_RoundHalfAway_N3_N2 =  Dict
+_test_Mod_RoundHalfAway_N3_N2 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfAway_N3_N2 =  Dict
+_test_Div_RoundHalfAway_N3_N3 :: Dict (K.Div 'K.RoundHalfAway (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfAway_N3_N3 =  Dict
+_test_Mod_RoundHalfAway_N3_N3 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfAway_N3_N3 =  Dict
+_test_Div_RoundHalfAway_N3_N4 :: Dict (K.Div 'K.RoundHalfAway (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfAway_N3_N4 =  Dict
+_test_Mod_RoundHalfAway_N3_N4 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfAway_N3_N4 =  Dict
+_test_Div_RoundHalfAway_N3_N5 :: Dict (K.Div 'K.RoundHalfAway (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfAway_N3_N5 =  Dict
+_test_Mod_RoundHalfAway_N3_N5 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfAway_N3_N5 =  Dict
+_test_Div_RoundHalfAway_N3_P1 :: Dict (K.Div 'K.RoundHalfAway (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfAway_N3_P1 =  Dict
+_test_Mod_RoundHalfAway_N3_P1 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_N3_P1 =  Dict
+_test_Div_RoundHalfAway_N3_P2 :: Dict (K.Div 'K.RoundHalfAway (N 3) (P 2) ~ N 2)
+_test_Div_RoundHalfAway_N3_P2 =  Dict
+_test_Mod_RoundHalfAway_N3_P2 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfAway_N3_P2 =  Dict
+_test_Div_RoundHalfAway_N3_P3 :: Dict (K.Div 'K.RoundHalfAway (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfAway_N3_P3 =  Dict
+_test_Mod_RoundHalfAway_N3_P3 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfAway_N3_P3 =  Dict
+_test_Div_RoundHalfAway_N3_P4 :: Dict (K.Div 'K.RoundHalfAway (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfAway_N3_P4 =  Dict
+_test_Mod_RoundHalfAway_N3_P4 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfAway_N3_P4 =  Dict
+_test_Div_RoundHalfAway_N3_P5 :: Dict (K.Div 'K.RoundHalfAway (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfAway_N3_P5 =  Dict
+_test_Mod_RoundHalfAway_N3_P5 :: Dict (K.Mod 'K.RoundHalfAway (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfAway_N3_P5 =  Dict
+_test_Div_RoundHalfAway_N4_N1 :: Dict (K.Div 'K.RoundHalfAway (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfAway_N4_N1 =  Dict
+_test_Mod_RoundHalfAway_N4_N1 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_N4_N1 =  Dict
+_test_Div_RoundHalfAway_N4_N2 :: Dict (K.Div 'K.RoundHalfAway (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfAway_N4_N2 =  Dict
+_test_Mod_RoundHalfAway_N4_N2 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfAway_N4_N2 =  Dict
+_test_Div_RoundHalfAway_N4_N3 :: Dict (K.Div 'K.RoundHalfAway (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfAway_N4_N3 =  Dict
+_test_Mod_RoundHalfAway_N4_N3 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfAway_N4_N3 =  Dict
+_test_Div_RoundHalfAway_N4_N4 :: Dict (K.Div 'K.RoundHalfAway (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfAway_N4_N4 =  Dict
+_test_Mod_RoundHalfAway_N4_N4 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfAway_N4_N4 =  Dict
+_test_Div_RoundHalfAway_N4_N5 :: Dict (K.Div 'K.RoundHalfAway (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfAway_N4_N5 =  Dict
+_test_Mod_RoundHalfAway_N4_N5 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfAway_N4_N5 =  Dict
+_test_Div_RoundHalfAway_N4_P1 :: Dict (K.Div 'K.RoundHalfAway (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfAway_N4_P1 =  Dict
+_test_Mod_RoundHalfAway_N4_P1 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_N4_P1 =  Dict
+_test_Div_RoundHalfAway_N4_P2 :: Dict (K.Div 'K.RoundHalfAway (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfAway_N4_P2 =  Dict
+_test_Mod_RoundHalfAway_N4_P2 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfAway_N4_P2 =  Dict
+_test_Div_RoundHalfAway_N4_P3 :: Dict (K.Div 'K.RoundHalfAway (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfAway_N4_P3 =  Dict
+_test_Mod_RoundHalfAway_N4_P3 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfAway_N4_P3 =  Dict
+_test_Div_RoundHalfAway_N4_P4 :: Dict (K.Div 'K.RoundHalfAway (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfAway_N4_P4 =  Dict
+_test_Mod_RoundHalfAway_N4_P4 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfAway_N4_P4 =  Dict
+_test_Div_RoundHalfAway_N4_P5 :: Dict (K.Div 'K.RoundHalfAway (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfAway_N4_P5 =  Dict
+_test_Mod_RoundHalfAway_N4_P5 :: Dict (K.Mod 'K.RoundHalfAway (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfAway_N4_P5 =  Dict
+_test_Div_RoundHalfAway_N5_N1 :: Dict (K.Div 'K.RoundHalfAway (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfAway_N5_N1 =  Dict
+_test_Mod_RoundHalfAway_N5_N1 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_N5_N1 =  Dict
+_test_Div_RoundHalfAway_N5_N2 :: Dict (K.Div 'K.RoundHalfAway (N 5) (N 2) ~ P 3)
+_test_Div_RoundHalfAway_N5_N2 =  Dict
+_test_Mod_RoundHalfAway_N5_N2 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfAway_N5_N2 =  Dict
+_test_Div_RoundHalfAway_N5_N3 :: Dict (K.Div 'K.RoundHalfAway (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfAway_N5_N3 =  Dict
+_test_Mod_RoundHalfAway_N5_N3 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfAway_N5_N3 =  Dict
+_test_Div_RoundHalfAway_N5_N4 :: Dict (K.Div 'K.RoundHalfAway (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfAway_N5_N4 =  Dict
+_test_Mod_RoundHalfAway_N5_N4 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfAway_N5_N4 =  Dict
+_test_Div_RoundHalfAway_N5_N5 :: Dict (K.Div 'K.RoundHalfAway (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfAway_N5_N5 =  Dict
+_test_Mod_RoundHalfAway_N5_N5 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfAway_N5_N5 =  Dict
+_test_Div_RoundHalfAway_N5_P1 :: Dict (K.Div 'K.RoundHalfAway (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfAway_N5_P1 =  Dict
+_test_Mod_RoundHalfAway_N5_P1 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_N5_P1 =  Dict
+_test_Div_RoundHalfAway_N5_P2 :: Dict (K.Div 'K.RoundHalfAway (N 5) (P 2) ~ N 3)
+_test_Div_RoundHalfAway_N5_P2 =  Dict
+_test_Mod_RoundHalfAway_N5_P2 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfAway_N5_P2 =  Dict
+_test_Div_RoundHalfAway_N5_P3 :: Dict (K.Div 'K.RoundHalfAway (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfAway_N5_P3 =  Dict
+_test_Mod_RoundHalfAway_N5_P3 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfAway_N5_P3 =  Dict
+_test_Div_RoundHalfAway_N5_P4 :: Dict (K.Div 'K.RoundHalfAway (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfAway_N5_P4 =  Dict
+_test_Mod_RoundHalfAway_N5_P4 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfAway_N5_P4 =  Dict
+_test_Div_RoundHalfAway_N5_P5 :: Dict (K.Div 'K.RoundHalfAway (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfAway_N5_P5 =  Dict
+_test_Mod_RoundHalfAway_N5_P5 :: Dict (K.Mod 'K.RoundHalfAway (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfAway_N5_P5 =  Dict
+_test_Div_RoundHalfAway_P0_N1 :: Dict (K.Div 'K.RoundHalfAway (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfAway_P0_N1 =  Dict
+_test_Mod_RoundHalfAway_P0_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P0_N1 =  Dict
+_test_Div_RoundHalfAway_P0_N2 :: Dict (K.Div 'K.RoundHalfAway (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfAway_P0_N2 =  Dict
+_test_Mod_RoundHalfAway_P0_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfAway_P0_N2 =  Dict
+_test_Div_RoundHalfAway_P0_N3 :: Dict (K.Div 'K.RoundHalfAway (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfAway_P0_N3 =  Dict
+_test_Mod_RoundHalfAway_P0_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfAway_P0_N3 =  Dict
+_test_Div_RoundHalfAway_P0_N4 :: Dict (K.Div 'K.RoundHalfAway (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfAway_P0_N4 =  Dict
+_test_Mod_RoundHalfAway_P0_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfAway_P0_N4 =  Dict
+_test_Div_RoundHalfAway_P0_N5 :: Dict (K.Div 'K.RoundHalfAway (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfAway_P0_N5 =  Dict
+_test_Mod_RoundHalfAway_P0_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfAway_P0_N5 =  Dict
+_test_Div_RoundHalfAway_P0_P1 :: Dict (K.Div 'K.RoundHalfAway (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfAway_P0_P1 =  Dict
+_test_Mod_RoundHalfAway_P0_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P0_P1 =  Dict
+_test_Div_RoundHalfAway_P0_P2 :: Dict (K.Div 'K.RoundHalfAway (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfAway_P0_P2 =  Dict
+_test_Mod_RoundHalfAway_P0_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfAway_P0_P2 =  Dict
+_test_Div_RoundHalfAway_P0_P3 :: Dict (K.Div 'K.RoundHalfAway (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfAway_P0_P3 =  Dict
+_test_Mod_RoundHalfAway_P0_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfAway_P0_P3 =  Dict
+_test_Div_RoundHalfAway_P0_P4 :: Dict (K.Div 'K.RoundHalfAway (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfAway_P0_P4 =  Dict
+_test_Mod_RoundHalfAway_P0_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfAway_P0_P4 =  Dict
+_test_Div_RoundHalfAway_P0_P5 :: Dict (K.Div 'K.RoundHalfAway (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfAway_P0_P5 =  Dict
+_test_Mod_RoundHalfAway_P0_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfAway_P0_P5 =  Dict
+_test_Div_RoundHalfAway_P1_N1 :: Dict (K.Div 'K.RoundHalfAway (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfAway_P1_N1 =  Dict
+_test_Mod_RoundHalfAway_P1_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P1_N1 =  Dict
+_test_Div_RoundHalfAway_P1_N2 :: Dict (K.Div 'K.RoundHalfAway (P 1) (N 2) ~ N 1)
+_test_Div_RoundHalfAway_P1_N2 =  Dict
+_test_Mod_RoundHalfAway_P1_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfAway_P1_N2 =  Dict
+_test_Div_RoundHalfAway_P1_N3 :: Dict (K.Div 'K.RoundHalfAway (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfAway_P1_N3 =  Dict
+_test_Mod_RoundHalfAway_P1_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfAway_P1_N3 =  Dict
+_test_Div_RoundHalfAway_P1_N4 :: Dict (K.Div 'K.RoundHalfAway (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfAway_P1_N4 =  Dict
+_test_Mod_RoundHalfAway_P1_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfAway_P1_N4 =  Dict
+_test_Div_RoundHalfAway_P1_N5 :: Dict (K.Div 'K.RoundHalfAway (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfAway_P1_N5 =  Dict
+_test_Mod_RoundHalfAway_P1_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfAway_P1_N5 =  Dict
+_test_Div_RoundHalfAway_P1_P1 :: Dict (K.Div 'K.RoundHalfAway (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfAway_P1_P1 =  Dict
+_test_Mod_RoundHalfAway_P1_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P1_P1 =  Dict
+_test_Div_RoundHalfAway_P1_P2 :: Dict (K.Div 'K.RoundHalfAway (P 1) (P 2) ~ P 1)
+_test_Div_RoundHalfAway_P1_P2 =  Dict
+_test_Mod_RoundHalfAway_P1_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfAway_P1_P2 =  Dict
+_test_Div_RoundHalfAway_P1_P3 :: Dict (K.Div 'K.RoundHalfAway (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfAway_P1_P3 =  Dict
+_test_Mod_RoundHalfAway_P1_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfAway_P1_P3 =  Dict
+_test_Div_RoundHalfAway_P1_P4 :: Dict (K.Div 'K.RoundHalfAway (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfAway_P1_P4 =  Dict
+_test_Mod_RoundHalfAway_P1_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfAway_P1_P4 =  Dict
+_test_Div_RoundHalfAway_P1_P5 :: Dict (K.Div 'K.RoundHalfAway (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfAway_P1_P5 =  Dict
+_test_Mod_RoundHalfAway_P1_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfAway_P1_P5 =  Dict
+_test_Div_RoundHalfAway_P2_N1 :: Dict (K.Div 'K.RoundHalfAway (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfAway_P2_N1 =  Dict
+_test_Mod_RoundHalfAway_P2_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P2_N1 =  Dict
+_test_Div_RoundHalfAway_P2_N2 :: Dict (K.Div 'K.RoundHalfAway (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfAway_P2_N2 =  Dict
+_test_Mod_RoundHalfAway_P2_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfAway_P2_N2 =  Dict
+_test_Div_RoundHalfAway_P2_N3 :: Dict (K.Div 'K.RoundHalfAway (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfAway_P2_N3 =  Dict
+_test_Mod_RoundHalfAway_P2_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfAway_P2_N3 =  Dict
+_test_Div_RoundHalfAway_P2_N4 :: Dict (K.Div 'K.RoundHalfAway (P 2) (N 4) ~ N 1)
+_test_Div_RoundHalfAway_P2_N4 =  Dict
+_test_Mod_RoundHalfAway_P2_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfAway_P2_N4 =  Dict
+_test_Div_RoundHalfAway_P2_N5 :: Dict (K.Div 'K.RoundHalfAway (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfAway_P2_N5 =  Dict
+_test_Mod_RoundHalfAway_P2_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfAway_P2_N5 =  Dict
+_test_Div_RoundHalfAway_P2_P1 :: Dict (K.Div 'K.RoundHalfAway (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfAway_P2_P1 =  Dict
+_test_Mod_RoundHalfAway_P2_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P2_P1 =  Dict
+_test_Div_RoundHalfAway_P2_P2 :: Dict (K.Div 'K.RoundHalfAway (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfAway_P2_P2 =  Dict
+_test_Mod_RoundHalfAway_P2_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfAway_P2_P2 =  Dict
+_test_Div_RoundHalfAway_P2_P3 :: Dict (K.Div 'K.RoundHalfAway (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfAway_P2_P3 =  Dict
+_test_Mod_RoundHalfAway_P2_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfAway_P2_P3 =  Dict
+_test_Div_RoundHalfAway_P2_P4 :: Dict (K.Div 'K.RoundHalfAway (P 2) (P 4) ~ P 1)
+_test_Div_RoundHalfAway_P2_P4 =  Dict
+_test_Mod_RoundHalfAway_P2_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfAway_P2_P4 =  Dict
+_test_Div_RoundHalfAway_P2_P5 :: Dict (K.Div 'K.RoundHalfAway (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfAway_P2_P5 =  Dict
+_test_Mod_RoundHalfAway_P2_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfAway_P2_P5 =  Dict
+_test_Div_RoundHalfAway_P3_N1 :: Dict (K.Div 'K.RoundHalfAway (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfAway_P3_N1 =  Dict
+_test_Mod_RoundHalfAway_P3_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P3_N1 =  Dict
+_test_Div_RoundHalfAway_P3_N2 :: Dict (K.Div 'K.RoundHalfAway (P 3) (N 2) ~ N 2)
+_test_Div_RoundHalfAway_P3_N2 =  Dict
+_test_Mod_RoundHalfAway_P3_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfAway_P3_N2 =  Dict
+_test_Div_RoundHalfAway_P3_N3 :: Dict (K.Div 'K.RoundHalfAway (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfAway_P3_N3 =  Dict
+_test_Mod_RoundHalfAway_P3_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfAway_P3_N3 =  Dict
+_test_Div_RoundHalfAway_P3_N4 :: Dict (K.Div 'K.RoundHalfAway (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfAway_P3_N4 =  Dict
+_test_Mod_RoundHalfAway_P3_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfAway_P3_N4 =  Dict
+_test_Div_RoundHalfAway_P3_N5 :: Dict (K.Div 'K.RoundHalfAway (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfAway_P3_N5 =  Dict
+_test_Mod_RoundHalfAway_P3_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfAway_P3_N5 =  Dict
+_test_Div_RoundHalfAway_P3_P1 :: Dict (K.Div 'K.RoundHalfAway (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfAway_P3_P1 =  Dict
+_test_Mod_RoundHalfAway_P3_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P3_P1 =  Dict
+_test_Div_RoundHalfAway_P3_P2 :: Dict (K.Div 'K.RoundHalfAway (P 3) (P 2) ~ P 2)
+_test_Div_RoundHalfAway_P3_P2 =  Dict
+_test_Mod_RoundHalfAway_P3_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfAway_P3_P2 =  Dict
+_test_Div_RoundHalfAway_P3_P3 :: Dict (K.Div 'K.RoundHalfAway (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfAway_P3_P3 =  Dict
+_test_Mod_RoundHalfAway_P3_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfAway_P3_P3 =  Dict
+_test_Div_RoundHalfAway_P3_P4 :: Dict (K.Div 'K.RoundHalfAway (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfAway_P3_P4 =  Dict
+_test_Mod_RoundHalfAway_P3_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfAway_P3_P4 =  Dict
+_test_Div_RoundHalfAway_P3_P5 :: Dict (K.Div 'K.RoundHalfAway (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfAway_P3_P5 =  Dict
+_test_Mod_RoundHalfAway_P3_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfAway_P3_P5 =  Dict
+_test_Div_RoundHalfAway_P4_N1 :: Dict (K.Div 'K.RoundHalfAway (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfAway_P4_N1 =  Dict
+_test_Mod_RoundHalfAway_P4_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P4_N1 =  Dict
+_test_Div_RoundHalfAway_P4_N2 :: Dict (K.Div 'K.RoundHalfAway (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfAway_P4_N2 =  Dict
+_test_Mod_RoundHalfAway_P4_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfAway_P4_N2 =  Dict
+_test_Div_RoundHalfAway_P4_N3 :: Dict (K.Div 'K.RoundHalfAway (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfAway_P4_N3 =  Dict
+_test_Mod_RoundHalfAway_P4_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfAway_P4_N3 =  Dict
+_test_Div_RoundHalfAway_P4_N4 :: Dict (K.Div 'K.RoundHalfAway (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfAway_P4_N4 =  Dict
+_test_Mod_RoundHalfAway_P4_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfAway_P4_N4 =  Dict
+_test_Div_RoundHalfAway_P4_N5 :: Dict (K.Div 'K.RoundHalfAway (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfAway_P4_N5 =  Dict
+_test_Mod_RoundHalfAway_P4_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfAway_P4_N5 =  Dict
+_test_Div_RoundHalfAway_P4_P1 :: Dict (K.Div 'K.RoundHalfAway (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfAway_P4_P1 =  Dict
+_test_Mod_RoundHalfAway_P4_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P4_P1 =  Dict
+_test_Div_RoundHalfAway_P4_P2 :: Dict (K.Div 'K.RoundHalfAway (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfAway_P4_P2 =  Dict
+_test_Mod_RoundHalfAway_P4_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfAway_P4_P2 =  Dict
+_test_Div_RoundHalfAway_P4_P3 :: Dict (K.Div 'K.RoundHalfAway (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfAway_P4_P3 =  Dict
+_test_Mod_RoundHalfAway_P4_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfAway_P4_P3 =  Dict
+_test_Div_RoundHalfAway_P4_P4 :: Dict (K.Div 'K.RoundHalfAway (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfAway_P4_P4 =  Dict
+_test_Mod_RoundHalfAway_P4_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfAway_P4_P4 =  Dict
+_test_Div_RoundHalfAway_P4_P5 :: Dict (K.Div 'K.RoundHalfAway (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfAway_P4_P5 =  Dict
+_test_Mod_RoundHalfAway_P4_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfAway_P4_P5 =  Dict
+_test_Div_RoundHalfAway_P5_N1 :: Dict (K.Div 'K.RoundHalfAway (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfAway_P5_N1 =  Dict
+_test_Mod_RoundHalfAway_P5_N1 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfAway_P5_N1 =  Dict
+_test_Div_RoundHalfAway_P5_N2 :: Dict (K.Div 'K.RoundHalfAway (P 5) (N 2) ~ N 3)
+_test_Div_RoundHalfAway_P5_N2 =  Dict
+_test_Mod_RoundHalfAway_P5_N2 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfAway_P5_N2 =  Dict
+_test_Div_RoundHalfAway_P5_N3 :: Dict (K.Div 'K.RoundHalfAway (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfAway_P5_N3 =  Dict
+_test_Mod_RoundHalfAway_P5_N3 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfAway_P5_N3 =  Dict
+_test_Div_RoundHalfAway_P5_N4 :: Dict (K.Div 'K.RoundHalfAway (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfAway_P5_N4 =  Dict
+_test_Mod_RoundHalfAway_P5_N4 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfAway_P5_N4 =  Dict
+_test_Div_RoundHalfAway_P5_N5 :: Dict (K.Div 'K.RoundHalfAway (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfAway_P5_N5 =  Dict
+_test_Mod_RoundHalfAway_P5_N5 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfAway_P5_N5 =  Dict
+_test_Div_RoundHalfAway_P5_P1 :: Dict (K.Div 'K.RoundHalfAway (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfAway_P5_P1 =  Dict
+_test_Mod_RoundHalfAway_P5_P1 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfAway_P5_P1 =  Dict
+_test_Div_RoundHalfAway_P5_P2 :: Dict (K.Div 'K.RoundHalfAway (P 5) (P 2) ~ P 3)
+_test_Div_RoundHalfAway_P5_P2 =  Dict
+_test_Mod_RoundHalfAway_P5_P2 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfAway_P5_P2 =  Dict
+_test_Div_RoundHalfAway_P5_P3 :: Dict (K.Div 'K.RoundHalfAway (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfAway_P5_P3 =  Dict
+_test_Mod_RoundHalfAway_P5_P3 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfAway_P5_P3 =  Dict
+_test_Div_RoundHalfAway_P5_P4 :: Dict (K.Div 'K.RoundHalfAway (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfAway_P5_P4 =  Dict
+_test_Mod_RoundHalfAway_P5_P4 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfAway_P5_P4 =  Dict
+_test_Div_RoundHalfAway_P5_P5 :: Dict (K.Div 'K.RoundHalfAway (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfAway_P5_P5 =  Dict
+_test_Mod_RoundHalfAway_P5_P5 :: Dict (K.Mod 'K.RoundHalfAway (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfAway_P5_P5 =  Dict
+_test_Div_RoundHalfDown_N1_N1 :: Dict (K.Div 'K.RoundHalfDown (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfDown_N1_N1 =  Dict
+_test_Mod_RoundHalfDown_N1_N1 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_N1_N1 =  Dict
+_test_Div_RoundHalfDown_N1_N2 :: Dict (K.Div 'K.RoundHalfDown (N 1) (N 2) ~ P 0)
+_test_Div_RoundHalfDown_N1_N2 =  Dict
+_test_Mod_RoundHalfDown_N1_N2 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_N1_N2 =  Dict
+_test_Div_RoundHalfDown_N1_N3 :: Dict (K.Div 'K.RoundHalfDown (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfDown_N1_N3 =  Dict
+_test_Mod_RoundHalfDown_N1_N3 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfDown_N1_N3 =  Dict
+_test_Div_RoundHalfDown_N1_N4 :: Dict (K.Div 'K.RoundHalfDown (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfDown_N1_N4 =  Dict
+_test_Mod_RoundHalfDown_N1_N4 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfDown_N1_N4 =  Dict
+_test_Div_RoundHalfDown_N1_N5 :: Dict (K.Div 'K.RoundHalfDown (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfDown_N1_N5 =  Dict
+_test_Mod_RoundHalfDown_N1_N5 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfDown_N1_N5 =  Dict
+_test_Div_RoundHalfDown_N1_P1 :: Dict (K.Div 'K.RoundHalfDown (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfDown_N1_P1 =  Dict
+_test_Mod_RoundHalfDown_N1_P1 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_N1_P1 =  Dict
+_test_Div_RoundHalfDown_N1_P2 :: Dict (K.Div 'K.RoundHalfDown (N 1) (P 2) ~ N 1)
+_test_Div_RoundHalfDown_N1_P2 =  Dict
+_test_Mod_RoundHalfDown_N1_P2 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_N1_P2 =  Dict
+_test_Div_RoundHalfDown_N1_P3 :: Dict (K.Div 'K.RoundHalfDown (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfDown_N1_P3 =  Dict
+_test_Mod_RoundHalfDown_N1_P3 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfDown_N1_P3 =  Dict
+_test_Div_RoundHalfDown_N1_P4 :: Dict (K.Div 'K.RoundHalfDown (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfDown_N1_P4 =  Dict
+_test_Mod_RoundHalfDown_N1_P4 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfDown_N1_P4 =  Dict
+_test_Div_RoundHalfDown_N1_P5 :: Dict (K.Div 'K.RoundHalfDown (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfDown_N1_P5 =  Dict
+_test_Mod_RoundHalfDown_N1_P5 :: Dict (K.Mod 'K.RoundHalfDown (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfDown_N1_P5 =  Dict
+_test_Div_RoundHalfDown_N2_N1 :: Dict (K.Div 'K.RoundHalfDown (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfDown_N2_N1 =  Dict
+_test_Mod_RoundHalfDown_N2_N1 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_N2_N1 =  Dict
+_test_Div_RoundHalfDown_N2_N2 :: Dict (K.Div 'K.RoundHalfDown (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfDown_N2_N2 =  Dict
+_test_Mod_RoundHalfDown_N2_N2 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfDown_N2_N2 =  Dict
+_test_Div_RoundHalfDown_N2_N3 :: Dict (K.Div 'K.RoundHalfDown (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfDown_N2_N3 =  Dict
+_test_Mod_RoundHalfDown_N2_N3 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfDown_N2_N3 =  Dict
+_test_Div_RoundHalfDown_N2_N4 :: Dict (K.Div 'K.RoundHalfDown (N 2) (N 4) ~ P 0)
+_test_Div_RoundHalfDown_N2_N4 =  Dict
+_test_Mod_RoundHalfDown_N2_N4 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfDown_N2_N4 =  Dict
+_test_Div_RoundHalfDown_N2_N5 :: Dict (K.Div 'K.RoundHalfDown (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfDown_N2_N5 =  Dict
+_test_Mod_RoundHalfDown_N2_N5 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfDown_N2_N5 =  Dict
+_test_Div_RoundHalfDown_N2_P1 :: Dict (K.Div 'K.RoundHalfDown (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfDown_N2_P1 =  Dict
+_test_Mod_RoundHalfDown_N2_P1 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_N2_P1 =  Dict
+_test_Div_RoundHalfDown_N2_P2 :: Dict (K.Div 'K.RoundHalfDown (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfDown_N2_P2 =  Dict
+_test_Mod_RoundHalfDown_N2_P2 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfDown_N2_P2 =  Dict
+_test_Div_RoundHalfDown_N2_P3 :: Dict (K.Div 'K.RoundHalfDown (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfDown_N2_P3 =  Dict
+_test_Mod_RoundHalfDown_N2_P3 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfDown_N2_P3 =  Dict
+_test_Div_RoundHalfDown_N2_P4 :: Dict (K.Div 'K.RoundHalfDown (N 2) (P 4) ~ N 1)
+_test_Div_RoundHalfDown_N2_P4 =  Dict
+_test_Mod_RoundHalfDown_N2_P4 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfDown_N2_P4 =  Dict
+_test_Div_RoundHalfDown_N2_P5 :: Dict (K.Div 'K.RoundHalfDown (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfDown_N2_P5 =  Dict
+_test_Mod_RoundHalfDown_N2_P5 :: Dict (K.Mod 'K.RoundHalfDown (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfDown_N2_P5 =  Dict
+_test_Div_RoundHalfDown_N3_N1 :: Dict (K.Div 'K.RoundHalfDown (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfDown_N3_N1 =  Dict
+_test_Mod_RoundHalfDown_N3_N1 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_N3_N1 =  Dict
+_test_Div_RoundHalfDown_N3_N2 :: Dict (K.Div 'K.RoundHalfDown (N 3) (N 2) ~ P 1)
+_test_Div_RoundHalfDown_N3_N2 =  Dict
+_test_Mod_RoundHalfDown_N3_N2 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_N3_N2 =  Dict
+_test_Div_RoundHalfDown_N3_N3 :: Dict (K.Div 'K.RoundHalfDown (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfDown_N3_N3 =  Dict
+_test_Mod_RoundHalfDown_N3_N3 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfDown_N3_N3 =  Dict
+_test_Div_RoundHalfDown_N3_N4 :: Dict (K.Div 'K.RoundHalfDown (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfDown_N3_N4 =  Dict
+_test_Mod_RoundHalfDown_N3_N4 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfDown_N3_N4 =  Dict
+_test_Div_RoundHalfDown_N3_N5 :: Dict (K.Div 'K.RoundHalfDown (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfDown_N3_N5 =  Dict
+_test_Mod_RoundHalfDown_N3_N5 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfDown_N3_N5 =  Dict
+_test_Div_RoundHalfDown_N3_P1 :: Dict (K.Div 'K.RoundHalfDown (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfDown_N3_P1 =  Dict
+_test_Mod_RoundHalfDown_N3_P1 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_N3_P1 =  Dict
+_test_Div_RoundHalfDown_N3_P2 :: Dict (K.Div 'K.RoundHalfDown (N 3) (P 2) ~ N 2)
+_test_Div_RoundHalfDown_N3_P2 =  Dict
+_test_Mod_RoundHalfDown_N3_P2 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_N3_P2 =  Dict
+_test_Div_RoundHalfDown_N3_P3 :: Dict (K.Div 'K.RoundHalfDown (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfDown_N3_P3 =  Dict
+_test_Mod_RoundHalfDown_N3_P3 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfDown_N3_P3 =  Dict
+_test_Div_RoundHalfDown_N3_P4 :: Dict (K.Div 'K.RoundHalfDown (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfDown_N3_P4 =  Dict
+_test_Mod_RoundHalfDown_N3_P4 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfDown_N3_P4 =  Dict
+_test_Div_RoundHalfDown_N3_P5 :: Dict (K.Div 'K.RoundHalfDown (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfDown_N3_P5 =  Dict
+_test_Mod_RoundHalfDown_N3_P5 :: Dict (K.Mod 'K.RoundHalfDown (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfDown_N3_P5 =  Dict
+_test_Div_RoundHalfDown_N4_N1 :: Dict (K.Div 'K.RoundHalfDown (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfDown_N4_N1 =  Dict
+_test_Mod_RoundHalfDown_N4_N1 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_N4_N1 =  Dict
+_test_Div_RoundHalfDown_N4_N2 :: Dict (K.Div 'K.RoundHalfDown (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfDown_N4_N2 =  Dict
+_test_Mod_RoundHalfDown_N4_N2 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfDown_N4_N2 =  Dict
+_test_Div_RoundHalfDown_N4_N3 :: Dict (K.Div 'K.RoundHalfDown (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfDown_N4_N3 =  Dict
+_test_Mod_RoundHalfDown_N4_N3 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfDown_N4_N3 =  Dict
+_test_Div_RoundHalfDown_N4_N4 :: Dict (K.Div 'K.RoundHalfDown (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfDown_N4_N4 =  Dict
+_test_Mod_RoundHalfDown_N4_N4 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfDown_N4_N4 =  Dict
+_test_Div_RoundHalfDown_N4_N5 :: Dict (K.Div 'K.RoundHalfDown (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfDown_N4_N5 =  Dict
+_test_Mod_RoundHalfDown_N4_N5 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfDown_N4_N5 =  Dict
+_test_Div_RoundHalfDown_N4_P1 :: Dict (K.Div 'K.RoundHalfDown (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfDown_N4_P1 =  Dict
+_test_Mod_RoundHalfDown_N4_P1 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_N4_P1 =  Dict
+_test_Div_RoundHalfDown_N4_P2 :: Dict (K.Div 'K.RoundHalfDown (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfDown_N4_P2 =  Dict
+_test_Mod_RoundHalfDown_N4_P2 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfDown_N4_P2 =  Dict
+_test_Div_RoundHalfDown_N4_P3 :: Dict (K.Div 'K.RoundHalfDown (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfDown_N4_P3 =  Dict
+_test_Mod_RoundHalfDown_N4_P3 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfDown_N4_P3 =  Dict
+_test_Div_RoundHalfDown_N4_P4 :: Dict (K.Div 'K.RoundHalfDown (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfDown_N4_P4 =  Dict
+_test_Mod_RoundHalfDown_N4_P4 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfDown_N4_P4 =  Dict
+_test_Div_RoundHalfDown_N4_P5 :: Dict (K.Div 'K.RoundHalfDown (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfDown_N4_P5 =  Dict
+_test_Mod_RoundHalfDown_N4_P5 :: Dict (K.Mod 'K.RoundHalfDown (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfDown_N4_P5 =  Dict
+_test_Div_RoundHalfDown_N5_N1 :: Dict (K.Div 'K.RoundHalfDown (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfDown_N5_N1 =  Dict
+_test_Mod_RoundHalfDown_N5_N1 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_N5_N1 =  Dict
+_test_Div_RoundHalfDown_N5_N2 :: Dict (K.Div 'K.RoundHalfDown (N 5) (N 2) ~ P 2)
+_test_Div_RoundHalfDown_N5_N2 =  Dict
+_test_Mod_RoundHalfDown_N5_N2 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_N5_N2 =  Dict
+_test_Div_RoundHalfDown_N5_N3 :: Dict (K.Div 'K.RoundHalfDown (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfDown_N5_N3 =  Dict
+_test_Mod_RoundHalfDown_N5_N3 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfDown_N5_N3 =  Dict
+_test_Div_RoundHalfDown_N5_N4 :: Dict (K.Div 'K.RoundHalfDown (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfDown_N5_N4 =  Dict
+_test_Mod_RoundHalfDown_N5_N4 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfDown_N5_N4 =  Dict
+_test_Div_RoundHalfDown_N5_N5 :: Dict (K.Div 'K.RoundHalfDown (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfDown_N5_N5 =  Dict
+_test_Mod_RoundHalfDown_N5_N5 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfDown_N5_N5 =  Dict
+_test_Div_RoundHalfDown_N5_P1 :: Dict (K.Div 'K.RoundHalfDown (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfDown_N5_P1 =  Dict
+_test_Mod_RoundHalfDown_N5_P1 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_N5_P1 =  Dict
+_test_Div_RoundHalfDown_N5_P2 :: Dict (K.Div 'K.RoundHalfDown (N 5) (P 2) ~ N 3)
+_test_Div_RoundHalfDown_N5_P2 =  Dict
+_test_Mod_RoundHalfDown_N5_P2 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_N5_P2 =  Dict
+_test_Div_RoundHalfDown_N5_P3 :: Dict (K.Div 'K.RoundHalfDown (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfDown_N5_P3 =  Dict
+_test_Mod_RoundHalfDown_N5_P3 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfDown_N5_P3 =  Dict
+_test_Div_RoundHalfDown_N5_P4 :: Dict (K.Div 'K.RoundHalfDown (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfDown_N5_P4 =  Dict
+_test_Mod_RoundHalfDown_N5_P4 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfDown_N5_P4 =  Dict
+_test_Div_RoundHalfDown_N5_P5 :: Dict (K.Div 'K.RoundHalfDown (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfDown_N5_P5 =  Dict
+_test_Mod_RoundHalfDown_N5_P5 :: Dict (K.Mod 'K.RoundHalfDown (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfDown_N5_P5 =  Dict
+_test_Div_RoundHalfDown_P0_N1 :: Dict (K.Div 'K.RoundHalfDown (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfDown_P0_N1 =  Dict
+_test_Mod_RoundHalfDown_P0_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P0_N1 =  Dict
+_test_Div_RoundHalfDown_P0_N2 :: Dict (K.Div 'K.RoundHalfDown (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfDown_P0_N2 =  Dict
+_test_Mod_RoundHalfDown_P0_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfDown_P0_N2 =  Dict
+_test_Div_RoundHalfDown_P0_N3 :: Dict (K.Div 'K.RoundHalfDown (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfDown_P0_N3 =  Dict
+_test_Mod_RoundHalfDown_P0_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfDown_P0_N3 =  Dict
+_test_Div_RoundHalfDown_P0_N4 :: Dict (K.Div 'K.RoundHalfDown (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfDown_P0_N4 =  Dict
+_test_Mod_RoundHalfDown_P0_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfDown_P0_N4 =  Dict
+_test_Div_RoundHalfDown_P0_N5 :: Dict (K.Div 'K.RoundHalfDown (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfDown_P0_N5 =  Dict
+_test_Mod_RoundHalfDown_P0_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfDown_P0_N5 =  Dict
+_test_Div_RoundHalfDown_P0_P1 :: Dict (K.Div 'K.RoundHalfDown (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfDown_P0_P1 =  Dict
+_test_Mod_RoundHalfDown_P0_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P0_P1 =  Dict
+_test_Div_RoundHalfDown_P0_P2 :: Dict (K.Div 'K.RoundHalfDown (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfDown_P0_P2 =  Dict
+_test_Mod_RoundHalfDown_P0_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfDown_P0_P2 =  Dict
+_test_Div_RoundHalfDown_P0_P3 :: Dict (K.Div 'K.RoundHalfDown (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfDown_P0_P3 =  Dict
+_test_Mod_RoundHalfDown_P0_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfDown_P0_P3 =  Dict
+_test_Div_RoundHalfDown_P0_P4 :: Dict (K.Div 'K.RoundHalfDown (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfDown_P0_P4 =  Dict
+_test_Mod_RoundHalfDown_P0_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfDown_P0_P4 =  Dict
+_test_Div_RoundHalfDown_P0_P5 :: Dict (K.Div 'K.RoundHalfDown (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfDown_P0_P5 =  Dict
+_test_Mod_RoundHalfDown_P0_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfDown_P0_P5 =  Dict
+_test_Div_RoundHalfDown_P1_N1 :: Dict (K.Div 'K.RoundHalfDown (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfDown_P1_N1 =  Dict
+_test_Mod_RoundHalfDown_P1_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P1_N1 =  Dict
+_test_Div_RoundHalfDown_P1_N2 :: Dict (K.Div 'K.RoundHalfDown (P 1) (N 2) ~ N 1)
+_test_Div_RoundHalfDown_P1_N2 =  Dict
+_test_Mod_RoundHalfDown_P1_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_P1_N2 =  Dict
+_test_Div_RoundHalfDown_P1_N3 :: Dict (K.Div 'K.RoundHalfDown (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfDown_P1_N3 =  Dict
+_test_Mod_RoundHalfDown_P1_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfDown_P1_N3 =  Dict
+_test_Div_RoundHalfDown_P1_N4 :: Dict (K.Div 'K.RoundHalfDown (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfDown_P1_N4 =  Dict
+_test_Mod_RoundHalfDown_P1_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfDown_P1_N4 =  Dict
+_test_Div_RoundHalfDown_P1_N5 :: Dict (K.Div 'K.RoundHalfDown (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfDown_P1_N5 =  Dict
+_test_Mod_RoundHalfDown_P1_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfDown_P1_N5 =  Dict
+_test_Div_RoundHalfDown_P1_P1 :: Dict (K.Div 'K.RoundHalfDown (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfDown_P1_P1 =  Dict
+_test_Mod_RoundHalfDown_P1_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P1_P1 =  Dict
+_test_Div_RoundHalfDown_P1_P2 :: Dict (K.Div 'K.RoundHalfDown (P 1) (P 2) ~ P 0)
+_test_Div_RoundHalfDown_P1_P2 =  Dict
+_test_Mod_RoundHalfDown_P1_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_P1_P2 =  Dict
+_test_Div_RoundHalfDown_P1_P3 :: Dict (K.Div 'K.RoundHalfDown (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfDown_P1_P3 =  Dict
+_test_Mod_RoundHalfDown_P1_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfDown_P1_P3 =  Dict
+_test_Div_RoundHalfDown_P1_P4 :: Dict (K.Div 'K.RoundHalfDown (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfDown_P1_P4 =  Dict
+_test_Mod_RoundHalfDown_P1_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfDown_P1_P4 =  Dict
+_test_Div_RoundHalfDown_P1_P5 :: Dict (K.Div 'K.RoundHalfDown (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfDown_P1_P5 =  Dict
+_test_Mod_RoundHalfDown_P1_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfDown_P1_P5 =  Dict
+_test_Div_RoundHalfDown_P2_N1 :: Dict (K.Div 'K.RoundHalfDown (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfDown_P2_N1 =  Dict
+_test_Mod_RoundHalfDown_P2_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P2_N1 =  Dict
+_test_Div_RoundHalfDown_P2_N2 :: Dict (K.Div 'K.RoundHalfDown (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfDown_P2_N2 =  Dict
+_test_Mod_RoundHalfDown_P2_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfDown_P2_N2 =  Dict
+_test_Div_RoundHalfDown_P2_N3 :: Dict (K.Div 'K.RoundHalfDown (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfDown_P2_N3 =  Dict
+_test_Mod_RoundHalfDown_P2_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfDown_P2_N3 =  Dict
+_test_Div_RoundHalfDown_P2_N4 :: Dict (K.Div 'K.RoundHalfDown (P 2) (N 4) ~ N 1)
+_test_Div_RoundHalfDown_P2_N4 =  Dict
+_test_Mod_RoundHalfDown_P2_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfDown_P2_N4 =  Dict
+_test_Div_RoundHalfDown_P2_N5 :: Dict (K.Div 'K.RoundHalfDown (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfDown_P2_N5 =  Dict
+_test_Mod_RoundHalfDown_P2_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfDown_P2_N5 =  Dict
+_test_Div_RoundHalfDown_P2_P1 :: Dict (K.Div 'K.RoundHalfDown (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfDown_P2_P1 =  Dict
+_test_Mod_RoundHalfDown_P2_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P2_P1 =  Dict
+_test_Div_RoundHalfDown_P2_P2 :: Dict (K.Div 'K.RoundHalfDown (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfDown_P2_P2 =  Dict
+_test_Mod_RoundHalfDown_P2_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfDown_P2_P2 =  Dict
+_test_Div_RoundHalfDown_P2_P3 :: Dict (K.Div 'K.RoundHalfDown (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfDown_P2_P3 =  Dict
+_test_Mod_RoundHalfDown_P2_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfDown_P2_P3 =  Dict
+_test_Div_RoundHalfDown_P2_P4 :: Dict (K.Div 'K.RoundHalfDown (P 2) (P 4) ~ P 0)
+_test_Div_RoundHalfDown_P2_P4 =  Dict
+_test_Mod_RoundHalfDown_P2_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfDown_P2_P4 =  Dict
+_test_Div_RoundHalfDown_P2_P5 :: Dict (K.Div 'K.RoundHalfDown (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfDown_P2_P5 =  Dict
+_test_Mod_RoundHalfDown_P2_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfDown_P2_P5 =  Dict
+_test_Div_RoundHalfDown_P3_N1 :: Dict (K.Div 'K.RoundHalfDown (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfDown_P3_N1 =  Dict
+_test_Mod_RoundHalfDown_P3_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P3_N1 =  Dict
+_test_Div_RoundHalfDown_P3_N2 :: Dict (K.Div 'K.RoundHalfDown (P 3) (N 2) ~ N 2)
+_test_Div_RoundHalfDown_P3_N2 =  Dict
+_test_Mod_RoundHalfDown_P3_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_P3_N2 =  Dict
+_test_Div_RoundHalfDown_P3_N3 :: Dict (K.Div 'K.RoundHalfDown (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfDown_P3_N3 =  Dict
+_test_Mod_RoundHalfDown_P3_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfDown_P3_N3 =  Dict
+_test_Div_RoundHalfDown_P3_N4 :: Dict (K.Div 'K.RoundHalfDown (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfDown_P3_N4 =  Dict
+_test_Mod_RoundHalfDown_P3_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfDown_P3_N4 =  Dict
+_test_Div_RoundHalfDown_P3_N5 :: Dict (K.Div 'K.RoundHalfDown (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfDown_P3_N5 =  Dict
+_test_Mod_RoundHalfDown_P3_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfDown_P3_N5 =  Dict
+_test_Div_RoundHalfDown_P3_P1 :: Dict (K.Div 'K.RoundHalfDown (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfDown_P3_P1 =  Dict
+_test_Mod_RoundHalfDown_P3_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P3_P1 =  Dict
+_test_Div_RoundHalfDown_P3_P2 :: Dict (K.Div 'K.RoundHalfDown (P 3) (P 2) ~ P 1)
+_test_Div_RoundHalfDown_P3_P2 =  Dict
+_test_Mod_RoundHalfDown_P3_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_P3_P2 =  Dict
+_test_Div_RoundHalfDown_P3_P3 :: Dict (K.Div 'K.RoundHalfDown (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfDown_P3_P3 =  Dict
+_test_Mod_RoundHalfDown_P3_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfDown_P3_P3 =  Dict
+_test_Div_RoundHalfDown_P3_P4 :: Dict (K.Div 'K.RoundHalfDown (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfDown_P3_P4 =  Dict
+_test_Mod_RoundHalfDown_P3_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfDown_P3_P4 =  Dict
+_test_Div_RoundHalfDown_P3_P5 :: Dict (K.Div 'K.RoundHalfDown (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfDown_P3_P5 =  Dict
+_test_Mod_RoundHalfDown_P3_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfDown_P3_P5 =  Dict
+_test_Div_RoundHalfDown_P4_N1 :: Dict (K.Div 'K.RoundHalfDown (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfDown_P4_N1 =  Dict
+_test_Mod_RoundHalfDown_P4_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P4_N1 =  Dict
+_test_Div_RoundHalfDown_P4_N2 :: Dict (K.Div 'K.RoundHalfDown (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfDown_P4_N2 =  Dict
+_test_Mod_RoundHalfDown_P4_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfDown_P4_N2 =  Dict
+_test_Div_RoundHalfDown_P4_N3 :: Dict (K.Div 'K.RoundHalfDown (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfDown_P4_N3 =  Dict
+_test_Mod_RoundHalfDown_P4_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfDown_P4_N3 =  Dict
+_test_Div_RoundHalfDown_P4_N4 :: Dict (K.Div 'K.RoundHalfDown (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfDown_P4_N4 =  Dict
+_test_Mod_RoundHalfDown_P4_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfDown_P4_N4 =  Dict
+_test_Div_RoundHalfDown_P4_N5 :: Dict (K.Div 'K.RoundHalfDown (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfDown_P4_N5 =  Dict
+_test_Mod_RoundHalfDown_P4_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfDown_P4_N5 =  Dict
+_test_Div_RoundHalfDown_P4_P1 :: Dict (K.Div 'K.RoundHalfDown (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfDown_P4_P1 =  Dict
+_test_Mod_RoundHalfDown_P4_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P4_P1 =  Dict
+_test_Div_RoundHalfDown_P4_P2 :: Dict (K.Div 'K.RoundHalfDown (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfDown_P4_P2 =  Dict
+_test_Mod_RoundHalfDown_P4_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfDown_P4_P2 =  Dict
+_test_Div_RoundHalfDown_P4_P3 :: Dict (K.Div 'K.RoundHalfDown (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfDown_P4_P3 =  Dict
+_test_Mod_RoundHalfDown_P4_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfDown_P4_P3 =  Dict
+_test_Div_RoundHalfDown_P4_P4 :: Dict (K.Div 'K.RoundHalfDown (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfDown_P4_P4 =  Dict
+_test_Mod_RoundHalfDown_P4_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfDown_P4_P4 =  Dict
+_test_Div_RoundHalfDown_P4_P5 :: Dict (K.Div 'K.RoundHalfDown (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfDown_P4_P5 =  Dict
+_test_Mod_RoundHalfDown_P4_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfDown_P4_P5 =  Dict
+_test_Div_RoundHalfDown_P5_N1 :: Dict (K.Div 'K.RoundHalfDown (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfDown_P5_N1 =  Dict
+_test_Mod_RoundHalfDown_P5_N1 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfDown_P5_N1 =  Dict
+_test_Div_RoundHalfDown_P5_N2 :: Dict (K.Div 'K.RoundHalfDown (P 5) (N 2) ~ N 3)
+_test_Div_RoundHalfDown_P5_N2 =  Dict
+_test_Mod_RoundHalfDown_P5_N2 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfDown_P5_N2 =  Dict
+_test_Div_RoundHalfDown_P5_N3 :: Dict (K.Div 'K.RoundHalfDown (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfDown_P5_N3 =  Dict
+_test_Mod_RoundHalfDown_P5_N3 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfDown_P5_N3 =  Dict
+_test_Div_RoundHalfDown_P5_N4 :: Dict (K.Div 'K.RoundHalfDown (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfDown_P5_N4 =  Dict
+_test_Mod_RoundHalfDown_P5_N4 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfDown_P5_N4 =  Dict
+_test_Div_RoundHalfDown_P5_N5 :: Dict (K.Div 'K.RoundHalfDown (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfDown_P5_N5 =  Dict
+_test_Mod_RoundHalfDown_P5_N5 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfDown_P5_N5 =  Dict
+_test_Div_RoundHalfDown_P5_P1 :: Dict (K.Div 'K.RoundHalfDown (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfDown_P5_P1 =  Dict
+_test_Mod_RoundHalfDown_P5_P1 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfDown_P5_P1 =  Dict
+_test_Div_RoundHalfDown_P5_P2 :: Dict (K.Div 'K.RoundHalfDown (P 5) (P 2) ~ P 2)
+_test_Div_RoundHalfDown_P5_P2 =  Dict
+_test_Mod_RoundHalfDown_P5_P2 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfDown_P5_P2 =  Dict
+_test_Div_RoundHalfDown_P5_P3 :: Dict (K.Div 'K.RoundHalfDown (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfDown_P5_P3 =  Dict
+_test_Mod_RoundHalfDown_P5_P3 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfDown_P5_P3 =  Dict
+_test_Div_RoundHalfDown_P5_P4 :: Dict (K.Div 'K.RoundHalfDown (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfDown_P5_P4 =  Dict
+_test_Mod_RoundHalfDown_P5_P4 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfDown_P5_P4 =  Dict
+_test_Div_RoundHalfDown_P5_P5 :: Dict (K.Div 'K.RoundHalfDown (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfDown_P5_P5 =  Dict
+_test_Mod_RoundHalfDown_P5_P5 :: Dict (K.Mod 'K.RoundHalfDown (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfDown_P5_P5 =  Dict
+_test_Div_RoundHalfEven_N1_N1 :: Dict (K.Div 'K.RoundHalfEven (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfEven_N1_N1 =  Dict
+_test_Mod_RoundHalfEven_N1_N1 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_N1_N1 =  Dict
+_test_Div_RoundHalfEven_N1_N2 :: Dict (K.Div 'K.RoundHalfEven (N 1) (N 2) ~ P 0)
+_test_Div_RoundHalfEven_N1_N2 =  Dict
+_test_Mod_RoundHalfEven_N1_N2 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfEven_N1_N2 =  Dict
+_test_Div_RoundHalfEven_N1_N3 :: Dict (K.Div 'K.RoundHalfEven (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfEven_N1_N3 =  Dict
+_test_Mod_RoundHalfEven_N1_N3 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfEven_N1_N3 =  Dict
+_test_Div_RoundHalfEven_N1_N4 :: Dict (K.Div 'K.RoundHalfEven (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfEven_N1_N4 =  Dict
+_test_Mod_RoundHalfEven_N1_N4 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfEven_N1_N4 =  Dict
+_test_Div_RoundHalfEven_N1_N5 :: Dict (K.Div 'K.RoundHalfEven (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfEven_N1_N5 =  Dict
+_test_Mod_RoundHalfEven_N1_N5 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfEven_N1_N5 =  Dict
+_test_Div_RoundHalfEven_N1_P1 :: Dict (K.Div 'K.RoundHalfEven (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfEven_N1_P1 =  Dict
+_test_Mod_RoundHalfEven_N1_P1 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_N1_P1 =  Dict
+_test_Div_RoundHalfEven_N1_P2 :: Dict (K.Div 'K.RoundHalfEven (N 1) (P 2) ~ P 0)
+_test_Div_RoundHalfEven_N1_P2 =  Dict
+_test_Mod_RoundHalfEven_N1_P2 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfEven_N1_P2 =  Dict
+_test_Div_RoundHalfEven_N1_P3 :: Dict (K.Div 'K.RoundHalfEven (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfEven_N1_P3 =  Dict
+_test_Mod_RoundHalfEven_N1_P3 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfEven_N1_P3 =  Dict
+_test_Div_RoundHalfEven_N1_P4 :: Dict (K.Div 'K.RoundHalfEven (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfEven_N1_P4 =  Dict
+_test_Mod_RoundHalfEven_N1_P4 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfEven_N1_P4 =  Dict
+_test_Div_RoundHalfEven_N1_P5 :: Dict (K.Div 'K.RoundHalfEven (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfEven_N1_P5 =  Dict
+_test_Mod_RoundHalfEven_N1_P5 :: Dict (K.Mod 'K.RoundHalfEven (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfEven_N1_P5 =  Dict
+_test_Div_RoundHalfEven_N2_N1 :: Dict (K.Div 'K.RoundHalfEven (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfEven_N2_N1 =  Dict
+_test_Mod_RoundHalfEven_N2_N1 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_N2_N1 =  Dict
+_test_Div_RoundHalfEven_N2_N2 :: Dict (K.Div 'K.RoundHalfEven (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfEven_N2_N2 =  Dict
+_test_Mod_RoundHalfEven_N2_N2 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfEven_N2_N2 =  Dict
+_test_Div_RoundHalfEven_N2_N3 :: Dict (K.Div 'K.RoundHalfEven (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfEven_N2_N3 =  Dict
+_test_Mod_RoundHalfEven_N2_N3 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfEven_N2_N3 =  Dict
+_test_Div_RoundHalfEven_N2_N4 :: Dict (K.Div 'K.RoundHalfEven (N 2) (N 4) ~ P 0)
+_test_Div_RoundHalfEven_N2_N4 =  Dict
+_test_Mod_RoundHalfEven_N2_N4 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfEven_N2_N4 =  Dict
+_test_Div_RoundHalfEven_N2_N5 :: Dict (K.Div 'K.RoundHalfEven (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfEven_N2_N5 =  Dict
+_test_Mod_RoundHalfEven_N2_N5 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfEven_N2_N5 =  Dict
+_test_Div_RoundHalfEven_N2_P1 :: Dict (K.Div 'K.RoundHalfEven (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfEven_N2_P1 =  Dict
+_test_Mod_RoundHalfEven_N2_P1 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_N2_P1 =  Dict
+_test_Div_RoundHalfEven_N2_P2 :: Dict (K.Div 'K.RoundHalfEven (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfEven_N2_P2 =  Dict
+_test_Mod_RoundHalfEven_N2_P2 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfEven_N2_P2 =  Dict
+_test_Div_RoundHalfEven_N2_P3 :: Dict (K.Div 'K.RoundHalfEven (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfEven_N2_P3 =  Dict
+_test_Mod_RoundHalfEven_N2_P3 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfEven_N2_P3 =  Dict
+_test_Div_RoundHalfEven_N2_P4 :: Dict (K.Div 'K.RoundHalfEven (N 2) (P 4) ~ P 0)
+_test_Div_RoundHalfEven_N2_P4 =  Dict
+_test_Mod_RoundHalfEven_N2_P4 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfEven_N2_P4 =  Dict
+_test_Div_RoundHalfEven_N2_P5 :: Dict (K.Div 'K.RoundHalfEven (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfEven_N2_P5 =  Dict
+_test_Mod_RoundHalfEven_N2_P5 :: Dict (K.Mod 'K.RoundHalfEven (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfEven_N2_P5 =  Dict
+_test_Div_RoundHalfEven_N3_N1 :: Dict (K.Div 'K.RoundHalfEven (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfEven_N3_N1 =  Dict
+_test_Mod_RoundHalfEven_N3_N1 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_N3_N1 =  Dict
+_test_Div_RoundHalfEven_N3_N2 :: Dict (K.Div 'K.RoundHalfEven (N 3) (N 2) ~ P 2)
+_test_Div_RoundHalfEven_N3_N2 =  Dict
+_test_Mod_RoundHalfEven_N3_N2 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfEven_N3_N2 =  Dict
+_test_Div_RoundHalfEven_N3_N3 :: Dict (K.Div 'K.RoundHalfEven (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfEven_N3_N3 =  Dict
+_test_Mod_RoundHalfEven_N3_N3 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfEven_N3_N3 =  Dict
+_test_Div_RoundHalfEven_N3_N4 :: Dict (K.Div 'K.RoundHalfEven (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfEven_N3_N4 =  Dict
+_test_Mod_RoundHalfEven_N3_N4 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfEven_N3_N4 =  Dict
+_test_Div_RoundHalfEven_N3_N5 :: Dict (K.Div 'K.RoundHalfEven (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfEven_N3_N5 =  Dict
+_test_Mod_RoundHalfEven_N3_N5 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfEven_N3_N5 =  Dict
+_test_Div_RoundHalfEven_N3_P1 :: Dict (K.Div 'K.RoundHalfEven (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfEven_N3_P1 =  Dict
+_test_Mod_RoundHalfEven_N3_P1 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_N3_P1 =  Dict
+_test_Div_RoundHalfEven_N3_P2 :: Dict (K.Div 'K.RoundHalfEven (N 3) (P 2) ~ N 2)
+_test_Div_RoundHalfEven_N3_P2 =  Dict
+_test_Mod_RoundHalfEven_N3_P2 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfEven_N3_P2 =  Dict
+_test_Div_RoundHalfEven_N3_P3 :: Dict (K.Div 'K.RoundHalfEven (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfEven_N3_P3 =  Dict
+_test_Mod_RoundHalfEven_N3_P3 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfEven_N3_P3 =  Dict
+_test_Div_RoundHalfEven_N3_P4 :: Dict (K.Div 'K.RoundHalfEven (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfEven_N3_P4 =  Dict
+_test_Mod_RoundHalfEven_N3_P4 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfEven_N3_P4 =  Dict
+_test_Div_RoundHalfEven_N3_P5 :: Dict (K.Div 'K.RoundHalfEven (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfEven_N3_P5 =  Dict
+_test_Mod_RoundHalfEven_N3_P5 :: Dict (K.Mod 'K.RoundHalfEven (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfEven_N3_P5 =  Dict
+_test_Div_RoundHalfEven_N4_N1 :: Dict (K.Div 'K.RoundHalfEven (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfEven_N4_N1 =  Dict
+_test_Mod_RoundHalfEven_N4_N1 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_N4_N1 =  Dict
+_test_Div_RoundHalfEven_N4_N2 :: Dict (K.Div 'K.RoundHalfEven (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfEven_N4_N2 =  Dict
+_test_Mod_RoundHalfEven_N4_N2 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfEven_N4_N2 =  Dict
+_test_Div_RoundHalfEven_N4_N3 :: Dict (K.Div 'K.RoundHalfEven (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfEven_N4_N3 =  Dict
+_test_Mod_RoundHalfEven_N4_N3 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfEven_N4_N3 =  Dict
+_test_Div_RoundHalfEven_N4_N4 :: Dict (K.Div 'K.RoundHalfEven (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfEven_N4_N4 =  Dict
+_test_Mod_RoundHalfEven_N4_N4 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfEven_N4_N4 =  Dict
+_test_Div_RoundHalfEven_N4_N5 :: Dict (K.Div 'K.RoundHalfEven (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfEven_N4_N5 =  Dict
+_test_Mod_RoundHalfEven_N4_N5 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfEven_N4_N5 =  Dict
+_test_Div_RoundHalfEven_N4_P1 :: Dict (K.Div 'K.RoundHalfEven (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfEven_N4_P1 =  Dict
+_test_Mod_RoundHalfEven_N4_P1 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_N4_P1 =  Dict
+_test_Div_RoundHalfEven_N4_P2 :: Dict (K.Div 'K.RoundHalfEven (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfEven_N4_P2 =  Dict
+_test_Mod_RoundHalfEven_N4_P2 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfEven_N4_P2 =  Dict
+_test_Div_RoundHalfEven_N4_P3 :: Dict (K.Div 'K.RoundHalfEven (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfEven_N4_P3 =  Dict
+_test_Mod_RoundHalfEven_N4_P3 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfEven_N4_P3 =  Dict
+_test_Div_RoundHalfEven_N4_P4 :: Dict (K.Div 'K.RoundHalfEven (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfEven_N4_P4 =  Dict
+_test_Mod_RoundHalfEven_N4_P4 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfEven_N4_P4 =  Dict
+_test_Div_RoundHalfEven_N4_P5 :: Dict (K.Div 'K.RoundHalfEven (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfEven_N4_P5 =  Dict
+_test_Mod_RoundHalfEven_N4_P5 :: Dict (K.Mod 'K.RoundHalfEven (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfEven_N4_P5 =  Dict
+_test_Div_RoundHalfEven_N5_N1 :: Dict (K.Div 'K.RoundHalfEven (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfEven_N5_N1 =  Dict
+_test_Mod_RoundHalfEven_N5_N1 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_N5_N1 =  Dict
+_test_Div_RoundHalfEven_N5_N2 :: Dict (K.Div 'K.RoundHalfEven (N 5) (N 2) ~ P 2)
+_test_Div_RoundHalfEven_N5_N2 =  Dict
+_test_Mod_RoundHalfEven_N5_N2 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfEven_N5_N2 =  Dict
+_test_Div_RoundHalfEven_N5_N3 :: Dict (K.Div 'K.RoundHalfEven (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfEven_N5_N3 =  Dict
+_test_Mod_RoundHalfEven_N5_N3 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfEven_N5_N3 =  Dict
+_test_Div_RoundHalfEven_N5_N4 :: Dict (K.Div 'K.RoundHalfEven (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfEven_N5_N4 =  Dict
+_test_Mod_RoundHalfEven_N5_N4 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfEven_N5_N4 =  Dict
+_test_Div_RoundHalfEven_N5_N5 :: Dict (K.Div 'K.RoundHalfEven (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfEven_N5_N5 =  Dict
+_test_Mod_RoundHalfEven_N5_N5 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfEven_N5_N5 =  Dict
+_test_Div_RoundHalfEven_N5_P1 :: Dict (K.Div 'K.RoundHalfEven (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfEven_N5_P1 =  Dict
+_test_Mod_RoundHalfEven_N5_P1 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_N5_P1 =  Dict
+_test_Div_RoundHalfEven_N5_P2 :: Dict (K.Div 'K.RoundHalfEven (N 5) (P 2) ~ N 2)
+_test_Div_RoundHalfEven_N5_P2 =  Dict
+_test_Mod_RoundHalfEven_N5_P2 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfEven_N5_P2 =  Dict
+_test_Div_RoundHalfEven_N5_P3 :: Dict (K.Div 'K.RoundHalfEven (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfEven_N5_P3 =  Dict
+_test_Mod_RoundHalfEven_N5_P3 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfEven_N5_P3 =  Dict
+_test_Div_RoundHalfEven_N5_P4 :: Dict (K.Div 'K.RoundHalfEven (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfEven_N5_P4 =  Dict
+_test_Mod_RoundHalfEven_N5_P4 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfEven_N5_P4 =  Dict
+_test_Div_RoundHalfEven_N5_P5 :: Dict (K.Div 'K.RoundHalfEven (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfEven_N5_P5 =  Dict
+_test_Mod_RoundHalfEven_N5_P5 :: Dict (K.Mod 'K.RoundHalfEven (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfEven_N5_P5 =  Dict
+_test_Div_RoundHalfEven_P0_N1 :: Dict (K.Div 'K.RoundHalfEven (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfEven_P0_N1 =  Dict
+_test_Mod_RoundHalfEven_P0_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P0_N1 =  Dict
+_test_Div_RoundHalfEven_P0_N2 :: Dict (K.Div 'K.RoundHalfEven (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfEven_P0_N2 =  Dict
+_test_Mod_RoundHalfEven_P0_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfEven_P0_N2 =  Dict
+_test_Div_RoundHalfEven_P0_N3 :: Dict (K.Div 'K.RoundHalfEven (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfEven_P0_N3 =  Dict
+_test_Mod_RoundHalfEven_P0_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfEven_P0_N3 =  Dict
+_test_Div_RoundHalfEven_P0_N4 :: Dict (K.Div 'K.RoundHalfEven (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfEven_P0_N4 =  Dict
+_test_Mod_RoundHalfEven_P0_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfEven_P0_N4 =  Dict
+_test_Div_RoundHalfEven_P0_N5 :: Dict (K.Div 'K.RoundHalfEven (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfEven_P0_N5 =  Dict
+_test_Mod_RoundHalfEven_P0_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfEven_P0_N5 =  Dict
+_test_Div_RoundHalfEven_P0_P1 :: Dict (K.Div 'K.RoundHalfEven (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfEven_P0_P1 =  Dict
+_test_Mod_RoundHalfEven_P0_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P0_P1 =  Dict
+_test_Div_RoundHalfEven_P0_P2 :: Dict (K.Div 'K.RoundHalfEven (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfEven_P0_P2 =  Dict
+_test_Mod_RoundHalfEven_P0_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfEven_P0_P2 =  Dict
+_test_Div_RoundHalfEven_P0_P3 :: Dict (K.Div 'K.RoundHalfEven (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfEven_P0_P3 =  Dict
+_test_Mod_RoundHalfEven_P0_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfEven_P0_P3 =  Dict
+_test_Div_RoundHalfEven_P0_P4 :: Dict (K.Div 'K.RoundHalfEven (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfEven_P0_P4 =  Dict
+_test_Mod_RoundHalfEven_P0_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfEven_P0_P4 =  Dict
+_test_Div_RoundHalfEven_P0_P5 :: Dict (K.Div 'K.RoundHalfEven (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfEven_P0_P5 =  Dict
+_test_Mod_RoundHalfEven_P0_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfEven_P0_P5 =  Dict
+_test_Div_RoundHalfEven_P1_N1 :: Dict (K.Div 'K.RoundHalfEven (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfEven_P1_N1 =  Dict
+_test_Mod_RoundHalfEven_P1_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P1_N1 =  Dict
+_test_Div_RoundHalfEven_P1_N2 :: Dict (K.Div 'K.RoundHalfEven (P 1) (N 2) ~ P 0)
+_test_Div_RoundHalfEven_P1_N2 =  Dict
+_test_Mod_RoundHalfEven_P1_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfEven_P1_N2 =  Dict
+_test_Div_RoundHalfEven_P1_N3 :: Dict (K.Div 'K.RoundHalfEven (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfEven_P1_N3 =  Dict
+_test_Mod_RoundHalfEven_P1_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfEven_P1_N3 =  Dict
+_test_Div_RoundHalfEven_P1_N4 :: Dict (K.Div 'K.RoundHalfEven (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfEven_P1_N4 =  Dict
+_test_Mod_RoundHalfEven_P1_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfEven_P1_N4 =  Dict
+_test_Div_RoundHalfEven_P1_N5 :: Dict (K.Div 'K.RoundHalfEven (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfEven_P1_N5 =  Dict
+_test_Mod_RoundHalfEven_P1_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfEven_P1_N5 =  Dict
+_test_Div_RoundHalfEven_P1_P1 :: Dict (K.Div 'K.RoundHalfEven (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfEven_P1_P1 =  Dict
+_test_Mod_RoundHalfEven_P1_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P1_P1 =  Dict
+_test_Div_RoundHalfEven_P1_P2 :: Dict (K.Div 'K.RoundHalfEven (P 1) (P 2) ~ P 0)
+_test_Div_RoundHalfEven_P1_P2 =  Dict
+_test_Mod_RoundHalfEven_P1_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfEven_P1_P2 =  Dict
+_test_Div_RoundHalfEven_P1_P3 :: Dict (K.Div 'K.RoundHalfEven (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfEven_P1_P3 =  Dict
+_test_Mod_RoundHalfEven_P1_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfEven_P1_P3 =  Dict
+_test_Div_RoundHalfEven_P1_P4 :: Dict (K.Div 'K.RoundHalfEven (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfEven_P1_P4 =  Dict
+_test_Mod_RoundHalfEven_P1_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfEven_P1_P4 =  Dict
+_test_Div_RoundHalfEven_P1_P5 :: Dict (K.Div 'K.RoundHalfEven (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfEven_P1_P5 =  Dict
+_test_Mod_RoundHalfEven_P1_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfEven_P1_P5 =  Dict
+_test_Div_RoundHalfEven_P2_N1 :: Dict (K.Div 'K.RoundHalfEven (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfEven_P2_N1 =  Dict
+_test_Mod_RoundHalfEven_P2_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P2_N1 =  Dict
+_test_Div_RoundHalfEven_P2_N2 :: Dict (K.Div 'K.RoundHalfEven (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfEven_P2_N2 =  Dict
+_test_Mod_RoundHalfEven_P2_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfEven_P2_N2 =  Dict
+_test_Div_RoundHalfEven_P2_N3 :: Dict (K.Div 'K.RoundHalfEven (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfEven_P2_N3 =  Dict
+_test_Mod_RoundHalfEven_P2_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfEven_P2_N3 =  Dict
+_test_Div_RoundHalfEven_P2_N4 :: Dict (K.Div 'K.RoundHalfEven (P 2) (N 4) ~ P 0)
+_test_Div_RoundHalfEven_P2_N4 =  Dict
+_test_Mod_RoundHalfEven_P2_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfEven_P2_N4 =  Dict
+_test_Div_RoundHalfEven_P2_N5 :: Dict (K.Div 'K.RoundHalfEven (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfEven_P2_N5 =  Dict
+_test_Mod_RoundHalfEven_P2_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfEven_P2_N5 =  Dict
+_test_Div_RoundHalfEven_P2_P1 :: Dict (K.Div 'K.RoundHalfEven (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfEven_P2_P1 =  Dict
+_test_Mod_RoundHalfEven_P2_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P2_P1 =  Dict
+_test_Div_RoundHalfEven_P2_P2 :: Dict (K.Div 'K.RoundHalfEven (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfEven_P2_P2 =  Dict
+_test_Mod_RoundHalfEven_P2_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfEven_P2_P2 =  Dict
+_test_Div_RoundHalfEven_P2_P3 :: Dict (K.Div 'K.RoundHalfEven (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfEven_P2_P3 =  Dict
+_test_Mod_RoundHalfEven_P2_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfEven_P2_P3 =  Dict
+_test_Div_RoundHalfEven_P2_P4 :: Dict (K.Div 'K.RoundHalfEven (P 2) (P 4) ~ P 0)
+_test_Div_RoundHalfEven_P2_P4 =  Dict
+_test_Mod_RoundHalfEven_P2_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfEven_P2_P4 =  Dict
+_test_Div_RoundHalfEven_P2_P5 :: Dict (K.Div 'K.RoundHalfEven (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfEven_P2_P5 =  Dict
+_test_Mod_RoundHalfEven_P2_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfEven_P2_P5 =  Dict
+_test_Div_RoundHalfEven_P3_N1 :: Dict (K.Div 'K.RoundHalfEven (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfEven_P3_N1 =  Dict
+_test_Mod_RoundHalfEven_P3_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P3_N1 =  Dict
+_test_Div_RoundHalfEven_P3_N2 :: Dict (K.Div 'K.RoundHalfEven (P 3) (N 2) ~ N 2)
+_test_Div_RoundHalfEven_P3_N2 =  Dict
+_test_Mod_RoundHalfEven_P3_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfEven_P3_N2 =  Dict
+_test_Div_RoundHalfEven_P3_N3 :: Dict (K.Div 'K.RoundHalfEven (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfEven_P3_N3 =  Dict
+_test_Mod_RoundHalfEven_P3_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfEven_P3_N3 =  Dict
+_test_Div_RoundHalfEven_P3_N4 :: Dict (K.Div 'K.RoundHalfEven (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfEven_P3_N4 =  Dict
+_test_Mod_RoundHalfEven_P3_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfEven_P3_N4 =  Dict
+_test_Div_RoundHalfEven_P3_N5 :: Dict (K.Div 'K.RoundHalfEven (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfEven_P3_N5 =  Dict
+_test_Mod_RoundHalfEven_P3_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfEven_P3_N5 =  Dict
+_test_Div_RoundHalfEven_P3_P1 :: Dict (K.Div 'K.RoundHalfEven (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfEven_P3_P1 =  Dict
+_test_Mod_RoundHalfEven_P3_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P3_P1 =  Dict
+_test_Div_RoundHalfEven_P3_P2 :: Dict (K.Div 'K.RoundHalfEven (P 3) (P 2) ~ P 2)
+_test_Div_RoundHalfEven_P3_P2 =  Dict
+_test_Mod_RoundHalfEven_P3_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfEven_P3_P2 =  Dict
+_test_Div_RoundHalfEven_P3_P3 :: Dict (K.Div 'K.RoundHalfEven (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfEven_P3_P3 =  Dict
+_test_Mod_RoundHalfEven_P3_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfEven_P3_P3 =  Dict
+_test_Div_RoundHalfEven_P3_P4 :: Dict (K.Div 'K.RoundHalfEven (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfEven_P3_P4 =  Dict
+_test_Mod_RoundHalfEven_P3_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfEven_P3_P4 =  Dict
+_test_Div_RoundHalfEven_P3_P5 :: Dict (K.Div 'K.RoundHalfEven (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfEven_P3_P5 =  Dict
+_test_Mod_RoundHalfEven_P3_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfEven_P3_P5 =  Dict
+_test_Div_RoundHalfEven_P4_N1 :: Dict (K.Div 'K.RoundHalfEven (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfEven_P4_N1 =  Dict
+_test_Mod_RoundHalfEven_P4_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P4_N1 =  Dict
+_test_Div_RoundHalfEven_P4_N2 :: Dict (K.Div 'K.RoundHalfEven (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfEven_P4_N2 =  Dict
+_test_Mod_RoundHalfEven_P4_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfEven_P4_N2 =  Dict
+_test_Div_RoundHalfEven_P4_N3 :: Dict (K.Div 'K.RoundHalfEven (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfEven_P4_N3 =  Dict
+_test_Mod_RoundHalfEven_P4_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfEven_P4_N3 =  Dict
+_test_Div_RoundHalfEven_P4_N4 :: Dict (K.Div 'K.RoundHalfEven (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfEven_P4_N4 =  Dict
+_test_Mod_RoundHalfEven_P4_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfEven_P4_N4 =  Dict
+_test_Div_RoundHalfEven_P4_N5 :: Dict (K.Div 'K.RoundHalfEven (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfEven_P4_N5 =  Dict
+_test_Mod_RoundHalfEven_P4_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfEven_P4_N5 =  Dict
+_test_Div_RoundHalfEven_P4_P1 :: Dict (K.Div 'K.RoundHalfEven (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfEven_P4_P1 =  Dict
+_test_Mod_RoundHalfEven_P4_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P4_P1 =  Dict
+_test_Div_RoundHalfEven_P4_P2 :: Dict (K.Div 'K.RoundHalfEven (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfEven_P4_P2 =  Dict
+_test_Mod_RoundHalfEven_P4_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfEven_P4_P2 =  Dict
+_test_Div_RoundHalfEven_P4_P3 :: Dict (K.Div 'K.RoundHalfEven (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfEven_P4_P3 =  Dict
+_test_Mod_RoundHalfEven_P4_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfEven_P4_P3 =  Dict
+_test_Div_RoundHalfEven_P4_P4 :: Dict (K.Div 'K.RoundHalfEven (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfEven_P4_P4 =  Dict
+_test_Mod_RoundHalfEven_P4_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfEven_P4_P4 =  Dict
+_test_Div_RoundHalfEven_P4_P5 :: Dict (K.Div 'K.RoundHalfEven (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfEven_P4_P5 =  Dict
+_test_Mod_RoundHalfEven_P4_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfEven_P4_P5 =  Dict
+_test_Div_RoundHalfEven_P5_N1 :: Dict (K.Div 'K.RoundHalfEven (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfEven_P5_N1 =  Dict
+_test_Mod_RoundHalfEven_P5_N1 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfEven_P5_N1 =  Dict
+_test_Div_RoundHalfEven_P5_N2 :: Dict (K.Div 'K.RoundHalfEven (P 5) (N 2) ~ N 2)
+_test_Div_RoundHalfEven_P5_N2 =  Dict
+_test_Mod_RoundHalfEven_P5_N2 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfEven_P5_N2 =  Dict
+_test_Div_RoundHalfEven_P5_N3 :: Dict (K.Div 'K.RoundHalfEven (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfEven_P5_N3 =  Dict
+_test_Mod_RoundHalfEven_P5_N3 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfEven_P5_N3 =  Dict
+_test_Div_RoundHalfEven_P5_N4 :: Dict (K.Div 'K.RoundHalfEven (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfEven_P5_N4 =  Dict
+_test_Mod_RoundHalfEven_P5_N4 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfEven_P5_N4 =  Dict
+_test_Div_RoundHalfEven_P5_N5 :: Dict (K.Div 'K.RoundHalfEven (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfEven_P5_N5 =  Dict
+_test_Mod_RoundHalfEven_P5_N5 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfEven_P5_N5 =  Dict
+_test_Div_RoundHalfEven_P5_P1 :: Dict (K.Div 'K.RoundHalfEven (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfEven_P5_P1 =  Dict
+_test_Mod_RoundHalfEven_P5_P1 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfEven_P5_P1 =  Dict
+_test_Div_RoundHalfEven_P5_P2 :: Dict (K.Div 'K.RoundHalfEven (P 5) (P 2) ~ P 2)
+_test_Div_RoundHalfEven_P5_P2 =  Dict
+_test_Mod_RoundHalfEven_P5_P2 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfEven_P5_P2 =  Dict
+_test_Div_RoundHalfEven_P5_P3 :: Dict (K.Div 'K.RoundHalfEven (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfEven_P5_P3 =  Dict
+_test_Mod_RoundHalfEven_P5_P3 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfEven_P5_P3 =  Dict
+_test_Div_RoundHalfEven_P5_P4 :: Dict (K.Div 'K.RoundHalfEven (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfEven_P5_P4 =  Dict
+_test_Mod_RoundHalfEven_P5_P4 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfEven_P5_P4 =  Dict
+_test_Div_RoundHalfEven_P5_P5 :: Dict (K.Div 'K.RoundHalfEven (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfEven_P5_P5 =  Dict
+_test_Mod_RoundHalfEven_P5_P5 :: Dict (K.Mod 'K.RoundHalfEven (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfEven_P5_P5 =  Dict
+_test_Div_RoundHalfOdd_N1_N1 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfOdd_N1_N1 =  Dict
+_test_Mod_RoundHalfOdd_N1_N1 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N1_N1 =  Dict
+_test_Div_RoundHalfOdd_N1_N2 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (N 2) ~ P 1)
+_test_Div_RoundHalfOdd_N1_N2 =  Dict
+_test_Mod_RoundHalfOdd_N1_N2 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfOdd_N1_N2 =  Dict
+_test_Div_RoundHalfOdd_N1_N3 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfOdd_N1_N3 =  Dict
+_test_Mod_RoundHalfOdd_N1_N3 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_N3 =  Dict
+_test_Div_RoundHalfOdd_N1_N4 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfOdd_N1_N4 =  Dict
+_test_Mod_RoundHalfOdd_N1_N4 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_N4 =  Dict
+_test_Div_RoundHalfOdd_N1_N5 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfOdd_N1_N5 =  Dict
+_test_Mod_RoundHalfOdd_N1_N5 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_N5 =  Dict
+_test_Div_RoundHalfOdd_N1_P1 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfOdd_N1_P1 =  Dict
+_test_Mod_RoundHalfOdd_N1_P1 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N1_P1 =  Dict
+_test_Div_RoundHalfOdd_N1_P2 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (P 2) ~ N 1)
+_test_Div_RoundHalfOdd_N1_P2 =  Dict
+_test_Mod_RoundHalfOdd_N1_P2 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfOdd_N1_P2 =  Dict
+_test_Div_RoundHalfOdd_N1_P3 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfOdd_N1_P3 =  Dict
+_test_Mod_RoundHalfOdd_N1_P3 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_P3 =  Dict
+_test_Div_RoundHalfOdd_N1_P4 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfOdd_N1_P4 =  Dict
+_test_Mod_RoundHalfOdd_N1_P4 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_P4 =  Dict
+_test_Div_RoundHalfOdd_N1_P5 :: Dict (K.Div 'K.RoundHalfOdd (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfOdd_N1_P5 =  Dict
+_test_Mod_RoundHalfOdd_N1_P5 :: Dict (K.Mod 'K.RoundHalfOdd (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfOdd_N1_P5 =  Dict
+_test_Div_RoundHalfOdd_N2_N1 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfOdd_N2_N1 =  Dict
+_test_Mod_RoundHalfOdd_N2_N1 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N2_N1 =  Dict
+_test_Div_RoundHalfOdd_N2_N2 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfOdd_N2_N2 =  Dict
+_test_Mod_RoundHalfOdd_N2_N2 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfOdd_N2_N2 =  Dict
+_test_Div_RoundHalfOdd_N2_N3 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfOdd_N2_N3 =  Dict
+_test_Mod_RoundHalfOdd_N2_N3 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfOdd_N2_N3 =  Dict
+_test_Div_RoundHalfOdd_N2_N4 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (N 4) ~ P 1)
+_test_Div_RoundHalfOdd_N2_N4 =  Dict
+_test_Mod_RoundHalfOdd_N2_N4 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfOdd_N2_N4 =  Dict
+_test_Div_RoundHalfOdd_N2_N5 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfOdd_N2_N5 =  Dict
+_test_Mod_RoundHalfOdd_N2_N5 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfOdd_N2_N5 =  Dict
+_test_Div_RoundHalfOdd_N2_P1 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfOdd_N2_P1 =  Dict
+_test_Mod_RoundHalfOdd_N2_P1 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N2_P1 =  Dict
+_test_Div_RoundHalfOdd_N2_P2 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfOdd_N2_P2 =  Dict
+_test_Mod_RoundHalfOdd_N2_P2 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfOdd_N2_P2 =  Dict
+_test_Div_RoundHalfOdd_N2_P3 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfOdd_N2_P3 =  Dict
+_test_Mod_RoundHalfOdd_N2_P3 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfOdd_N2_P3 =  Dict
+_test_Div_RoundHalfOdd_N2_P4 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (P 4) ~ N 1)
+_test_Div_RoundHalfOdd_N2_P4 =  Dict
+_test_Mod_RoundHalfOdd_N2_P4 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfOdd_N2_P4 =  Dict
+_test_Div_RoundHalfOdd_N2_P5 :: Dict (K.Div 'K.RoundHalfOdd (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfOdd_N2_P5 =  Dict
+_test_Mod_RoundHalfOdd_N2_P5 :: Dict (K.Mod 'K.RoundHalfOdd (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfOdd_N2_P5 =  Dict
+_test_Div_RoundHalfOdd_N3_N1 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfOdd_N3_N1 =  Dict
+_test_Mod_RoundHalfOdd_N3_N1 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N3_N1 =  Dict
+_test_Div_RoundHalfOdd_N3_N2 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (N 2) ~ P 1)
+_test_Div_RoundHalfOdd_N3_N2 =  Dict
+_test_Mod_RoundHalfOdd_N3_N2 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfOdd_N3_N2 =  Dict
+_test_Div_RoundHalfOdd_N3_N3 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfOdd_N3_N3 =  Dict
+_test_Mod_RoundHalfOdd_N3_N3 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfOdd_N3_N3 =  Dict
+_test_Div_RoundHalfOdd_N3_N4 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfOdd_N3_N4 =  Dict
+_test_Mod_RoundHalfOdd_N3_N4 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfOdd_N3_N4 =  Dict
+_test_Div_RoundHalfOdd_N3_N5 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfOdd_N3_N5 =  Dict
+_test_Mod_RoundHalfOdd_N3_N5 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfOdd_N3_N5 =  Dict
+_test_Div_RoundHalfOdd_N3_P1 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfOdd_N3_P1 =  Dict
+_test_Mod_RoundHalfOdd_N3_P1 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N3_P1 =  Dict
+_test_Div_RoundHalfOdd_N3_P2 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (P 2) ~ N 1)
+_test_Div_RoundHalfOdd_N3_P2 =  Dict
+_test_Mod_RoundHalfOdd_N3_P2 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfOdd_N3_P2 =  Dict
+_test_Div_RoundHalfOdd_N3_P3 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfOdd_N3_P3 =  Dict
+_test_Mod_RoundHalfOdd_N3_P3 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfOdd_N3_P3 =  Dict
+_test_Div_RoundHalfOdd_N3_P4 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfOdd_N3_P4 =  Dict
+_test_Mod_RoundHalfOdd_N3_P4 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfOdd_N3_P4 =  Dict
+_test_Div_RoundHalfOdd_N3_P5 :: Dict (K.Div 'K.RoundHalfOdd (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfOdd_N3_P5 =  Dict
+_test_Mod_RoundHalfOdd_N3_P5 :: Dict (K.Mod 'K.RoundHalfOdd (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfOdd_N3_P5 =  Dict
+_test_Div_RoundHalfOdd_N4_N1 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfOdd_N4_N1 =  Dict
+_test_Mod_RoundHalfOdd_N4_N1 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_N1 =  Dict
+_test_Div_RoundHalfOdd_N4_N2 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfOdd_N4_N2 =  Dict
+_test_Mod_RoundHalfOdd_N4_N2 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_N2 =  Dict
+_test_Div_RoundHalfOdd_N4_N3 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfOdd_N4_N3 =  Dict
+_test_Mod_RoundHalfOdd_N4_N3 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfOdd_N4_N3 =  Dict
+_test_Div_RoundHalfOdd_N4_N4 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfOdd_N4_N4 =  Dict
+_test_Mod_RoundHalfOdd_N4_N4 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_N4 =  Dict
+_test_Div_RoundHalfOdd_N4_N5 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfOdd_N4_N5 =  Dict
+_test_Mod_RoundHalfOdd_N4_N5 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfOdd_N4_N5 =  Dict
+_test_Div_RoundHalfOdd_N4_P1 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfOdd_N4_P1 =  Dict
+_test_Mod_RoundHalfOdd_N4_P1 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_P1 =  Dict
+_test_Div_RoundHalfOdd_N4_P2 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfOdd_N4_P2 =  Dict
+_test_Mod_RoundHalfOdd_N4_P2 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_P2 =  Dict
+_test_Div_RoundHalfOdd_N4_P3 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfOdd_N4_P3 =  Dict
+_test_Mod_RoundHalfOdd_N4_P3 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfOdd_N4_P3 =  Dict
+_test_Div_RoundHalfOdd_N4_P4 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfOdd_N4_P4 =  Dict
+_test_Mod_RoundHalfOdd_N4_P4 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfOdd_N4_P4 =  Dict
+_test_Div_RoundHalfOdd_N4_P5 :: Dict (K.Div 'K.RoundHalfOdd (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfOdd_N4_P5 =  Dict
+_test_Mod_RoundHalfOdd_N4_P5 :: Dict (K.Mod 'K.RoundHalfOdd (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfOdd_N4_P5 =  Dict
+_test_Div_RoundHalfOdd_N5_N1 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfOdd_N5_N1 =  Dict
+_test_Mod_RoundHalfOdd_N5_N1 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N5_N1 =  Dict
+_test_Div_RoundHalfOdd_N5_N2 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (N 2) ~ P 3)
+_test_Div_RoundHalfOdd_N5_N2 =  Dict
+_test_Mod_RoundHalfOdd_N5_N2 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfOdd_N5_N2 =  Dict
+_test_Div_RoundHalfOdd_N5_N3 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfOdd_N5_N3 =  Dict
+_test_Mod_RoundHalfOdd_N5_N3 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfOdd_N5_N3 =  Dict
+_test_Div_RoundHalfOdd_N5_N4 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfOdd_N5_N4 =  Dict
+_test_Mod_RoundHalfOdd_N5_N4 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfOdd_N5_N4 =  Dict
+_test_Div_RoundHalfOdd_N5_N5 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfOdd_N5_N5 =  Dict
+_test_Mod_RoundHalfOdd_N5_N5 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfOdd_N5_N5 =  Dict
+_test_Div_RoundHalfOdd_N5_P1 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfOdd_N5_P1 =  Dict
+_test_Mod_RoundHalfOdd_N5_P1 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_N5_P1 =  Dict
+_test_Div_RoundHalfOdd_N5_P2 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (P 2) ~ N 3)
+_test_Div_RoundHalfOdd_N5_P2 =  Dict
+_test_Mod_RoundHalfOdd_N5_P2 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfOdd_N5_P2 =  Dict
+_test_Div_RoundHalfOdd_N5_P3 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfOdd_N5_P3 =  Dict
+_test_Mod_RoundHalfOdd_N5_P3 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfOdd_N5_P3 =  Dict
+_test_Div_RoundHalfOdd_N5_P4 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfOdd_N5_P4 =  Dict
+_test_Mod_RoundHalfOdd_N5_P4 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfOdd_N5_P4 =  Dict
+_test_Div_RoundHalfOdd_N5_P5 :: Dict (K.Div 'K.RoundHalfOdd (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfOdd_N5_P5 =  Dict
+_test_Mod_RoundHalfOdd_N5_P5 :: Dict (K.Mod 'K.RoundHalfOdd (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfOdd_N5_P5 =  Dict
+_test_Div_RoundHalfOdd_P0_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfOdd_P0_N1 =  Dict
+_test_Mod_RoundHalfOdd_P0_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_N1 =  Dict
+_test_Div_RoundHalfOdd_P0_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfOdd_P0_N2 =  Dict
+_test_Mod_RoundHalfOdd_P0_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_N2 =  Dict
+_test_Div_RoundHalfOdd_P0_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfOdd_P0_N3 =  Dict
+_test_Mod_RoundHalfOdd_P0_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_N3 =  Dict
+_test_Div_RoundHalfOdd_P0_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfOdd_P0_N4 =  Dict
+_test_Mod_RoundHalfOdd_P0_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_N4 =  Dict
+_test_Div_RoundHalfOdd_P0_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfOdd_P0_N5 =  Dict
+_test_Mod_RoundHalfOdd_P0_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_N5 =  Dict
+_test_Div_RoundHalfOdd_P0_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfOdd_P0_P1 =  Dict
+_test_Mod_RoundHalfOdd_P0_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_P1 =  Dict
+_test_Div_RoundHalfOdd_P0_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfOdd_P0_P2 =  Dict
+_test_Mod_RoundHalfOdd_P0_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_P2 =  Dict
+_test_Div_RoundHalfOdd_P0_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfOdd_P0_P3 =  Dict
+_test_Mod_RoundHalfOdd_P0_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_P3 =  Dict
+_test_Div_RoundHalfOdd_P0_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfOdd_P0_P4 =  Dict
+_test_Mod_RoundHalfOdd_P0_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_P4 =  Dict
+_test_Div_RoundHalfOdd_P0_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfOdd_P0_P5 =  Dict
+_test_Mod_RoundHalfOdd_P0_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfOdd_P0_P5 =  Dict
+_test_Div_RoundHalfOdd_P1_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfOdd_P1_N1 =  Dict
+_test_Mod_RoundHalfOdd_P1_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P1_N1 =  Dict
+_test_Div_RoundHalfOdd_P1_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (N 2) ~ N 1)
+_test_Div_RoundHalfOdd_P1_N2 =  Dict
+_test_Mod_RoundHalfOdd_P1_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfOdd_P1_N2 =  Dict
+_test_Div_RoundHalfOdd_P1_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfOdd_P1_N3 =  Dict
+_test_Mod_RoundHalfOdd_P1_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_N3 =  Dict
+_test_Div_RoundHalfOdd_P1_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfOdd_P1_N4 =  Dict
+_test_Mod_RoundHalfOdd_P1_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_N4 =  Dict
+_test_Div_RoundHalfOdd_P1_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfOdd_P1_N5 =  Dict
+_test_Mod_RoundHalfOdd_P1_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_N5 =  Dict
+_test_Div_RoundHalfOdd_P1_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfOdd_P1_P1 =  Dict
+_test_Mod_RoundHalfOdd_P1_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P1_P1 =  Dict
+_test_Div_RoundHalfOdd_P1_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (P 2) ~ P 1)
+_test_Div_RoundHalfOdd_P1_P2 =  Dict
+_test_Mod_RoundHalfOdd_P1_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfOdd_P1_P2 =  Dict
+_test_Div_RoundHalfOdd_P1_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfOdd_P1_P3 =  Dict
+_test_Mod_RoundHalfOdd_P1_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_P3 =  Dict
+_test_Div_RoundHalfOdd_P1_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfOdd_P1_P4 =  Dict
+_test_Mod_RoundHalfOdd_P1_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_P4 =  Dict
+_test_Div_RoundHalfOdd_P1_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfOdd_P1_P5 =  Dict
+_test_Mod_RoundHalfOdd_P1_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfOdd_P1_P5 =  Dict
+_test_Div_RoundHalfOdd_P2_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfOdd_P2_N1 =  Dict
+_test_Mod_RoundHalfOdd_P2_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P2_N1 =  Dict
+_test_Div_RoundHalfOdd_P2_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfOdd_P2_N2 =  Dict
+_test_Mod_RoundHalfOdd_P2_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P2_N2 =  Dict
+_test_Div_RoundHalfOdd_P2_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfOdd_P2_N3 =  Dict
+_test_Mod_RoundHalfOdd_P2_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfOdd_P2_N3 =  Dict
+_test_Div_RoundHalfOdd_P2_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (N 4) ~ N 1)
+_test_Div_RoundHalfOdd_P2_N4 =  Dict
+_test_Mod_RoundHalfOdd_P2_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfOdd_P2_N4 =  Dict
+_test_Div_RoundHalfOdd_P2_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfOdd_P2_N5 =  Dict
+_test_Mod_RoundHalfOdd_P2_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfOdd_P2_N5 =  Dict
+_test_Div_RoundHalfOdd_P2_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfOdd_P2_P1 =  Dict
+_test_Mod_RoundHalfOdd_P2_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P2_P1 =  Dict
+_test_Div_RoundHalfOdd_P2_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfOdd_P2_P2 =  Dict
+_test_Mod_RoundHalfOdd_P2_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P2_P2 =  Dict
+_test_Div_RoundHalfOdd_P2_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfOdd_P2_P3 =  Dict
+_test_Mod_RoundHalfOdd_P2_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfOdd_P2_P3 =  Dict
+_test_Div_RoundHalfOdd_P2_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (P 4) ~ P 1)
+_test_Div_RoundHalfOdd_P2_P4 =  Dict
+_test_Mod_RoundHalfOdd_P2_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfOdd_P2_P4 =  Dict
+_test_Div_RoundHalfOdd_P2_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfOdd_P2_P5 =  Dict
+_test_Mod_RoundHalfOdd_P2_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfOdd_P2_P5 =  Dict
+_test_Div_RoundHalfOdd_P3_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfOdd_P3_N1 =  Dict
+_test_Mod_RoundHalfOdd_P3_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P3_N1 =  Dict
+_test_Div_RoundHalfOdd_P3_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (N 2) ~ N 1)
+_test_Div_RoundHalfOdd_P3_N2 =  Dict
+_test_Mod_RoundHalfOdd_P3_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfOdd_P3_N2 =  Dict
+_test_Div_RoundHalfOdd_P3_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfOdd_P3_N3 =  Dict
+_test_Mod_RoundHalfOdd_P3_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfOdd_P3_N3 =  Dict
+_test_Div_RoundHalfOdd_P3_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfOdd_P3_N4 =  Dict
+_test_Mod_RoundHalfOdd_P3_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfOdd_P3_N4 =  Dict
+_test_Div_RoundHalfOdd_P3_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfOdd_P3_N5 =  Dict
+_test_Mod_RoundHalfOdd_P3_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfOdd_P3_N5 =  Dict
+_test_Div_RoundHalfOdd_P3_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfOdd_P3_P1 =  Dict
+_test_Mod_RoundHalfOdd_P3_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P3_P1 =  Dict
+_test_Div_RoundHalfOdd_P3_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (P 2) ~ P 1)
+_test_Div_RoundHalfOdd_P3_P2 =  Dict
+_test_Mod_RoundHalfOdd_P3_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfOdd_P3_P2 =  Dict
+_test_Div_RoundHalfOdd_P3_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfOdd_P3_P3 =  Dict
+_test_Mod_RoundHalfOdd_P3_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfOdd_P3_P3 =  Dict
+_test_Div_RoundHalfOdd_P3_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfOdd_P3_P4 =  Dict
+_test_Mod_RoundHalfOdd_P3_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfOdd_P3_P4 =  Dict
+_test_Div_RoundHalfOdd_P3_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfOdd_P3_P5 =  Dict
+_test_Mod_RoundHalfOdd_P3_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfOdd_P3_P5 =  Dict
+_test_Div_RoundHalfOdd_P4_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfOdd_P4_N1 =  Dict
+_test_Mod_RoundHalfOdd_P4_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_N1 =  Dict
+_test_Div_RoundHalfOdd_P4_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfOdd_P4_N2 =  Dict
+_test_Mod_RoundHalfOdd_P4_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_N2 =  Dict
+_test_Div_RoundHalfOdd_P4_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfOdd_P4_N3 =  Dict
+_test_Mod_RoundHalfOdd_P4_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfOdd_P4_N3 =  Dict
+_test_Div_RoundHalfOdd_P4_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfOdd_P4_N4 =  Dict
+_test_Mod_RoundHalfOdd_P4_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_N4 =  Dict
+_test_Div_RoundHalfOdd_P4_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfOdd_P4_N5 =  Dict
+_test_Mod_RoundHalfOdd_P4_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfOdd_P4_N5 =  Dict
+_test_Div_RoundHalfOdd_P4_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfOdd_P4_P1 =  Dict
+_test_Mod_RoundHalfOdd_P4_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_P1 =  Dict
+_test_Div_RoundHalfOdd_P4_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfOdd_P4_P2 =  Dict
+_test_Mod_RoundHalfOdd_P4_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_P2 =  Dict
+_test_Div_RoundHalfOdd_P4_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfOdd_P4_P3 =  Dict
+_test_Mod_RoundHalfOdd_P4_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfOdd_P4_P3 =  Dict
+_test_Div_RoundHalfOdd_P4_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfOdd_P4_P4 =  Dict
+_test_Mod_RoundHalfOdd_P4_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfOdd_P4_P4 =  Dict
+_test_Div_RoundHalfOdd_P4_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfOdd_P4_P5 =  Dict
+_test_Mod_RoundHalfOdd_P4_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfOdd_P4_P5 =  Dict
+_test_Div_RoundHalfOdd_P5_N1 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfOdd_P5_N1 =  Dict
+_test_Mod_RoundHalfOdd_P5_N1 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P5_N1 =  Dict
+_test_Div_RoundHalfOdd_P5_N2 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (N 2) ~ N 3)
+_test_Div_RoundHalfOdd_P5_N2 =  Dict
+_test_Mod_RoundHalfOdd_P5_N2 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfOdd_P5_N2 =  Dict
+_test_Div_RoundHalfOdd_P5_N3 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfOdd_P5_N3 =  Dict
+_test_Mod_RoundHalfOdd_P5_N3 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfOdd_P5_N3 =  Dict
+_test_Div_RoundHalfOdd_P5_N4 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfOdd_P5_N4 =  Dict
+_test_Mod_RoundHalfOdd_P5_N4 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfOdd_P5_N4 =  Dict
+_test_Div_RoundHalfOdd_P5_N5 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfOdd_P5_N5 =  Dict
+_test_Mod_RoundHalfOdd_P5_N5 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfOdd_P5_N5 =  Dict
+_test_Div_RoundHalfOdd_P5_P1 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfOdd_P5_P1 =  Dict
+_test_Mod_RoundHalfOdd_P5_P1 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfOdd_P5_P1 =  Dict
+_test_Div_RoundHalfOdd_P5_P2 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (P 2) ~ P 3)
+_test_Div_RoundHalfOdd_P5_P2 =  Dict
+_test_Mod_RoundHalfOdd_P5_P2 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfOdd_P5_P2 =  Dict
+_test_Div_RoundHalfOdd_P5_P3 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfOdd_P5_P3 =  Dict
+_test_Mod_RoundHalfOdd_P5_P3 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfOdd_P5_P3 =  Dict
+_test_Div_RoundHalfOdd_P5_P4 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfOdd_P5_P4 =  Dict
+_test_Mod_RoundHalfOdd_P5_P4 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfOdd_P5_P4 =  Dict
+_test_Div_RoundHalfOdd_P5_P5 :: Dict (K.Div 'K.RoundHalfOdd (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfOdd_P5_P5 =  Dict
+_test_Mod_RoundHalfOdd_P5_P5 :: Dict (K.Mod 'K.RoundHalfOdd (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfOdd_P5_P5 =  Dict
+_test_Div_RoundHalfUp_N1_N1 :: Dict (K.Div 'K.RoundHalfUp (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfUp_N1_N1 =  Dict
+_test_Mod_RoundHalfUp_N1_N1 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_N1_N1 =  Dict
+_test_Div_RoundHalfUp_N1_N2 :: Dict (K.Div 'K.RoundHalfUp (N 1) (N 2) ~ P 1)
+_test_Div_RoundHalfUp_N1_N2 =  Dict
+_test_Mod_RoundHalfUp_N1_N2 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_N1_N2 =  Dict
+_test_Div_RoundHalfUp_N1_N3 :: Dict (K.Div 'K.RoundHalfUp (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfUp_N1_N3 =  Dict
+_test_Mod_RoundHalfUp_N1_N3 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfUp_N1_N3 =  Dict
+_test_Div_RoundHalfUp_N1_N4 :: Dict (K.Div 'K.RoundHalfUp (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfUp_N1_N4 =  Dict
+_test_Mod_RoundHalfUp_N1_N4 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfUp_N1_N4 =  Dict
+_test_Div_RoundHalfUp_N1_N5 :: Dict (K.Div 'K.RoundHalfUp (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfUp_N1_N5 =  Dict
+_test_Mod_RoundHalfUp_N1_N5 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfUp_N1_N5 =  Dict
+_test_Div_RoundHalfUp_N1_P1 :: Dict (K.Div 'K.RoundHalfUp (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfUp_N1_P1 =  Dict
+_test_Mod_RoundHalfUp_N1_P1 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_N1_P1 =  Dict
+_test_Div_RoundHalfUp_N1_P2 :: Dict (K.Div 'K.RoundHalfUp (N 1) (P 2) ~ P 0)
+_test_Div_RoundHalfUp_N1_P2 =  Dict
+_test_Mod_RoundHalfUp_N1_P2 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_N1_P2 =  Dict
+_test_Div_RoundHalfUp_N1_P3 :: Dict (K.Div 'K.RoundHalfUp (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfUp_N1_P3 =  Dict
+_test_Mod_RoundHalfUp_N1_P3 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfUp_N1_P3 =  Dict
+_test_Div_RoundHalfUp_N1_P4 :: Dict (K.Div 'K.RoundHalfUp (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfUp_N1_P4 =  Dict
+_test_Mod_RoundHalfUp_N1_P4 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfUp_N1_P4 =  Dict
+_test_Div_RoundHalfUp_N1_P5 :: Dict (K.Div 'K.RoundHalfUp (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfUp_N1_P5 =  Dict
+_test_Mod_RoundHalfUp_N1_P5 :: Dict (K.Mod 'K.RoundHalfUp (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfUp_N1_P5 =  Dict
+_test_Div_RoundHalfUp_N2_N1 :: Dict (K.Div 'K.RoundHalfUp (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfUp_N2_N1 =  Dict
+_test_Mod_RoundHalfUp_N2_N1 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_N2_N1 =  Dict
+_test_Div_RoundHalfUp_N2_N2 :: Dict (K.Div 'K.RoundHalfUp (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfUp_N2_N2 =  Dict
+_test_Mod_RoundHalfUp_N2_N2 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfUp_N2_N2 =  Dict
+_test_Div_RoundHalfUp_N2_N3 :: Dict (K.Div 'K.RoundHalfUp (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfUp_N2_N3 =  Dict
+_test_Mod_RoundHalfUp_N2_N3 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfUp_N2_N3 =  Dict
+_test_Div_RoundHalfUp_N2_N4 :: Dict (K.Div 'K.RoundHalfUp (N 2) (N 4) ~ P 1)
+_test_Div_RoundHalfUp_N2_N4 =  Dict
+_test_Mod_RoundHalfUp_N2_N4 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfUp_N2_N4 =  Dict
+_test_Div_RoundHalfUp_N2_N5 :: Dict (K.Div 'K.RoundHalfUp (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfUp_N2_N5 =  Dict
+_test_Mod_RoundHalfUp_N2_N5 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfUp_N2_N5 =  Dict
+_test_Div_RoundHalfUp_N2_P1 :: Dict (K.Div 'K.RoundHalfUp (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfUp_N2_P1 =  Dict
+_test_Mod_RoundHalfUp_N2_P1 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_N2_P1 =  Dict
+_test_Div_RoundHalfUp_N2_P2 :: Dict (K.Div 'K.RoundHalfUp (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfUp_N2_P2 =  Dict
+_test_Mod_RoundHalfUp_N2_P2 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfUp_N2_P2 =  Dict
+_test_Div_RoundHalfUp_N2_P3 :: Dict (K.Div 'K.RoundHalfUp (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfUp_N2_P3 =  Dict
+_test_Mod_RoundHalfUp_N2_P3 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfUp_N2_P3 =  Dict
+_test_Div_RoundHalfUp_N2_P4 :: Dict (K.Div 'K.RoundHalfUp (N 2) (P 4) ~ P 0)
+_test_Div_RoundHalfUp_N2_P4 =  Dict
+_test_Mod_RoundHalfUp_N2_P4 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfUp_N2_P4 =  Dict
+_test_Div_RoundHalfUp_N2_P5 :: Dict (K.Div 'K.RoundHalfUp (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfUp_N2_P5 =  Dict
+_test_Mod_RoundHalfUp_N2_P5 :: Dict (K.Mod 'K.RoundHalfUp (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfUp_N2_P5 =  Dict
+_test_Div_RoundHalfUp_N3_N1 :: Dict (K.Div 'K.RoundHalfUp (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfUp_N3_N1 =  Dict
+_test_Mod_RoundHalfUp_N3_N1 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_N3_N1 =  Dict
+_test_Div_RoundHalfUp_N3_N2 :: Dict (K.Div 'K.RoundHalfUp (N 3) (N 2) ~ P 2)
+_test_Div_RoundHalfUp_N3_N2 =  Dict
+_test_Mod_RoundHalfUp_N3_N2 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_N3_N2 =  Dict
+_test_Div_RoundHalfUp_N3_N3 :: Dict (K.Div 'K.RoundHalfUp (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfUp_N3_N3 =  Dict
+_test_Mod_RoundHalfUp_N3_N3 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfUp_N3_N3 =  Dict
+_test_Div_RoundHalfUp_N3_N4 :: Dict (K.Div 'K.RoundHalfUp (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfUp_N3_N4 =  Dict
+_test_Mod_RoundHalfUp_N3_N4 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfUp_N3_N4 =  Dict
+_test_Div_RoundHalfUp_N3_N5 :: Dict (K.Div 'K.RoundHalfUp (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfUp_N3_N5 =  Dict
+_test_Mod_RoundHalfUp_N3_N5 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfUp_N3_N5 =  Dict
+_test_Div_RoundHalfUp_N3_P1 :: Dict (K.Div 'K.RoundHalfUp (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfUp_N3_P1 =  Dict
+_test_Mod_RoundHalfUp_N3_P1 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_N3_P1 =  Dict
+_test_Div_RoundHalfUp_N3_P2 :: Dict (K.Div 'K.RoundHalfUp (N 3) (P 2) ~ N 1)
+_test_Div_RoundHalfUp_N3_P2 =  Dict
+_test_Mod_RoundHalfUp_N3_P2 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_N3_P2 =  Dict
+_test_Div_RoundHalfUp_N3_P3 :: Dict (K.Div 'K.RoundHalfUp (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfUp_N3_P3 =  Dict
+_test_Mod_RoundHalfUp_N3_P3 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfUp_N3_P3 =  Dict
+_test_Div_RoundHalfUp_N3_P4 :: Dict (K.Div 'K.RoundHalfUp (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfUp_N3_P4 =  Dict
+_test_Mod_RoundHalfUp_N3_P4 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfUp_N3_P4 =  Dict
+_test_Div_RoundHalfUp_N3_P5 :: Dict (K.Div 'K.RoundHalfUp (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfUp_N3_P5 =  Dict
+_test_Mod_RoundHalfUp_N3_P5 :: Dict (K.Mod 'K.RoundHalfUp (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfUp_N3_P5 =  Dict
+_test_Div_RoundHalfUp_N4_N1 :: Dict (K.Div 'K.RoundHalfUp (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfUp_N4_N1 =  Dict
+_test_Mod_RoundHalfUp_N4_N1 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_N4_N1 =  Dict
+_test_Div_RoundHalfUp_N4_N2 :: Dict (K.Div 'K.RoundHalfUp (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfUp_N4_N2 =  Dict
+_test_Mod_RoundHalfUp_N4_N2 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfUp_N4_N2 =  Dict
+_test_Div_RoundHalfUp_N4_N3 :: Dict (K.Div 'K.RoundHalfUp (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfUp_N4_N3 =  Dict
+_test_Mod_RoundHalfUp_N4_N3 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfUp_N4_N3 =  Dict
+_test_Div_RoundHalfUp_N4_N4 :: Dict (K.Div 'K.RoundHalfUp (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfUp_N4_N4 =  Dict
+_test_Mod_RoundHalfUp_N4_N4 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfUp_N4_N4 =  Dict
+_test_Div_RoundHalfUp_N4_N5 :: Dict (K.Div 'K.RoundHalfUp (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfUp_N4_N5 =  Dict
+_test_Mod_RoundHalfUp_N4_N5 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfUp_N4_N5 =  Dict
+_test_Div_RoundHalfUp_N4_P1 :: Dict (K.Div 'K.RoundHalfUp (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfUp_N4_P1 =  Dict
+_test_Mod_RoundHalfUp_N4_P1 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_N4_P1 =  Dict
+_test_Div_RoundHalfUp_N4_P2 :: Dict (K.Div 'K.RoundHalfUp (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfUp_N4_P2 =  Dict
+_test_Mod_RoundHalfUp_N4_P2 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfUp_N4_P2 =  Dict
+_test_Div_RoundHalfUp_N4_P3 :: Dict (K.Div 'K.RoundHalfUp (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfUp_N4_P3 =  Dict
+_test_Mod_RoundHalfUp_N4_P3 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfUp_N4_P3 =  Dict
+_test_Div_RoundHalfUp_N4_P4 :: Dict (K.Div 'K.RoundHalfUp (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfUp_N4_P4 =  Dict
+_test_Mod_RoundHalfUp_N4_P4 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfUp_N4_P4 =  Dict
+_test_Div_RoundHalfUp_N4_P5 :: Dict (K.Div 'K.RoundHalfUp (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfUp_N4_P5 =  Dict
+_test_Mod_RoundHalfUp_N4_P5 :: Dict (K.Mod 'K.RoundHalfUp (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfUp_N4_P5 =  Dict
+_test_Div_RoundHalfUp_N5_N1 :: Dict (K.Div 'K.RoundHalfUp (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfUp_N5_N1 =  Dict
+_test_Mod_RoundHalfUp_N5_N1 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_N5_N1 =  Dict
+_test_Div_RoundHalfUp_N5_N2 :: Dict (K.Div 'K.RoundHalfUp (N 5) (N 2) ~ P 3)
+_test_Div_RoundHalfUp_N5_N2 =  Dict
+_test_Mod_RoundHalfUp_N5_N2 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_N5_N2 =  Dict
+_test_Div_RoundHalfUp_N5_N3 :: Dict (K.Div 'K.RoundHalfUp (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfUp_N5_N3 =  Dict
+_test_Mod_RoundHalfUp_N5_N3 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfUp_N5_N3 =  Dict
+_test_Div_RoundHalfUp_N5_N4 :: Dict (K.Div 'K.RoundHalfUp (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfUp_N5_N4 =  Dict
+_test_Mod_RoundHalfUp_N5_N4 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfUp_N5_N4 =  Dict
+_test_Div_RoundHalfUp_N5_N5 :: Dict (K.Div 'K.RoundHalfUp (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfUp_N5_N5 =  Dict
+_test_Mod_RoundHalfUp_N5_N5 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfUp_N5_N5 =  Dict
+_test_Div_RoundHalfUp_N5_P1 :: Dict (K.Div 'K.RoundHalfUp (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfUp_N5_P1 =  Dict
+_test_Mod_RoundHalfUp_N5_P1 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_N5_P1 =  Dict
+_test_Div_RoundHalfUp_N5_P2 :: Dict (K.Div 'K.RoundHalfUp (N 5) (P 2) ~ N 2)
+_test_Div_RoundHalfUp_N5_P2 =  Dict
+_test_Mod_RoundHalfUp_N5_P2 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_N5_P2 =  Dict
+_test_Div_RoundHalfUp_N5_P3 :: Dict (K.Div 'K.RoundHalfUp (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfUp_N5_P3 =  Dict
+_test_Mod_RoundHalfUp_N5_P3 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfUp_N5_P3 =  Dict
+_test_Div_RoundHalfUp_N5_P4 :: Dict (K.Div 'K.RoundHalfUp (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfUp_N5_P4 =  Dict
+_test_Mod_RoundHalfUp_N5_P4 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfUp_N5_P4 =  Dict
+_test_Div_RoundHalfUp_N5_P5 :: Dict (K.Div 'K.RoundHalfUp (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfUp_N5_P5 =  Dict
+_test_Mod_RoundHalfUp_N5_P5 :: Dict (K.Mod 'K.RoundHalfUp (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfUp_N5_P5 =  Dict
+_test_Div_RoundHalfUp_P0_N1 :: Dict (K.Div 'K.RoundHalfUp (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfUp_P0_N1 =  Dict
+_test_Mod_RoundHalfUp_P0_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P0_N1 =  Dict
+_test_Div_RoundHalfUp_P0_N2 :: Dict (K.Div 'K.RoundHalfUp (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfUp_P0_N2 =  Dict
+_test_Mod_RoundHalfUp_P0_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfUp_P0_N2 =  Dict
+_test_Div_RoundHalfUp_P0_N3 :: Dict (K.Div 'K.RoundHalfUp (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfUp_P0_N3 =  Dict
+_test_Mod_RoundHalfUp_P0_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfUp_P0_N3 =  Dict
+_test_Div_RoundHalfUp_P0_N4 :: Dict (K.Div 'K.RoundHalfUp (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfUp_P0_N4 =  Dict
+_test_Mod_RoundHalfUp_P0_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfUp_P0_N4 =  Dict
+_test_Div_RoundHalfUp_P0_N5 :: Dict (K.Div 'K.RoundHalfUp (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfUp_P0_N5 =  Dict
+_test_Mod_RoundHalfUp_P0_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfUp_P0_N5 =  Dict
+_test_Div_RoundHalfUp_P0_P1 :: Dict (K.Div 'K.RoundHalfUp (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfUp_P0_P1 =  Dict
+_test_Mod_RoundHalfUp_P0_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P0_P1 =  Dict
+_test_Div_RoundHalfUp_P0_P2 :: Dict (K.Div 'K.RoundHalfUp (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfUp_P0_P2 =  Dict
+_test_Mod_RoundHalfUp_P0_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfUp_P0_P2 =  Dict
+_test_Div_RoundHalfUp_P0_P3 :: Dict (K.Div 'K.RoundHalfUp (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfUp_P0_P3 =  Dict
+_test_Mod_RoundHalfUp_P0_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfUp_P0_P3 =  Dict
+_test_Div_RoundHalfUp_P0_P4 :: Dict (K.Div 'K.RoundHalfUp (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfUp_P0_P4 =  Dict
+_test_Mod_RoundHalfUp_P0_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfUp_P0_P4 =  Dict
+_test_Div_RoundHalfUp_P0_P5 :: Dict (K.Div 'K.RoundHalfUp (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfUp_P0_P5 =  Dict
+_test_Mod_RoundHalfUp_P0_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfUp_P0_P5 =  Dict
+_test_Div_RoundHalfUp_P1_N1 :: Dict (K.Div 'K.RoundHalfUp (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfUp_P1_N1 =  Dict
+_test_Mod_RoundHalfUp_P1_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P1_N1 =  Dict
+_test_Div_RoundHalfUp_P1_N2 :: Dict (K.Div 'K.RoundHalfUp (P 1) (N 2) ~ P 0)
+_test_Div_RoundHalfUp_P1_N2 =  Dict
+_test_Mod_RoundHalfUp_P1_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_P1_N2 =  Dict
+_test_Div_RoundHalfUp_P1_N3 :: Dict (K.Div 'K.RoundHalfUp (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfUp_P1_N3 =  Dict
+_test_Mod_RoundHalfUp_P1_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfUp_P1_N3 =  Dict
+_test_Div_RoundHalfUp_P1_N4 :: Dict (K.Div 'K.RoundHalfUp (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfUp_P1_N4 =  Dict
+_test_Mod_RoundHalfUp_P1_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfUp_P1_N4 =  Dict
+_test_Div_RoundHalfUp_P1_N5 :: Dict (K.Div 'K.RoundHalfUp (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfUp_P1_N5 =  Dict
+_test_Mod_RoundHalfUp_P1_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfUp_P1_N5 =  Dict
+_test_Div_RoundHalfUp_P1_P1 :: Dict (K.Div 'K.RoundHalfUp (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfUp_P1_P1 =  Dict
+_test_Mod_RoundHalfUp_P1_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P1_P1 =  Dict
+_test_Div_RoundHalfUp_P1_P2 :: Dict (K.Div 'K.RoundHalfUp (P 1) (P 2) ~ P 1)
+_test_Div_RoundHalfUp_P1_P2 =  Dict
+_test_Mod_RoundHalfUp_P1_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_P1_P2 =  Dict
+_test_Div_RoundHalfUp_P1_P3 :: Dict (K.Div 'K.RoundHalfUp (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfUp_P1_P3 =  Dict
+_test_Mod_RoundHalfUp_P1_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfUp_P1_P3 =  Dict
+_test_Div_RoundHalfUp_P1_P4 :: Dict (K.Div 'K.RoundHalfUp (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfUp_P1_P4 =  Dict
+_test_Mod_RoundHalfUp_P1_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfUp_P1_P4 =  Dict
+_test_Div_RoundHalfUp_P1_P5 :: Dict (K.Div 'K.RoundHalfUp (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfUp_P1_P5 =  Dict
+_test_Mod_RoundHalfUp_P1_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfUp_P1_P5 =  Dict
+_test_Div_RoundHalfUp_P2_N1 :: Dict (K.Div 'K.RoundHalfUp (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfUp_P2_N1 =  Dict
+_test_Mod_RoundHalfUp_P2_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P2_N1 =  Dict
+_test_Div_RoundHalfUp_P2_N2 :: Dict (K.Div 'K.RoundHalfUp (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfUp_P2_N2 =  Dict
+_test_Mod_RoundHalfUp_P2_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfUp_P2_N2 =  Dict
+_test_Div_RoundHalfUp_P2_N3 :: Dict (K.Div 'K.RoundHalfUp (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfUp_P2_N3 =  Dict
+_test_Mod_RoundHalfUp_P2_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfUp_P2_N3 =  Dict
+_test_Div_RoundHalfUp_P2_N4 :: Dict (K.Div 'K.RoundHalfUp (P 2) (N 4) ~ P 0)
+_test_Div_RoundHalfUp_P2_N4 =  Dict
+_test_Mod_RoundHalfUp_P2_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfUp_P2_N4 =  Dict
+_test_Div_RoundHalfUp_P2_N5 :: Dict (K.Div 'K.RoundHalfUp (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfUp_P2_N5 =  Dict
+_test_Mod_RoundHalfUp_P2_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfUp_P2_N5 =  Dict
+_test_Div_RoundHalfUp_P2_P1 :: Dict (K.Div 'K.RoundHalfUp (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfUp_P2_P1 =  Dict
+_test_Mod_RoundHalfUp_P2_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P2_P1 =  Dict
+_test_Div_RoundHalfUp_P2_P2 :: Dict (K.Div 'K.RoundHalfUp (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfUp_P2_P2 =  Dict
+_test_Mod_RoundHalfUp_P2_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfUp_P2_P2 =  Dict
+_test_Div_RoundHalfUp_P2_P3 :: Dict (K.Div 'K.RoundHalfUp (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfUp_P2_P3 =  Dict
+_test_Mod_RoundHalfUp_P2_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfUp_P2_P3 =  Dict
+_test_Div_RoundHalfUp_P2_P4 :: Dict (K.Div 'K.RoundHalfUp (P 2) (P 4) ~ P 1)
+_test_Div_RoundHalfUp_P2_P4 =  Dict
+_test_Mod_RoundHalfUp_P2_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfUp_P2_P4 =  Dict
+_test_Div_RoundHalfUp_P2_P5 :: Dict (K.Div 'K.RoundHalfUp (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfUp_P2_P5 =  Dict
+_test_Mod_RoundHalfUp_P2_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfUp_P2_P5 =  Dict
+_test_Div_RoundHalfUp_P3_N1 :: Dict (K.Div 'K.RoundHalfUp (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfUp_P3_N1 =  Dict
+_test_Mod_RoundHalfUp_P3_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P3_N1 =  Dict
+_test_Div_RoundHalfUp_P3_N2 :: Dict (K.Div 'K.RoundHalfUp (P 3) (N 2) ~ N 1)
+_test_Div_RoundHalfUp_P3_N2 =  Dict
+_test_Mod_RoundHalfUp_P3_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_P3_N2 =  Dict
+_test_Div_RoundHalfUp_P3_N3 :: Dict (K.Div 'K.RoundHalfUp (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfUp_P3_N3 =  Dict
+_test_Mod_RoundHalfUp_P3_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfUp_P3_N3 =  Dict
+_test_Div_RoundHalfUp_P3_N4 :: Dict (K.Div 'K.RoundHalfUp (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfUp_P3_N4 =  Dict
+_test_Mod_RoundHalfUp_P3_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfUp_P3_N4 =  Dict
+_test_Div_RoundHalfUp_P3_N5 :: Dict (K.Div 'K.RoundHalfUp (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfUp_P3_N5 =  Dict
+_test_Mod_RoundHalfUp_P3_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfUp_P3_N5 =  Dict
+_test_Div_RoundHalfUp_P3_P1 :: Dict (K.Div 'K.RoundHalfUp (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfUp_P3_P1 =  Dict
+_test_Mod_RoundHalfUp_P3_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P3_P1 =  Dict
+_test_Div_RoundHalfUp_P3_P2 :: Dict (K.Div 'K.RoundHalfUp (P 3) (P 2) ~ P 2)
+_test_Div_RoundHalfUp_P3_P2 =  Dict
+_test_Mod_RoundHalfUp_P3_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_P3_P2 =  Dict
+_test_Div_RoundHalfUp_P3_P3 :: Dict (K.Div 'K.RoundHalfUp (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfUp_P3_P3 =  Dict
+_test_Mod_RoundHalfUp_P3_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfUp_P3_P3 =  Dict
+_test_Div_RoundHalfUp_P3_P4 :: Dict (K.Div 'K.RoundHalfUp (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfUp_P3_P4 =  Dict
+_test_Mod_RoundHalfUp_P3_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfUp_P3_P4 =  Dict
+_test_Div_RoundHalfUp_P3_P5 :: Dict (K.Div 'K.RoundHalfUp (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfUp_P3_P5 =  Dict
+_test_Mod_RoundHalfUp_P3_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfUp_P3_P5 =  Dict
+_test_Div_RoundHalfUp_P4_N1 :: Dict (K.Div 'K.RoundHalfUp (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfUp_P4_N1 =  Dict
+_test_Mod_RoundHalfUp_P4_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P4_N1 =  Dict
+_test_Div_RoundHalfUp_P4_N2 :: Dict (K.Div 'K.RoundHalfUp (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfUp_P4_N2 =  Dict
+_test_Mod_RoundHalfUp_P4_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfUp_P4_N2 =  Dict
+_test_Div_RoundHalfUp_P4_N3 :: Dict (K.Div 'K.RoundHalfUp (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfUp_P4_N3 =  Dict
+_test_Mod_RoundHalfUp_P4_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfUp_P4_N3 =  Dict
+_test_Div_RoundHalfUp_P4_N4 :: Dict (K.Div 'K.RoundHalfUp (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfUp_P4_N4 =  Dict
+_test_Mod_RoundHalfUp_P4_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfUp_P4_N4 =  Dict
+_test_Div_RoundHalfUp_P4_N5 :: Dict (K.Div 'K.RoundHalfUp (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfUp_P4_N5 =  Dict
+_test_Mod_RoundHalfUp_P4_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfUp_P4_N5 =  Dict
+_test_Div_RoundHalfUp_P4_P1 :: Dict (K.Div 'K.RoundHalfUp (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfUp_P4_P1 =  Dict
+_test_Mod_RoundHalfUp_P4_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P4_P1 =  Dict
+_test_Div_RoundHalfUp_P4_P2 :: Dict (K.Div 'K.RoundHalfUp (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfUp_P4_P2 =  Dict
+_test_Mod_RoundHalfUp_P4_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfUp_P4_P2 =  Dict
+_test_Div_RoundHalfUp_P4_P3 :: Dict (K.Div 'K.RoundHalfUp (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfUp_P4_P3 =  Dict
+_test_Mod_RoundHalfUp_P4_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfUp_P4_P3 =  Dict
+_test_Div_RoundHalfUp_P4_P4 :: Dict (K.Div 'K.RoundHalfUp (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfUp_P4_P4 =  Dict
+_test_Mod_RoundHalfUp_P4_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfUp_P4_P4 =  Dict
+_test_Div_RoundHalfUp_P4_P5 :: Dict (K.Div 'K.RoundHalfUp (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfUp_P4_P5 =  Dict
+_test_Mod_RoundHalfUp_P4_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfUp_P4_P5 =  Dict
+_test_Div_RoundHalfUp_P5_N1 :: Dict (K.Div 'K.RoundHalfUp (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfUp_P5_N1 =  Dict
+_test_Mod_RoundHalfUp_P5_N1 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfUp_P5_N1 =  Dict
+_test_Div_RoundHalfUp_P5_N2 :: Dict (K.Div 'K.RoundHalfUp (P 5) (N 2) ~ N 2)
+_test_Div_RoundHalfUp_P5_N2 =  Dict
+_test_Mod_RoundHalfUp_P5_N2 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfUp_P5_N2 =  Dict
+_test_Div_RoundHalfUp_P5_N3 :: Dict (K.Div 'K.RoundHalfUp (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfUp_P5_N3 =  Dict
+_test_Mod_RoundHalfUp_P5_N3 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfUp_P5_N3 =  Dict
+_test_Div_RoundHalfUp_P5_N4 :: Dict (K.Div 'K.RoundHalfUp (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfUp_P5_N4 =  Dict
+_test_Mod_RoundHalfUp_P5_N4 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfUp_P5_N4 =  Dict
+_test_Div_RoundHalfUp_P5_N5 :: Dict (K.Div 'K.RoundHalfUp (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfUp_P5_N5 =  Dict
+_test_Mod_RoundHalfUp_P5_N5 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfUp_P5_N5 =  Dict
+_test_Div_RoundHalfUp_P5_P1 :: Dict (K.Div 'K.RoundHalfUp (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfUp_P5_P1 =  Dict
+_test_Mod_RoundHalfUp_P5_P1 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfUp_P5_P1 =  Dict
+_test_Div_RoundHalfUp_P5_P2 :: Dict (K.Div 'K.RoundHalfUp (P 5) (P 2) ~ P 3)
+_test_Div_RoundHalfUp_P5_P2 =  Dict
+_test_Mod_RoundHalfUp_P5_P2 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfUp_P5_P2 =  Dict
+_test_Div_RoundHalfUp_P5_P3 :: Dict (K.Div 'K.RoundHalfUp (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfUp_P5_P3 =  Dict
+_test_Mod_RoundHalfUp_P5_P3 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfUp_P5_P3 =  Dict
+_test_Div_RoundHalfUp_P5_P4 :: Dict (K.Div 'K.RoundHalfUp (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfUp_P5_P4 =  Dict
+_test_Mod_RoundHalfUp_P5_P4 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfUp_P5_P4 =  Dict
+_test_Div_RoundHalfUp_P5_P5 :: Dict (K.Div 'K.RoundHalfUp (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfUp_P5_P5 =  Dict
+_test_Mod_RoundHalfUp_P5_P5 :: Dict (K.Mod 'K.RoundHalfUp (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfUp_P5_P5 =  Dict
+_test_Div_RoundHalfZero_N1_N1 :: Dict (K.Div 'K.RoundHalfZero (N 1) (N 1) ~ P 1)
+_test_Div_RoundHalfZero_N1_N1 =  Dict
+_test_Mod_RoundHalfZero_N1_N1 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_N1_N1 =  Dict
+_test_Div_RoundHalfZero_N1_N2 :: Dict (K.Div 'K.RoundHalfZero (N 1) (N 2) ~ P 0)
+_test_Div_RoundHalfZero_N1_N2 =  Dict
+_test_Mod_RoundHalfZero_N1_N2 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (N 2) ~ N 1)
+_test_Mod_RoundHalfZero_N1_N2 =  Dict
+_test_Div_RoundHalfZero_N1_N3 :: Dict (K.Div 'K.RoundHalfZero (N 1) (N 3) ~ P 0)
+_test_Div_RoundHalfZero_N1_N3 =  Dict
+_test_Mod_RoundHalfZero_N1_N3 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (N 3) ~ N 1)
+_test_Mod_RoundHalfZero_N1_N3 =  Dict
+_test_Div_RoundHalfZero_N1_N4 :: Dict (K.Div 'K.RoundHalfZero (N 1) (N 4) ~ P 0)
+_test_Div_RoundHalfZero_N1_N4 =  Dict
+_test_Mod_RoundHalfZero_N1_N4 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (N 4) ~ N 1)
+_test_Mod_RoundHalfZero_N1_N4 =  Dict
+_test_Div_RoundHalfZero_N1_N5 :: Dict (K.Div 'K.RoundHalfZero (N 1) (N 5) ~ P 0)
+_test_Div_RoundHalfZero_N1_N5 =  Dict
+_test_Mod_RoundHalfZero_N1_N5 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (N 5) ~ N 1)
+_test_Mod_RoundHalfZero_N1_N5 =  Dict
+_test_Div_RoundHalfZero_N1_P1 :: Dict (K.Div 'K.RoundHalfZero (N 1) (P 1) ~ N 1)
+_test_Div_RoundHalfZero_N1_P1 =  Dict
+_test_Mod_RoundHalfZero_N1_P1 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_N1_P1 =  Dict
+_test_Div_RoundHalfZero_N1_P2 :: Dict (K.Div 'K.RoundHalfZero (N 1) (P 2) ~ P 0)
+_test_Div_RoundHalfZero_N1_P2 =  Dict
+_test_Mod_RoundHalfZero_N1_P2 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (P 2) ~ N 1)
+_test_Mod_RoundHalfZero_N1_P2 =  Dict
+_test_Div_RoundHalfZero_N1_P3 :: Dict (K.Div 'K.RoundHalfZero (N 1) (P 3) ~ P 0)
+_test_Div_RoundHalfZero_N1_P3 =  Dict
+_test_Mod_RoundHalfZero_N1_P3 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (P 3) ~ N 1)
+_test_Mod_RoundHalfZero_N1_P3 =  Dict
+_test_Div_RoundHalfZero_N1_P4 :: Dict (K.Div 'K.RoundHalfZero (N 1) (P 4) ~ P 0)
+_test_Div_RoundHalfZero_N1_P4 =  Dict
+_test_Mod_RoundHalfZero_N1_P4 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (P 4) ~ N 1)
+_test_Mod_RoundHalfZero_N1_P4 =  Dict
+_test_Div_RoundHalfZero_N1_P5 :: Dict (K.Div 'K.RoundHalfZero (N 1) (P 5) ~ P 0)
+_test_Div_RoundHalfZero_N1_P5 =  Dict
+_test_Mod_RoundHalfZero_N1_P5 :: Dict (K.Mod 'K.RoundHalfZero (N 1) (P 5) ~ N 1)
+_test_Mod_RoundHalfZero_N1_P5 =  Dict
+_test_Div_RoundHalfZero_N2_N1 :: Dict (K.Div 'K.RoundHalfZero (N 2) (N 1) ~ P 2)
+_test_Div_RoundHalfZero_N2_N1 =  Dict
+_test_Mod_RoundHalfZero_N2_N1 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_N2_N1 =  Dict
+_test_Div_RoundHalfZero_N2_N2 :: Dict (K.Div 'K.RoundHalfZero (N 2) (N 2) ~ P 1)
+_test_Div_RoundHalfZero_N2_N2 =  Dict
+_test_Mod_RoundHalfZero_N2_N2 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfZero_N2_N2 =  Dict
+_test_Div_RoundHalfZero_N2_N3 :: Dict (K.Div 'K.RoundHalfZero (N 2) (N 3) ~ P 1)
+_test_Div_RoundHalfZero_N2_N3 =  Dict
+_test_Mod_RoundHalfZero_N2_N3 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (N 3) ~ P 1)
+_test_Mod_RoundHalfZero_N2_N3 =  Dict
+_test_Div_RoundHalfZero_N2_N4 :: Dict (K.Div 'K.RoundHalfZero (N 2) (N 4) ~ P 0)
+_test_Div_RoundHalfZero_N2_N4 =  Dict
+_test_Mod_RoundHalfZero_N2_N4 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (N 4) ~ N 2)
+_test_Mod_RoundHalfZero_N2_N4 =  Dict
+_test_Div_RoundHalfZero_N2_N5 :: Dict (K.Div 'K.RoundHalfZero (N 2) (N 5) ~ P 0)
+_test_Div_RoundHalfZero_N2_N5 =  Dict
+_test_Mod_RoundHalfZero_N2_N5 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (N 5) ~ N 2)
+_test_Mod_RoundHalfZero_N2_N5 =  Dict
+_test_Div_RoundHalfZero_N2_P1 :: Dict (K.Div 'K.RoundHalfZero (N 2) (P 1) ~ N 2)
+_test_Div_RoundHalfZero_N2_P1 =  Dict
+_test_Mod_RoundHalfZero_N2_P1 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_N2_P1 =  Dict
+_test_Div_RoundHalfZero_N2_P2 :: Dict (K.Div 'K.RoundHalfZero (N 2) (P 2) ~ N 1)
+_test_Div_RoundHalfZero_N2_P2 =  Dict
+_test_Mod_RoundHalfZero_N2_P2 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfZero_N2_P2 =  Dict
+_test_Div_RoundHalfZero_N2_P3 :: Dict (K.Div 'K.RoundHalfZero (N 2) (P 3) ~ N 1)
+_test_Div_RoundHalfZero_N2_P3 =  Dict
+_test_Mod_RoundHalfZero_N2_P3 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (P 3) ~ P 1)
+_test_Mod_RoundHalfZero_N2_P3 =  Dict
+_test_Div_RoundHalfZero_N2_P4 :: Dict (K.Div 'K.RoundHalfZero (N 2) (P 4) ~ P 0)
+_test_Div_RoundHalfZero_N2_P4 =  Dict
+_test_Mod_RoundHalfZero_N2_P4 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (P 4) ~ N 2)
+_test_Mod_RoundHalfZero_N2_P4 =  Dict
+_test_Div_RoundHalfZero_N2_P5 :: Dict (K.Div 'K.RoundHalfZero (N 2) (P 5) ~ P 0)
+_test_Div_RoundHalfZero_N2_P5 =  Dict
+_test_Mod_RoundHalfZero_N2_P5 :: Dict (K.Mod 'K.RoundHalfZero (N 2) (P 5) ~ N 2)
+_test_Mod_RoundHalfZero_N2_P5 =  Dict
+_test_Div_RoundHalfZero_N3_N1 :: Dict (K.Div 'K.RoundHalfZero (N 3) (N 1) ~ P 3)
+_test_Div_RoundHalfZero_N3_N1 =  Dict
+_test_Mod_RoundHalfZero_N3_N1 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_N3_N1 =  Dict
+_test_Div_RoundHalfZero_N3_N2 :: Dict (K.Div 'K.RoundHalfZero (N 3) (N 2) ~ P 1)
+_test_Div_RoundHalfZero_N3_N2 =  Dict
+_test_Mod_RoundHalfZero_N3_N2 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (N 2) ~ N 1)
+_test_Mod_RoundHalfZero_N3_N2 =  Dict
+_test_Div_RoundHalfZero_N3_N3 :: Dict (K.Div 'K.RoundHalfZero (N 3) (N 3) ~ P 1)
+_test_Div_RoundHalfZero_N3_N3 =  Dict
+_test_Mod_RoundHalfZero_N3_N3 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfZero_N3_N3 =  Dict
+_test_Div_RoundHalfZero_N3_N4 :: Dict (K.Div 'K.RoundHalfZero (N 3) (N 4) ~ P 1)
+_test_Div_RoundHalfZero_N3_N4 =  Dict
+_test_Mod_RoundHalfZero_N3_N4 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (N 4) ~ P 1)
+_test_Mod_RoundHalfZero_N3_N4 =  Dict
+_test_Div_RoundHalfZero_N3_N5 :: Dict (K.Div 'K.RoundHalfZero (N 3) (N 5) ~ P 1)
+_test_Div_RoundHalfZero_N3_N5 =  Dict
+_test_Mod_RoundHalfZero_N3_N5 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (N 5) ~ P 2)
+_test_Mod_RoundHalfZero_N3_N5 =  Dict
+_test_Div_RoundHalfZero_N3_P1 :: Dict (K.Div 'K.RoundHalfZero (N 3) (P 1) ~ N 3)
+_test_Div_RoundHalfZero_N3_P1 =  Dict
+_test_Mod_RoundHalfZero_N3_P1 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_N3_P1 =  Dict
+_test_Div_RoundHalfZero_N3_P2 :: Dict (K.Div 'K.RoundHalfZero (N 3) (P 2) ~ N 1)
+_test_Div_RoundHalfZero_N3_P2 =  Dict
+_test_Mod_RoundHalfZero_N3_P2 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (P 2) ~ N 1)
+_test_Mod_RoundHalfZero_N3_P2 =  Dict
+_test_Div_RoundHalfZero_N3_P3 :: Dict (K.Div 'K.RoundHalfZero (N 3) (P 3) ~ N 1)
+_test_Div_RoundHalfZero_N3_P3 =  Dict
+_test_Mod_RoundHalfZero_N3_P3 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfZero_N3_P3 =  Dict
+_test_Div_RoundHalfZero_N3_P4 :: Dict (K.Div 'K.RoundHalfZero (N 3) (P 4) ~ N 1)
+_test_Div_RoundHalfZero_N3_P4 =  Dict
+_test_Mod_RoundHalfZero_N3_P4 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (P 4) ~ P 1)
+_test_Mod_RoundHalfZero_N3_P4 =  Dict
+_test_Div_RoundHalfZero_N3_P5 :: Dict (K.Div 'K.RoundHalfZero (N 3) (P 5) ~ N 1)
+_test_Div_RoundHalfZero_N3_P5 =  Dict
+_test_Mod_RoundHalfZero_N3_P5 :: Dict (K.Mod 'K.RoundHalfZero (N 3) (P 5) ~ P 2)
+_test_Mod_RoundHalfZero_N3_P5 =  Dict
+_test_Div_RoundHalfZero_N4_N1 :: Dict (K.Div 'K.RoundHalfZero (N 4) (N 1) ~ P 4)
+_test_Div_RoundHalfZero_N4_N1 =  Dict
+_test_Mod_RoundHalfZero_N4_N1 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_N4_N1 =  Dict
+_test_Div_RoundHalfZero_N4_N2 :: Dict (K.Div 'K.RoundHalfZero (N 4) (N 2) ~ P 2)
+_test_Div_RoundHalfZero_N4_N2 =  Dict
+_test_Mod_RoundHalfZero_N4_N2 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfZero_N4_N2 =  Dict
+_test_Div_RoundHalfZero_N4_N3 :: Dict (K.Div 'K.RoundHalfZero (N 4) (N 3) ~ P 1)
+_test_Div_RoundHalfZero_N4_N3 =  Dict
+_test_Mod_RoundHalfZero_N4_N3 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (N 3) ~ N 1)
+_test_Mod_RoundHalfZero_N4_N3 =  Dict
+_test_Div_RoundHalfZero_N4_N4 :: Dict (K.Div 'K.RoundHalfZero (N 4) (N 4) ~ P 1)
+_test_Div_RoundHalfZero_N4_N4 =  Dict
+_test_Mod_RoundHalfZero_N4_N4 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfZero_N4_N4 =  Dict
+_test_Div_RoundHalfZero_N4_N5 :: Dict (K.Div 'K.RoundHalfZero (N 4) (N 5) ~ P 1)
+_test_Div_RoundHalfZero_N4_N5 =  Dict
+_test_Mod_RoundHalfZero_N4_N5 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (N 5) ~ P 1)
+_test_Mod_RoundHalfZero_N4_N5 =  Dict
+_test_Div_RoundHalfZero_N4_P1 :: Dict (K.Div 'K.RoundHalfZero (N 4) (P 1) ~ N 4)
+_test_Div_RoundHalfZero_N4_P1 =  Dict
+_test_Mod_RoundHalfZero_N4_P1 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_N4_P1 =  Dict
+_test_Div_RoundHalfZero_N4_P2 :: Dict (K.Div 'K.RoundHalfZero (N 4) (P 2) ~ N 2)
+_test_Div_RoundHalfZero_N4_P2 =  Dict
+_test_Mod_RoundHalfZero_N4_P2 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfZero_N4_P2 =  Dict
+_test_Div_RoundHalfZero_N4_P3 :: Dict (K.Div 'K.RoundHalfZero (N 4) (P 3) ~ N 1)
+_test_Div_RoundHalfZero_N4_P3 =  Dict
+_test_Mod_RoundHalfZero_N4_P3 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (P 3) ~ N 1)
+_test_Mod_RoundHalfZero_N4_P3 =  Dict
+_test_Div_RoundHalfZero_N4_P4 :: Dict (K.Div 'K.RoundHalfZero (N 4) (P 4) ~ N 1)
+_test_Div_RoundHalfZero_N4_P4 =  Dict
+_test_Mod_RoundHalfZero_N4_P4 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfZero_N4_P4 =  Dict
+_test_Div_RoundHalfZero_N4_P5 :: Dict (K.Div 'K.RoundHalfZero (N 4) (P 5) ~ N 1)
+_test_Div_RoundHalfZero_N4_P5 =  Dict
+_test_Mod_RoundHalfZero_N4_P5 :: Dict (K.Mod 'K.RoundHalfZero (N 4) (P 5) ~ P 1)
+_test_Mod_RoundHalfZero_N4_P5 =  Dict
+_test_Div_RoundHalfZero_N5_N1 :: Dict (K.Div 'K.RoundHalfZero (N 5) (N 1) ~ P 5)
+_test_Div_RoundHalfZero_N5_N1 =  Dict
+_test_Mod_RoundHalfZero_N5_N1 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_N5_N1 =  Dict
+_test_Div_RoundHalfZero_N5_N2 :: Dict (K.Div 'K.RoundHalfZero (N 5) (N 2) ~ P 2)
+_test_Div_RoundHalfZero_N5_N2 =  Dict
+_test_Mod_RoundHalfZero_N5_N2 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (N 2) ~ N 1)
+_test_Mod_RoundHalfZero_N5_N2 =  Dict
+_test_Div_RoundHalfZero_N5_N3 :: Dict (K.Div 'K.RoundHalfZero (N 5) (N 3) ~ P 2)
+_test_Div_RoundHalfZero_N5_N3 =  Dict
+_test_Mod_RoundHalfZero_N5_N3 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (N 3) ~ P 1)
+_test_Mod_RoundHalfZero_N5_N3 =  Dict
+_test_Div_RoundHalfZero_N5_N4 :: Dict (K.Div 'K.RoundHalfZero (N 5) (N 4) ~ P 1)
+_test_Div_RoundHalfZero_N5_N4 =  Dict
+_test_Mod_RoundHalfZero_N5_N4 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (N 4) ~ N 1)
+_test_Mod_RoundHalfZero_N5_N4 =  Dict
+_test_Div_RoundHalfZero_N5_N5 :: Dict (K.Div 'K.RoundHalfZero (N 5) (N 5) ~ P 1)
+_test_Div_RoundHalfZero_N5_N5 =  Dict
+_test_Mod_RoundHalfZero_N5_N5 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfZero_N5_N5 =  Dict
+_test_Div_RoundHalfZero_N5_P1 :: Dict (K.Div 'K.RoundHalfZero (N 5) (P 1) ~ N 5)
+_test_Div_RoundHalfZero_N5_P1 =  Dict
+_test_Mod_RoundHalfZero_N5_P1 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_N5_P1 =  Dict
+_test_Div_RoundHalfZero_N5_P2 :: Dict (K.Div 'K.RoundHalfZero (N 5) (P 2) ~ N 2)
+_test_Div_RoundHalfZero_N5_P2 =  Dict
+_test_Mod_RoundHalfZero_N5_P2 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (P 2) ~ N 1)
+_test_Mod_RoundHalfZero_N5_P2 =  Dict
+_test_Div_RoundHalfZero_N5_P3 :: Dict (K.Div 'K.RoundHalfZero (N 5) (P 3) ~ N 2)
+_test_Div_RoundHalfZero_N5_P3 =  Dict
+_test_Mod_RoundHalfZero_N5_P3 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (P 3) ~ P 1)
+_test_Mod_RoundHalfZero_N5_P3 =  Dict
+_test_Div_RoundHalfZero_N5_P4 :: Dict (K.Div 'K.RoundHalfZero (N 5) (P 4) ~ N 1)
+_test_Div_RoundHalfZero_N5_P4 =  Dict
+_test_Mod_RoundHalfZero_N5_P4 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (P 4) ~ N 1)
+_test_Mod_RoundHalfZero_N5_P4 =  Dict
+_test_Div_RoundHalfZero_N5_P5 :: Dict (K.Div 'K.RoundHalfZero (N 5) (P 5) ~ N 1)
+_test_Div_RoundHalfZero_N5_P5 =  Dict
+_test_Mod_RoundHalfZero_N5_P5 :: Dict (K.Mod 'K.RoundHalfZero (N 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfZero_N5_P5 =  Dict
+_test_Div_RoundHalfZero_P0_N1 :: Dict (K.Div 'K.RoundHalfZero (P 0) (N 1) ~ P 0)
+_test_Div_RoundHalfZero_P0_N1 =  Dict
+_test_Mod_RoundHalfZero_P0_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P0_N1 =  Dict
+_test_Div_RoundHalfZero_P0_N2 :: Dict (K.Div 'K.RoundHalfZero (P 0) (N 2) ~ P 0)
+_test_Div_RoundHalfZero_P0_N2 =  Dict
+_test_Mod_RoundHalfZero_P0_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (N 2) ~ P 0)
+_test_Mod_RoundHalfZero_P0_N2 =  Dict
+_test_Div_RoundHalfZero_P0_N3 :: Dict (K.Div 'K.RoundHalfZero (P 0) (N 3) ~ P 0)
+_test_Div_RoundHalfZero_P0_N3 =  Dict
+_test_Mod_RoundHalfZero_P0_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (N 3) ~ P 0)
+_test_Mod_RoundHalfZero_P0_N3 =  Dict
+_test_Div_RoundHalfZero_P0_N4 :: Dict (K.Div 'K.RoundHalfZero (P 0) (N 4) ~ P 0)
+_test_Div_RoundHalfZero_P0_N4 =  Dict
+_test_Mod_RoundHalfZero_P0_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (N 4) ~ P 0)
+_test_Mod_RoundHalfZero_P0_N4 =  Dict
+_test_Div_RoundHalfZero_P0_N5 :: Dict (K.Div 'K.RoundHalfZero (P 0) (N 5) ~ P 0)
+_test_Div_RoundHalfZero_P0_N5 =  Dict
+_test_Mod_RoundHalfZero_P0_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (N 5) ~ P 0)
+_test_Mod_RoundHalfZero_P0_N5 =  Dict
+_test_Div_RoundHalfZero_P0_P1 :: Dict (K.Div 'K.RoundHalfZero (P 0) (P 1) ~ P 0)
+_test_Div_RoundHalfZero_P0_P1 =  Dict
+_test_Mod_RoundHalfZero_P0_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P0_P1 =  Dict
+_test_Div_RoundHalfZero_P0_P2 :: Dict (K.Div 'K.RoundHalfZero (P 0) (P 2) ~ P 0)
+_test_Div_RoundHalfZero_P0_P2 =  Dict
+_test_Mod_RoundHalfZero_P0_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (P 2) ~ P 0)
+_test_Mod_RoundHalfZero_P0_P2 =  Dict
+_test_Div_RoundHalfZero_P0_P3 :: Dict (K.Div 'K.RoundHalfZero (P 0) (P 3) ~ P 0)
+_test_Div_RoundHalfZero_P0_P3 =  Dict
+_test_Mod_RoundHalfZero_P0_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (P 3) ~ P 0)
+_test_Mod_RoundHalfZero_P0_P3 =  Dict
+_test_Div_RoundHalfZero_P0_P4 :: Dict (K.Div 'K.RoundHalfZero (P 0) (P 4) ~ P 0)
+_test_Div_RoundHalfZero_P0_P4 =  Dict
+_test_Mod_RoundHalfZero_P0_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (P 4) ~ P 0)
+_test_Mod_RoundHalfZero_P0_P4 =  Dict
+_test_Div_RoundHalfZero_P0_P5 :: Dict (K.Div 'K.RoundHalfZero (P 0) (P 5) ~ P 0)
+_test_Div_RoundHalfZero_P0_P5 =  Dict
+_test_Mod_RoundHalfZero_P0_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 0) (P 5) ~ P 0)
+_test_Mod_RoundHalfZero_P0_P5 =  Dict
+_test_Div_RoundHalfZero_P1_N1 :: Dict (K.Div 'K.RoundHalfZero (P 1) (N 1) ~ N 1)
+_test_Div_RoundHalfZero_P1_N1 =  Dict
+_test_Mod_RoundHalfZero_P1_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P1_N1 =  Dict
+_test_Div_RoundHalfZero_P1_N2 :: Dict (K.Div 'K.RoundHalfZero (P 1) (N 2) ~ P 0)
+_test_Div_RoundHalfZero_P1_N2 =  Dict
+_test_Mod_RoundHalfZero_P1_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (N 2) ~ P 1)
+_test_Mod_RoundHalfZero_P1_N2 =  Dict
+_test_Div_RoundHalfZero_P1_N3 :: Dict (K.Div 'K.RoundHalfZero (P 1) (N 3) ~ P 0)
+_test_Div_RoundHalfZero_P1_N3 =  Dict
+_test_Mod_RoundHalfZero_P1_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (N 3) ~ P 1)
+_test_Mod_RoundHalfZero_P1_N3 =  Dict
+_test_Div_RoundHalfZero_P1_N4 :: Dict (K.Div 'K.RoundHalfZero (P 1) (N 4) ~ P 0)
+_test_Div_RoundHalfZero_P1_N4 =  Dict
+_test_Mod_RoundHalfZero_P1_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (N 4) ~ P 1)
+_test_Mod_RoundHalfZero_P1_N4 =  Dict
+_test_Div_RoundHalfZero_P1_N5 :: Dict (K.Div 'K.RoundHalfZero (P 1) (N 5) ~ P 0)
+_test_Div_RoundHalfZero_P1_N5 =  Dict
+_test_Mod_RoundHalfZero_P1_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (N 5) ~ P 1)
+_test_Mod_RoundHalfZero_P1_N5 =  Dict
+_test_Div_RoundHalfZero_P1_P1 :: Dict (K.Div 'K.RoundHalfZero (P 1) (P 1) ~ P 1)
+_test_Div_RoundHalfZero_P1_P1 =  Dict
+_test_Mod_RoundHalfZero_P1_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P1_P1 =  Dict
+_test_Div_RoundHalfZero_P1_P2 :: Dict (K.Div 'K.RoundHalfZero (P 1) (P 2) ~ P 0)
+_test_Div_RoundHalfZero_P1_P2 =  Dict
+_test_Mod_RoundHalfZero_P1_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (P 2) ~ P 1)
+_test_Mod_RoundHalfZero_P1_P2 =  Dict
+_test_Div_RoundHalfZero_P1_P3 :: Dict (K.Div 'K.RoundHalfZero (P 1) (P 3) ~ P 0)
+_test_Div_RoundHalfZero_P1_P3 =  Dict
+_test_Mod_RoundHalfZero_P1_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (P 3) ~ P 1)
+_test_Mod_RoundHalfZero_P1_P3 =  Dict
+_test_Div_RoundHalfZero_P1_P4 :: Dict (K.Div 'K.RoundHalfZero (P 1) (P 4) ~ P 0)
+_test_Div_RoundHalfZero_P1_P4 =  Dict
+_test_Mod_RoundHalfZero_P1_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (P 4) ~ P 1)
+_test_Mod_RoundHalfZero_P1_P4 =  Dict
+_test_Div_RoundHalfZero_P1_P5 :: Dict (K.Div 'K.RoundHalfZero (P 1) (P 5) ~ P 0)
+_test_Div_RoundHalfZero_P1_P5 =  Dict
+_test_Mod_RoundHalfZero_P1_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 1) (P 5) ~ P 1)
+_test_Mod_RoundHalfZero_P1_P5 =  Dict
+_test_Div_RoundHalfZero_P2_N1 :: Dict (K.Div 'K.RoundHalfZero (P 2) (N 1) ~ N 2)
+_test_Div_RoundHalfZero_P2_N1 =  Dict
+_test_Mod_RoundHalfZero_P2_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P2_N1 =  Dict
+_test_Div_RoundHalfZero_P2_N2 :: Dict (K.Div 'K.RoundHalfZero (P 2) (N 2) ~ N 1)
+_test_Div_RoundHalfZero_P2_N2 =  Dict
+_test_Mod_RoundHalfZero_P2_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (N 2) ~ P 0)
+_test_Mod_RoundHalfZero_P2_N2 =  Dict
+_test_Div_RoundHalfZero_P2_N3 :: Dict (K.Div 'K.RoundHalfZero (P 2) (N 3) ~ N 1)
+_test_Div_RoundHalfZero_P2_N3 =  Dict
+_test_Mod_RoundHalfZero_P2_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (N 3) ~ N 1)
+_test_Mod_RoundHalfZero_P2_N3 =  Dict
+_test_Div_RoundHalfZero_P2_N4 :: Dict (K.Div 'K.RoundHalfZero (P 2) (N 4) ~ P 0)
+_test_Div_RoundHalfZero_P2_N4 =  Dict
+_test_Mod_RoundHalfZero_P2_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (N 4) ~ P 2)
+_test_Mod_RoundHalfZero_P2_N4 =  Dict
+_test_Div_RoundHalfZero_P2_N5 :: Dict (K.Div 'K.RoundHalfZero (P 2) (N 5) ~ P 0)
+_test_Div_RoundHalfZero_P2_N5 =  Dict
+_test_Mod_RoundHalfZero_P2_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (N 5) ~ P 2)
+_test_Mod_RoundHalfZero_P2_N5 =  Dict
+_test_Div_RoundHalfZero_P2_P1 :: Dict (K.Div 'K.RoundHalfZero (P 2) (P 1) ~ P 2)
+_test_Div_RoundHalfZero_P2_P1 =  Dict
+_test_Mod_RoundHalfZero_P2_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P2_P1 =  Dict
+_test_Div_RoundHalfZero_P2_P2 :: Dict (K.Div 'K.RoundHalfZero (P 2) (P 2) ~ P 1)
+_test_Div_RoundHalfZero_P2_P2 =  Dict
+_test_Mod_RoundHalfZero_P2_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (P 2) ~ P 0)
+_test_Mod_RoundHalfZero_P2_P2 =  Dict
+_test_Div_RoundHalfZero_P2_P3 :: Dict (K.Div 'K.RoundHalfZero (P 2) (P 3) ~ P 1)
+_test_Div_RoundHalfZero_P2_P3 =  Dict
+_test_Mod_RoundHalfZero_P2_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (P 3) ~ N 1)
+_test_Mod_RoundHalfZero_P2_P3 =  Dict
+_test_Div_RoundHalfZero_P2_P4 :: Dict (K.Div 'K.RoundHalfZero (P 2) (P 4) ~ P 0)
+_test_Div_RoundHalfZero_P2_P4 =  Dict
+_test_Mod_RoundHalfZero_P2_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (P 4) ~ P 2)
+_test_Mod_RoundHalfZero_P2_P4 =  Dict
+_test_Div_RoundHalfZero_P2_P5 :: Dict (K.Div 'K.RoundHalfZero (P 2) (P 5) ~ P 0)
+_test_Div_RoundHalfZero_P2_P5 =  Dict
+_test_Mod_RoundHalfZero_P2_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 2) (P 5) ~ P 2)
+_test_Mod_RoundHalfZero_P2_P5 =  Dict
+_test_Div_RoundHalfZero_P3_N1 :: Dict (K.Div 'K.RoundHalfZero (P 3) (N 1) ~ N 3)
+_test_Div_RoundHalfZero_P3_N1 =  Dict
+_test_Mod_RoundHalfZero_P3_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P3_N1 =  Dict
+_test_Div_RoundHalfZero_P3_N2 :: Dict (K.Div 'K.RoundHalfZero (P 3) (N 2) ~ N 1)
+_test_Div_RoundHalfZero_P3_N2 =  Dict
+_test_Mod_RoundHalfZero_P3_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (N 2) ~ P 1)
+_test_Mod_RoundHalfZero_P3_N2 =  Dict
+_test_Div_RoundHalfZero_P3_N3 :: Dict (K.Div 'K.RoundHalfZero (P 3) (N 3) ~ N 1)
+_test_Div_RoundHalfZero_P3_N3 =  Dict
+_test_Mod_RoundHalfZero_P3_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (N 3) ~ P 0)
+_test_Mod_RoundHalfZero_P3_N3 =  Dict
+_test_Div_RoundHalfZero_P3_N4 :: Dict (K.Div 'K.RoundHalfZero (P 3) (N 4) ~ N 1)
+_test_Div_RoundHalfZero_P3_N4 =  Dict
+_test_Mod_RoundHalfZero_P3_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (N 4) ~ N 1)
+_test_Mod_RoundHalfZero_P3_N4 =  Dict
+_test_Div_RoundHalfZero_P3_N5 :: Dict (K.Div 'K.RoundHalfZero (P 3) (N 5) ~ N 1)
+_test_Div_RoundHalfZero_P3_N5 =  Dict
+_test_Mod_RoundHalfZero_P3_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (N 5) ~ N 2)
+_test_Mod_RoundHalfZero_P3_N5 =  Dict
+_test_Div_RoundHalfZero_P3_P1 :: Dict (K.Div 'K.RoundHalfZero (P 3) (P 1) ~ P 3)
+_test_Div_RoundHalfZero_P3_P1 =  Dict
+_test_Mod_RoundHalfZero_P3_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P3_P1 =  Dict
+_test_Div_RoundHalfZero_P3_P2 :: Dict (K.Div 'K.RoundHalfZero (P 3) (P 2) ~ P 1)
+_test_Div_RoundHalfZero_P3_P2 =  Dict
+_test_Mod_RoundHalfZero_P3_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (P 2) ~ P 1)
+_test_Mod_RoundHalfZero_P3_P2 =  Dict
+_test_Div_RoundHalfZero_P3_P3 :: Dict (K.Div 'K.RoundHalfZero (P 3) (P 3) ~ P 1)
+_test_Div_RoundHalfZero_P3_P3 =  Dict
+_test_Mod_RoundHalfZero_P3_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (P 3) ~ P 0)
+_test_Mod_RoundHalfZero_P3_P3 =  Dict
+_test_Div_RoundHalfZero_P3_P4 :: Dict (K.Div 'K.RoundHalfZero (P 3) (P 4) ~ P 1)
+_test_Div_RoundHalfZero_P3_P4 =  Dict
+_test_Mod_RoundHalfZero_P3_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (P 4) ~ N 1)
+_test_Mod_RoundHalfZero_P3_P4 =  Dict
+_test_Div_RoundHalfZero_P3_P5 :: Dict (K.Div 'K.RoundHalfZero (P 3) (P 5) ~ P 1)
+_test_Div_RoundHalfZero_P3_P5 =  Dict
+_test_Mod_RoundHalfZero_P3_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 3) (P 5) ~ N 2)
+_test_Mod_RoundHalfZero_P3_P5 =  Dict
+_test_Div_RoundHalfZero_P4_N1 :: Dict (K.Div 'K.RoundHalfZero (P 4) (N 1) ~ N 4)
+_test_Div_RoundHalfZero_P4_N1 =  Dict
+_test_Mod_RoundHalfZero_P4_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P4_N1 =  Dict
+_test_Div_RoundHalfZero_P4_N2 :: Dict (K.Div 'K.RoundHalfZero (P 4) (N 2) ~ N 2)
+_test_Div_RoundHalfZero_P4_N2 =  Dict
+_test_Mod_RoundHalfZero_P4_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (N 2) ~ P 0)
+_test_Mod_RoundHalfZero_P4_N2 =  Dict
+_test_Div_RoundHalfZero_P4_N3 :: Dict (K.Div 'K.RoundHalfZero (P 4) (N 3) ~ N 1)
+_test_Div_RoundHalfZero_P4_N3 =  Dict
+_test_Mod_RoundHalfZero_P4_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (N 3) ~ P 1)
+_test_Mod_RoundHalfZero_P4_N3 =  Dict
+_test_Div_RoundHalfZero_P4_N4 :: Dict (K.Div 'K.RoundHalfZero (P 4) (N 4) ~ N 1)
+_test_Div_RoundHalfZero_P4_N4 =  Dict
+_test_Mod_RoundHalfZero_P4_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (N 4) ~ P 0)
+_test_Mod_RoundHalfZero_P4_N4 =  Dict
+_test_Div_RoundHalfZero_P4_N5 :: Dict (K.Div 'K.RoundHalfZero (P 4) (N 5) ~ N 1)
+_test_Div_RoundHalfZero_P4_N5 =  Dict
+_test_Mod_RoundHalfZero_P4_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (N 5) ~ N 1)
+_test_Mod_RoundHalfZero_P4_N5 =  Dict
+_test_Div_RoundHalfZero_P4_P1 :: Dict (K.Div 'K.RoundHalfZero (P 4) (P 1) ~ P 4)
+_test_Div_RoundHalfZero_P4_P1 =  Dict
+_test_Mod_RoundHalfZero_P4_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P4_P1 =  Dict
+_test_Div_RoundHalfZero_P4_P2 :: Dict (K.Div 'K.RoundHalfZero (P 4) (P 2) ~ P 2)
+_test_Div_RoundHalfZero_P4_P2 =  Dict
+_test_Mod_RoundHalfZero_P4_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (P 2) ~ P 0)
+_test_Mod_RoundHalfZero_P4_P2 =  Dict
+_test_Div_RoundHalfZero_P4_P3 :: Dict (K.Div 'K.RoundHalfZero (P 4) (P 3) ~ P 1)
+_test_Div_RoundHalfZero_P4_P3 =  Dict
+_test_Mod_RoundHalfZero_P4_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (P 3) ~ P 1)
+_test_Mod_RoundHalfZero_P4_P3 =  Dict
+_test_Div_RoundHalfZero_P4_P4 :: Dict (K.Div 'K.RoundHalfZero (P 4) (P 4) ~ P 1)
+_test_Div_RoundHalfZero_P4_P4 =  Dict
+_test_Mod_RoundHalfZero_P4_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (P 4) ~ P 0)
+_test_Mod_RoundHalfZero_P4_P4 =  Dict
+_test_Div_RoundHalfZero_P4_P5 :: Dict (K.Div 'K.RoundHalfZero (P 4) (P 5) ~ P 1)
+_test_Div_RoundHalfZero_P4_P5 =  Dict
+_test_Mod_RoundHalfZero_P4_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 4) (P 5) ~ N 1)
+_test_Mod_RoundHalfZero_P4_P5 =  Dict
+_test_Div_RoundHalfZero_P5_N1 :: Dict (K.Div 'K.RoundHalfZero (P 5) (N 1) ~ N 5)
+_test_Div_RoundHalfZero_P5_N1 =  Dict
+_test_Mod_RoundHalfZero_P5_N1 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (N 1) ~ P 0)
+_test_Mod_RoundHalfZero_P5_N1 =  Dict
+_test_Div_RoundHalfZero_P5_N2 :: Dict (K.Div 'K.RoundHalfZero (P 5) (N 2) ~ N 2)
+_test_Div_RoundHalfZero_P5_N2 =  Dict
+_test_Mod_RoundHalfZero_P5_N2 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (N 2) ~ P 1)
+_test_Mod_RoundHalfZero_P5_N2 =  Dict
+_test_Div_RoundHalfZero_P5_N3 :: Dict (K.Div 'K.RoundHalfZero (P 5) (N 3) ~ N 2)
+_test_Div_RoundHalfZero_P5_N3 =  Dict
+_test_Mod_RoundHalfZero_P5_N3 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (N 3) ~ N 1)
+_test_Mod_RoundHalfZero_P5_N3 =  Dict
+_test_Div_RoundHalfZero_P5_N4 :: Dict (K.Div 'K.RoundHalfZero (P 5) (N 4) ~ N 1)
+_test_Div_RoundHalfZero_P5_N4 =  Dict
+_test_Mod_RoundHalfZero_P5_N4 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (N 4) ~ P 1)
+_test_Mod_RoundHalfZero_P5_N4 =  Dict
+_test_Div_RoundHalfZero_P5_N5 :: Dict (K.Div 'K.RoundHalfZero (P 5) (N 5) ~ N 1)
+_test_Div_RoundHalfZero_P5_N5 =  Dict
+_test_Mod_RoundHalfZero_P5_N5 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (N 5) ~ P 0)
+_test_Mod_RoundHalfZero_P5_N5 =  Dict
+_test_Div_RoundHalfZero_P5_P1 :: Dict (K.Div 'K.RoundHalfZero (P 5) (P 1) ~ P 5)
+_test_Div_RoundHalfZero_P5_P1 =  Dict
+_test_Mod_RoundHalfZero_P5_P1 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (P 1) ~ P 0)
+_test_Mod_RoundHalfZero_P5_P1 =  Dict
+_test_Div_RoundHalfZero_P5_P2 :: Dict (K.Div 'K.RoundHalfZero (P 5) (P 2) ~ P 2)
+_test_Div_RoundHalfZero_P5_P2 =  Dict
+_test_Mod_RoundHalfZero_P5_P2 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (P 2) ~ P 1)
+_test_Mod_RoundHalfZero_P5_P2 =  Dict
+_test_Div_RoundHalfZero_P5_P3 :: Dict (K.Div 'K.RoundHalfZero (P 5) (P 3) ~ P 2)
+_test_Div_RoundHalfZero_P5_P3 =  Dict
+_test_Mod_RoundHalfZero_P5_P3 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (P 3) ~ N 1)
+_test_Mod_RoundHalfZero_P5_P3 =  Dict
+_test_Div_RoundHalfZero_P5_P4 :: Dict (K.Div 'K.RoundHalfZero (P 5) (P 4) ~ P 1)
+_test_Div_RoundHalfZero_P5_P4 =  Dict
+_test_Mod_RoundHalfZero_P5_P4 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (P 4) ~ P 1)
+_test_Mod_RoundHalfZero_P5_P4 =  Dict
+_test_Div_RoundHalfZero_P5_P5 :: Dict (K.Div 'K.RoundHalfZero (P 5) (P 5) ~ P 1)
+_test_Div_RoundHalfZero_P5_P5 =  Dict
+_test_Mod_RoundHalfZero_P5_P5 :: Dict (K.Mod 'K.RoundHalfZero (P 5) (P 5) ~ P 0)
+_test_Mod_RoundHalfZero_P5_P5 =  Dict
+_test_Div_RoundUp_N1_N1 :: Dict (K.Div 'K.RoundUp (N 1) (N 1) ~ P 1)
+_test_Div_RoundUp_N1_N1 =  Dict
+_test_Mod_RoundUp_N1_N1 :: Dict (K.Mod 'K.RoundUp (N 1) (N 1) ~ P 0)
+_test_Mod_RoundUp_N1_N1 =  Dict
+_test_Div_RoundUp_N1_N2 :: Dict (K.Div 'K.RoundUp (N 1) (N 2) ~ P 1)
+_test_Div_RoundUp_N1_N2 =  Dict
+_test_Mod_RoundUp_N1_N2 :: Dict (K.Mod 'K.RoundUp (N 1) (N 2) ~ P 1)
+_test_Mod_RoundUp_N1_N2 =  Dict
+_test_Div_RoundUp_N1_N3 :: Dict (K.Div 'K.RoundUp (N 1) (N 3) ~ P 1)
+_test_Div_RoundUp_N1_N3 =  Dict
+_test_Mod_RoundUp_N1_N3 :: Dict (K.Mod 'K.RoundUp (N 1) (N 3) ~ P 2)
+_test_Mod_RoundUp_N1_N3 =  Dict
+_test_Div_RoundUp_N1_N4 :: Dict (K.Div 'K.RoundUp (N 1) (N 4) ~ P 1)
+_test_Div_RoundUp_N1_N4 =  Dict
+_test_Mod_RoundUp_N1_N4 :: Dict (K.Mod 'K.RoundUp (N 1) (N 4) ~ P 3)
+_test_Mod_RoundUp_N1_N4 =  Dict
+_test_Div_RoundUp_N1_N5 :: Dict (K.Div 'K.RoundUp (N 1) (N 5) ~ P 1)
+_test_Div_RoundUp_N1_N5 =  Dict
+_test_Mod_RoundUp_N1_N5 :: Dict (K.Mod 'K.RoundUp (N 1) (N 5) ~ P 4)
+_test_Mod_RoundUp_N1_N5 =  Dict
+_test_Div_RoundUp_N1_P1 :: Dict (K.Div 'K.RoundUp (N 1) (P 1) ~ N 1)
+_test_Div_RoundUp_N1_P1 =  Dict
+_test_Mod_RoundUp_N1_P1 :: Dict (K.Mod 'K.RoundUp (N 1) (P 1) ~ P 0)
+_test_Mod_RoundUp_N1_P1 =  Dict
+_test_Div_RoundUp_N1_P2 :: Dict (K.Div 'K.RoundUp (N 1) (P 2) ~ P 0)
+_test_Div_RoundUp_N1_P2 =  Dict
+_test_Mod_RoundUp_N1_P2 :: Dict (K.Mod 'K.RoundUp (N 1) (P 2) ~ N 1)
+_test_Mod_RoundUp_N1_P2 =  Dict
+_test_Div_RoundUp_N1_P3 :: Dict (K.Div 'K.RoundUp (N 1) (P 3) ~ P 0)
+_test_Div_RoundUp_N1_P3 =  Dict
+_test_Mod_RoundUp_N1_P3 :: Dict (K.Mod 'K.RoundUp (N 1) (P 3) ~ N 1)
+_test_Mod_RoundUp_N1_P3 =  Dict
+_test_Div_RoundUp_N1_P4 :: Dict (K.Div 'K.RoundUp (N 1) (P 4) ~ P 0)
+_test_Div_RoundUp_N1_P4 =  Dict
+_test_Mod_RoundUp_N1_P4 :: Dict (K.Mod 'K.RoundUp (N 1) (P 4) ~ N 1)
+_test_Mod_RoundUp_N1_P4 =  Dict
+_test_Div_RoundUp_N1_P5 :: Dict (K.Div 'K.RoundUp (N 1) (P 5) ~ P 0)
+_test_Div_RoundUp_N1_P5 =  Dict
+_test_Mod_RoundUp_N1_P5 :: Dict (K.Mod 'K.RoundUp (N 1) (P 5) ~ N 1)
+_test_Mod_RoundUp_N1_P5 =  Dict
+_test_Div_RoundUp_N2_N1 :: Dict (K.Div 'K.RoundUp (N 2) (N 1) ~ P 2)
+_test_Div_RoundUp_N2_N1 =  Dict
+_test_Mod_RoundUp_N2_N1 :: Dict (K.Mod 'K.RoundUp (N 2) (N 1) ~ P 0)
+_test_Mod_RoundUp_N2_N1 =  Dict
+_test_Div_RoundUp_N2_N2 :: Dict (K.Div 'K.RoundUp (N 2) (N 2) ~ P 1)
+_test_Div_RoundUp_N2_N2 =  Dict
+_test_Mod_RoundUp_N2_N2 :: Dict (K.Mod 'K.RoundUp (N 2) (N 2) ~ P 0)
+_test_Mod_RoundUp_N2_N2 =  Dict
+_test_Div_RoundUp_N2_N3 :: Dict (K.Div 'K.RoundUp (N 2) (N 3) ~ P 1)
+_test_Div_RoundUp_N2_N3 =  Dict
+_test_Mod_RoundUp_N2_N3 :: Dict (K.Mod 'K.RoundUp (N 2) (N 3) ~ P 1)
+_test_Mod_RoundUp_N2_N3 =  Dict
+_test_Div_RoundUp_N2_N4 :: Dict (K.Div 'K.RoundUp (N 2) (N 4) ~ P 1)
+_test_Div_RoundUp_N2_N4 =  Dict
+_test_Mod_RoundUp_N2_N4 :: Dict (K.Mod 'K.RoundUp (N 2) (N 4) ~ P 2)
+_test_Mod_RoundUp_N2_N4 =  Dict
+_test_Div_RoundUp_N2_N5 :: Dict (K.Div 'K.RoundUp (N 2) (N 5) ~ P 1)
+_test_Div_RoundUp_N2_N5 =  Dict
+_test_Mod_RoundUp_N2_N5 :: Dict (K.Mod 'K.RoundUp (N 2) (N 5) ~ P 3)
+_test_Mod_RoundUp_N2_N5 =  Dict
+_test_Div_RoundUp_N2_P1 :: Dict (K.Div 'K.RoundUp (N 2) (P 1) ~ N 2)
+_test_Div_RoundUp_N2_P1 =  Dict
+_test_Mod_RoundUp_N2_P1 :: Dict (K.Mod 'K.RoundUp (N 2) (P 1) ~ P 0)
+_test_Mod_RoundUp_N2_P1 =  Dict
+_test_Div_RoundUp_N2_P2 :: Dict (K.Div 'K.RoundUp (N 2) (P 2) ~ N 1)
+_test_Div_RoundUp_N2_P2 =  Dict
+_test_Mod_RoundUp_N2_P2 :: Dict (K.Mod 'K.RoundUp (N 2) (P 2) ~ P 0)
+_test_Mod_RoundUp_N2_P2 =  Dict
+_test_Div_RoundUp_N2_P3 :: Dict (K.Div 'K.RoundUp (N 2) (P 3) ~ P 0)
+_test_Div_RoundUp_N2_P3 =  Dict
+_test_Mod_RoundUp_N2_P3 :: Dict (K.Mod 'K.RoundUp (N 2) (P 3) ~ N 2)
+_test_Mod_RoundUp_N2_P3 =  Dict
+_test_Div_RoundUp_N2_P4 :: Dict (K.Div 'K.RoundUp (N 2) (P 4) ~ P 0)
+_test_Div_RoundUp_N2_P4 =  Dict
+_test_Mod_RoundUp_N2_P4 :: Dict (K.Mod 'K.RoundUp (N 2) (P 4) ~ N 2)
+_test_Mod_RoundUp_N2_P4 =  Dict
+_test_Div_RoundUp_N2_P5 :: Dict (K.Div 'K.RoundUp (N 2) (P 5) ~ P 0)
+_test_Div_RoundUp_N2_P5 =  Dict
+_test_Mod_RoundUp_N2_P5 :: Dict (K.Mod 'K.RoundUp (N 2) (P 5) ~ N 2)
+_test_Mod_RoundUp_N2_P5 =  Dict
+_test_Div_RoundUp_N3_N1 :: Dict (K.Div 'K.RoundUp (N 3) (N 1) ~ P 3)
+_test_Div_RoundUp_N3_N1 =  Dict
+_test_Mod_RoundUp_N3_N1 :: Dict (K.Mod 'K.RoundUp (N 3) (N 1) ~ P 0)
+_test_Mod_RoundUp_N3_N1 =  Dict
+_test_Div_RoundUp_N3_N2 :: Dict (K.Div 'K.RoundUp (N 3) (N 2) ~ P 2)
+_test_Div_RoundUp_N3_N2 =  Dict
+_test_Mod_RoundUp_N3_N2 :: Dict (K.Mod 'K.RoundUp (N 3) (N 2) ~ P 1)
+_test_Mod_RoundUp_N3_N2 =  Dict
+_test_Div_RoundUp_N3_N3 :: Dict (K.Div 'K.RoundUp (N 3) (N 3) ~ P 1)
+_test_Div_RoundUp_N3_N3 =  Dict
+_test_Mod_RoundUp_N3_N3 :: Dict (K.Mod 'K.RoundUp (N 3) (N 3) ~ P 0)
+_test_Mod_RoundUp_N3_N3 =  Dict
+_test_Div_RoundUp_N3_N4 :: Dict (K.Div 'K.RoundUp (N 3) (N 4) ~ P 1)
+_test_Div_RoundUp_N3_N4 =  Dict
+_test_Mod_RoundUp_N3_N4 :: Dict (K.Mod 'K.RoundUp (N 3) (N 4) ~ P 1)
+_test_Mod_RoundUp_N3_N4 =  Dict
+_test_Div_RoundUp_N3_N5 :: Dict (K.Div 'K.RoundUp (N 3) (N 5) ~ P 1)
+_test_Div_RoundUp_N3_N5 =  Dict
+_test_Mod_RoundUp_N3_N5 :: Dict (K.Mod 'K.RoundUp (N 3) (N 5) ~ P 2)
+_test_Mod_RoundUp_N3_N5 =  Dict
+_test_Div_RoundUp_N3_P1 :: Dict (K.Div 'K.RoundUp (N 3) (P 1) ~ N 3)
+_test_Div_RoundUp_N3_P1 =  Dict
+_test_Mod_RoundUp_N3_P1 :: Dict (K.Mod 'K.RoundUp (N 3) (P 1) ~ P 0)
+_test_Mod_RoundUp_N3_P1 =  Dict
+_test_Div_RoundUp_N3_P2 :: Dict (K.Div 'K.RoundUp (N 3) (P 2) ~ N 1)
+_test_Div_RoundUp_N3_P2 =  Dict
+_test_Mod_RoundUp_N3_P2 :: Dict (K.Mod 'K.RoundUp (N 3) (P 2) ~ N 1)
+_test_Mod_RoundUp_N3_P2 =  Dict
+_test_Div_RoundUp_N3_P3 :: Dict (K.Div 'K.RoundUp (N 3) (P 3) ~ N 1)
+_test_Div_RoundUp_N3_P3 =  Dict
+_test_Mod_RoundUp_N3_P3 :: Dict (K.Mod 'K.RoundUp (N 3) (P 3) ~ P 0)
+_test_Mod_RoundUp_N3_P3 =  Dict
+_test_Div_RoundUp_N3_P4 :: Dict (K.Div 'K.RoundUp (N 3) (P 4) ~ P 0)
+_test_Div_RoundUp_N3_P4 =  Dict
+_test_Mod_RoundUp_N3_P4 :: Dict (K.Mod 'K.RoundUp (N 3) (P 4) ~ N 3)
+_test_Mod_RoundUp_N3_P4 =  Dict
+_test_Div_RoundUp_N3_P5 :: Dict (K.Div 'K.RoundUp (N 3) (P 5) ~ P 0)
+_test_Div_RoundUp_N3_P5 =  Dict
+_test_Mod_RoundUp_N3_P5 :: Dict (K.Mod 'K.RoundUp (N 3) (P 5) ~ N 3)
+_test_Mod_RoundUp_N3_P5 =  Dict
+_test_Div_RoundUp_N4_N1 :: Dict (K.Div 'K.RoundUp (N 4) (N 1) ~ P 4)
+_test_Div_RoundUp_N4_N1 =  Dict
+_test_Mod_RoundUp_N4_N1 :: Dict (K.Mod 'K.RoundUp (N 4) (N 1) ~ P 0)
+_test_Mod_RoundUp_N4_N1 =  Dict
+_test_Div_RoundUp_N4_N2 :: Dict (K.Div 'K.RoundUp (N 4) (N 2) ~ P 2)
+_test_Div_RoundUp_N4_N2 =  Dict
+_test_Mod_RoundUp_N4_N2 :: Dict (K.Mod 'K.RoundUp (N 4) (N 2) ~ P 0)
+_test_Mod_RoundUp_N4_N2 =  Dict
+_test_Div_RoundUp_N4_N3 :: Dict (K.Div 'K.RoundUp (N 4) (N 3) ~ P 2)
+_test_Div_RoundUp_N4_N3 =  Dict
+_test_Mod_RoundUp_N4_N3 :: Dict (K.Mod 'K.RoundUp (N 4) (N 3) ~ P 2)
+_test_Mod_RoundUp_N4_N3 =  Dict
+_test_Div_RoundUp_N4_N4 :: Dict (K.Div 'K.RoundUp (N 4) (N 4) ~ P 1)
+_test_Div_RoundUp_N4_N4 =  Dict
+_test_Mod_RoundUp_N4_N4 :: Dict (K.Mod 'K.RoundUp (N 4) (N 4) ~ P 0)
+_test_Mod_RoundUp_N4_N4 =  Dict
+_test_Div_RoundUp_N4_N5 :: Dict (K.Div 'K.RoundUp (N 4) (N 5) ~ P 1)
+_test_Div_RoundUp_N4_N5 =  Dict
+_test_Mod_RoundUp_N4_N5 :: Dict (K.Mod 'K.RoundUp (N 4) (N 5) ~ P 1)
+_test_Mod_RoundUp_N4_N5 =  Dict
+_test_Div_RoundUp_N4_P1 :: Dict (K.Div 'K.RoundUp (N 4) (P 1) ~ N 4)
+_test_Div_RoundUp_N4_P1 =  Dict
+_test_Mod_RoundUp_N4_P1 :: Dict (K.Mod 'K.RoundUp (N 4) (P 1) ~ P 0)
+_test_Mod_RoundUp_N4_P1 =  Dict
+_test_Div_RoundUp_N4_P2 :: Dict (K.Div 'K.RoundUp (N 4) (P 2) ~ N 2)
+_test_Div_RoundUp_N4_P2 =  Dict
+_test_Mod_RoundUp_N4_P2 :: Dict (K.Mod 'K.RoundUp (N 4) (P 2) ~ P 0)
+_test_Mod_RoundUp_N4_P2 =  Dict
+_test_Div_RoundUp_N4_P3 :: Dict (K.Div 'K.RoundUp (N 4) (P 3) ~ N 1)
+_test_Div_RoundUp_N4_P3 =  Dict
+_test_Mod_RoundUp_N4_P3 :: Dict (K.Mod 'K.RoundUp (N 4) (P 3) ~ N 1)
+_test_Mod_RoundUp_N4_P3 =  Dict
+_test_Div_RoundUp_N4_P4 :: Dict (K.Div 'K.RoundUp (N 4) (P 4) ~ N 1)
+_test_Div_RoundUp_N4_P4 =  Dict
+_test_Mod_RoundUp_N4_P4 :: Dict (K.Mod 'K.RoundUp (N 4) (P 4) ~ P 0)
+_test_Mod_RoundUp_N4_P4 =  Dict
+_test_Div_RoundUp_N4_P5 :: Dict (K.Div 'K.RoundUp (N 4) (P 5) ~ P 0)
+_test_Div_RoundUp_N4_P5 =  Dict
+_test_Mod_RoundUp_N4_P5 :: Dict (K.Mod 'K.RoundUp (N 4) (P 5) ~ N 4)
+_test_Mod_RoundUp_N4_P5 =  Dict
+_test_Div_RoundUp_N5_N1 :: Dict (K.Div 'K.RoundUp (N 5) (N 1) ~ P 5)
+_test_Div_RoundUp_N5_N1 =  Dict
+_test_Mod_RoundUp_N5_N1 :: Dict (K.Mod 'K.RoundUp (N 5) (N 1) ~ P 0)
+_test_Mod_RoundUp_N5_N1 =  Dict
+_test_Div_RoundUp_N5_N2 :: Dict (K.Div 'K.RoundUp (N 5) (N 2) ~ P 3)
+_test_Div_RoundUp_N5_N2 =  Dict
+_test_Mod_RoundUp_N5_N2 :: Dict (K.Mod 'K.RoundUp (N 5) (N 2) ~ P 1)
+_test_Mod_RoundUp_N5_N2 =  Dict
+_test_Div_RoundUp_N5_N3 :: Dict (K.Div 'K.RoundUp (N 5) (N 3) ~ P 2)
+_test_Div_RoundUp_N5_N3 =  Dict
+_test_Mod_RoundUp_N5_N3 :: Dict (K.Mod 'K.RoundUp (N 5) (N 3) ~ P 1)
+_test_Mod_RoundUp_N5_N3 =  Dict
+_test_Div_RoundUp_N5_N4 :: Dict (K.Div 'K.RoundUp (N 5) (N 4) ~ P 2)
+_test_Div_RoundUp_N5_N4 =  Dict
+_test_Mod_RoundUp_N5_N4 :: Dict (K.Mod 'K.RoundUp (N 5) (N 4) ~ P 3)
+_test_Mod_RoundUp_N5_N4 =  Dict
+_test_Div_RoundUp_N5_N5 :: Dict (K.Div 'K.RoundUp (N 5) (N 5) ~ P 1)
+_test_Div_RoundUp_N5_N5 =  Dict
+_test_Mod_RoundUp_N5_N5 :: Dict (K.Mod 'K.RoundUp (N 5) (N 5) ~ P 0)
+_test_Mod_RoundUp_N5_N5 =  Dict
+_test_Div_RoundUp_N5_P1 :: Dict (K.Div 'K.RoundUp (N 5) (P 1) ~ N 5)
+_test_Div_RoundUp_N5_P1 =  Dict
+_test_Mod_RoundUp_N5_P1 :: Dict (K.Mod 'K.RoundUp (N 5) (P 1) ~ P 0)
+_test_Mod_RoundUp_N5_P1 =  Dict
+_test_Div_RoundUp_N5_P2 :: Dict (K.Div 'K.RoundUp (N 5) (P 2) ~ N 2)
+_test_Div_RoundUp_N5_P2 =  Dict
+_test_Mod_RoundUp_N5_P2 :: Dict (K.Mod 'K.RoundUp (N 5) (P 2) ~ N 1)
+_test_Mod_RoundUp_N5_P2 =  Dict
+_test_Div_RoundUp_N5_P3 :: Dict (K.Div 'K.RoundUp (N 5) (P 3) ~ N 1)
+_test_Div_RoundUp_N5_P3 =  Dict
+_test_Mod_RoundUp_N5_P3 :: Dict (K.Mod 'K.RoundUp (N 5) (P 3) ~ N 2)
+_test_Mod_RoundUp_N5_P3 =  Dict
+_test_Div_RoundUp_N5_P4 :: Dict (K.Div 'K.RoundUp (N 5) (P 4) ~ N 1)
+_test_Div_RoundUp_N5_P4 =  Dict
+_test_Mod_RoundUp_N5_P4 :: Dict (K.Mod 'K.RoundUp (N 5) (P 4) ~ N 1)
+_test_Mod_RoundUp_N5_P4 =  Dict
+_test_Div_RoundUp_N5_P5 :: Dict (K.Div 'K.RoundUp (N 5) (P 5) ~ N 1)
+_test_Div_RoundUp_N5_P5 =  Dict
+_test_Mod_RoundUp_N5_P5 :: Dict (K.Mod 'K.RoundUp (N 5) (P 5) ~ P 0)
+_test_Mod_RoundUp_N5_P5 =  Dict
+_test_Div_RoundUp_P0_N1 :: Dict (K.Div 'K.RoundUp (P 0) (N 1) ~ P 0)
+_test_Div_RoundUp_P0_N1 =  Dict
+_test_Mod_RoundUp_P0_N1 :: Dict (K.Mod 'K.RoundUp (P 0) (N 1) ~ P 0)
+_test_Mod_RoundUp_P0_N1 =  Dict
+_test_Div_RoundUp_P0_N2 :: Dict (K.Div 'K.RoundUp (P 0) (N 2) ~ P 0)
+_test_Div_RoundUp_P0_N2 =  Dict
+_test_Mod_RoundUp_P0_N2 :: Dict (K.Mod 'K.RoundUp (P 0) (N 2) ~ P 0)
+_test_Mod_RoundUp_P0_N2 =  Dict
+_test_Div_RoundUp_P0_N3 :: Dict (K.Div 'K.RoundUp (P 0) (N 3) ~ P 0)
+_test_Div_RoundUp_P0_N3 =  Dict
+_test_Mod_RoundUp_P0_N3 :: Dict (K.Mod 'K.RoundUp (P 0) (N 3) ~ P 0)
+_test_Mod_RoundUp_P0_N3 =  Dict
+_test_Div_RoundUp_P0_N4 :: Dict (K.Div 'K.RoundUp (P 0) (N 4) ~ P 0)
+_test_Div_RoundUp_P0_N4 =  Dict
+_test_Mod_RoundUp_P0_N4 :: Dict (K.Mod 'K.RoundUp (P 0) (N 4) ~ P 0)
+_test_Mod_RoundUp_P0_N4 =  Dict
+_test_Div_RoundUp_P0_N5 :: Dict (K.Div 'K.RoundUp (P 0) (N 5) ~ P 0)
+_test_Div_RoundUp_P0_N5 =  Dict
+_test_Mod_RoundUp_P0_N5 :: Dict (K.Mod 'K.RoundUp (P 0) (N 5) ~ P 0)
+_test_Mod_RoundUp_P0_N5 =  Dict
+_test_Div_RoundUp_P0_P1 :: Dict (K.Div 'K.RoundUp (P 0) (P 1) ~ P 0)
+_test_Div_RoundUp_P0_P1 =  Dict
+_test_Mod_RoundUp_P0_P1 :: Dict (K.Mod 'K.RoundUp (P 0) (P 1) ~ P 0)
+_test_Mod_RoundUp_P0_P1 =  Dict
+_test_Div_RoundUp_P0_P2 :: Dict (K.Div 'K.RoundUp (P 0) (P 2) ~ P 0)
+_test_Div_RoundUp_P0_P2 =  Dict
+_test_Mod_RoundUp_P0_P2 :: Dict (K.Mod 'K.RoundUp (P 0) (P 2) ~ P 0)
+_test_Mod_RoundUp_P0_P2 =  Dict
+_test_Div_RoundUp_P0_P3 :: Dict (K.Div 'K.RoundUp (P 0) (P 3) ~ P 0)
+_test_Div_RoundUp_P0_P3 =  Dict
+_test_Mod_RoundUp_P0_P3 :: Dict (K.Mod 'K.RoundUp (P 0) (P 3) ~ P 0)
+_test_Mod_RoundUp_P0_P3 =  Dict
+_test_Div_RoundUp_P0_P4 :: Dict (K.Div 'K.RoundUp (P 0) (P 4) ~ P 0)
+_test_Div_RoundUp_P0_P4 =  Dict
+_test_Mod_RoundUp_P0_P4 :: Dict (K.Mod 'K.RoundUp (P 0) (P 4) ~ P 0)
+_test_Mod_RoundUp_P0_P4 =  Dict
+_test_Div_RoundUp_P0_P5 :: Dict (K.Div 'K.RoundUp (P 0) (P 5) ~ P 0)
+_test_Div_RoundUp_P0_P5 =  Dict
+_test_Mod_RoundUp_P0_P5 :: Dict (K.Mod 'K.RoundUp (P 0) (P 5) ~ P 0)
+_test_Mod_RoundUp_P0_P5 =  Dict
+_test_Div_RoundUp_P1_N1 :: Dict (K.Div 'K.RoundUp (P 1) (N 1) ~ N 1)
+_test_Div_RoundUp_P1_N1 =  Dict
+_test_Mod_RoundUp_P1_N1 :: Dict (K.Mod 'K.RoundUp (P 1) (N 1) ~ P 0)
+_test_Mod_RoundUp_P1_N1 =  Dict
+_test_Div_RoundUp_P1_N2 :: Dict (K.Div 'K.RoundUp (P 1) (N 2) ~ P 0)
+_test_Div_RoundUp_P1_N2 =  Dict
+_test_Mod_RoundUp_P1_N2 :: Dict (K.Mod 'K.RoundUp (P 1) (N 2) ~ P 1)
+_test_Mod_RoundUp_P1_N2 =  Dict
+_test_Div_RoundUp_P1_N3 :: Dict (K.Div 'K.RoundUp (P 1) (N 3) ~ P 0)
+_test_Div_RoundUp_P1_N3 =  Dict
+_test_Mod_RoundUp_P1_N3 :: Dict (K.Mod 'K.RoundUp (P 1) (N 3) ~ P 1)
+_test_Mod_RoundUp_P1_N3 =  Dict
+_test_Div_RoundUp_P1_N4 :: Dict (K.Div 'K.RoundUp (P 1) (N 4) ~ P 0)
+_test_Div_RoundUp_P1_N4 =  Dict
+_test_Mod_RoundUp_P1_N4 :: Dict (K.Mod 'K.RoundUp (P 1) (N 4) ~ P 1)
+_test_Mod_RoundUp_P1_N4 =  Dict
+_test_Div_RoundUp_P1_N5 :: Dict (K.Div 'K.RoundUp (P 1) (N 5) ~ P 0)
+_test_Div_RoundUp_P1_N5 =  Dict
+_test_Mod_RoundUp_P1_N5 :: Dict (K.Mod 'K.RoundUp (P 1) (N 5) ~ P 1)
+_test_Mod_RoundUp_P1_N5 =  Dict
+_test_Div_RoundUp_P1_P1 :: Dict (K.Div 'K.RoundUp (P 1) (P 1) ~ P 1)
+_test_Div_RoundUp_P1_P1 =  Dict
+_test_Mod_RoundUp_P1_P1 :: Dict (K.Mod 'K.RoundUp (P 1) (P 1) ~ P 0)
+_test_Mod_RoundUp_P1_P1 =  Dict
+_test_Div_RoundUp_P1_P2 :: Dict (K.Div 'K.RoundUp (P 1) (P 2) ~ P 1)
+_test_Div_RoundUp_P1_P2 =  Dict
+_test_Mod_RoundUp_P1_P2 :: Dict (K.Mod 'K.RoundUp (P 1) (P 2) ~ N 1)
+_test_Mod_RoundUp_P1_P2 =  Dict
+_test_Div_RoundUp_P1_P3 :: Dict (K.Div 'K.RoundUp (P 1) (P 3) ~ P 1)
+_test_Div_RoundUp_P1_P3 =  Dict
+_test_Mod_RoundUp_P1_P3 :: Dict (K.Mod 'K.RoundUp (P 1) (P 3) ~ N 2)
+_test_Mod_RoundUp_P1_P3 =  Dict
+_test_Div_RoundUp_P1_P4 :: Dict (K.Div 'K.RoundUp (P 1) (P 4) ~ P 1)
+_test_Div_RoundUp_P1_P4 =  Dict
+_test_Mod_RoundUp_P1_P4 :: Dict (K.Mod 'K.RoundUp (P 1) (P 4) ~ N 3)
+_test_Mod_RoundUp_P1_P4 =  Dict
+_test_Div_RoundUp_P1_P5 :: Dict (K.Div 'K.RoundUp (P 1) (P 5) ~ P 1)
+_test_Div_RoundUp_P1_P5 =  Dict
+_test_Mod_RoundUp_P1_P5 :: Dict (K.Mod 'K.RoundUp (P 1) (P 5) ~ N 4)
+_test_Mod_RoundUp_P1_P5 =  Dict
+_test_Div_RoundUp_P2_N1 :: Dict (K.Div 'K.RoundUp (P 2) (N 1) ~ N 2)
+_test_Div_RoundUp_P2_N1 =  Dict
+_test_Mod_RoundUp_P2_N1 :: Dict (K.Mod 'K.RoundUp (P 2) (N 1) ~ P 0)
+_test_Mod_RoundUp_P2_N1 =  Dict
+_test_Div_RoundUp_P2_N2 :: Dict (K.Div 'K.RoundUp (P 2) (N 2) ~ N 1)
+_test_Div_RoundUp_P2_N2 =  Dict
+_test_Mod_RoundUp_P2_N2 :: Dict (K.Mod 'K.RoundUp (P 2) (N 2) ~ P 0)
+_test_Mod_RoundUp_P2_N2 =  Dict
+_test_Div_RoundUp_P2_N3 :: Dict (K.Div 'K.RoundUp (P 2) (N 3) ~ P 0)
+_test_Div_RoundUp_P2_N3 =  Dict
+_test_Mod_RoundUp_P2_N3 :: Dict (K.Mod 'K.RoundUp (P 2) (N 3) ~ P 2)
+_test_Mod_RoundUp_P2_N3 =  Dict
+_test_Div_RoundUp_P2_N4 :: Dict (K.Div 'K.RoundUp (P 2) (N 4) ~ P 0)
+_test_Div_RoundUp_P2_N4 =  Dict
+_test_Mod_RoundUp_P2_N4 :: Dict (K.Mod 'K.RoundUp (P 2) (N 4) ~ P 2)
+_test_Mod_RoundUp_P2_N4 =  Dict
+_test_Div_RoundUp_P2_N5 :: Dict (K.Div 'K.RoundUp (P 2) (N 5) ~ P 0)
+_test_Div_RoundUp_P2_N5 =  Dict
+_test_Mod_RoundUp_P2_N5 :: Dict (K.Mod 'K.RoundUp (P 2) (N 5) ~ P 2)
+_test_Mod_RoundUp_P2_N5 =  Dict
+_test_Div_RoundUp_P2_P1 :: Dict (K.Div 'K.RoundUp (P 2) (P 1) ~ P 2)
+_test_Div_RoundUp_P2_P1 =  Dict
+_test_Mod_RoundUp_P2_P1 :: Dict (K.Mod 'K.RoundUp (P 2) (P 1) ~ P 0)
+_test_Mod_RoundUp_P2_P1 =  Dict
+_test_Div_RoundUp_P2_P2 :: Dict (K.Div 'K.RoundUp (P 2) (P 2) ~ P 1)
+_test_Div_RoundUp_P2_P2 =  Dict
+_test_Mod_RoundUp_P2_P2 :: Dict (K.Mod 'K.RoundUp (P 2) (P 2) ~ P 0)
+_test_Mod_RoundUp_P2_P2 =  Dict
+_test_Div_RoundUp_P2_P3 :: Dict (K.Div 'K.RoundUp (P 2) (P 3) ~ P 1)
+_test_Div_RoundUp_P2_P3 =  Dict
+_test_Mod_RoundUp_P2_P3 :: Dict (K.Mod 'K.RoundUp (P 2) (P 3) ~ N 1)
+_test_Mod_RoundUp_P2_P3 =  Dict
+_test_Div_RoundUp_P2_P4 :: Dict (K.Div 'K.RoundUp (P 2) (P 4) ~ P 1)
+_test_Div_RoundUp_P2_P4 =  Dict
+_test_Mod_RoundUp_P2_P4 :: Dict (K.Mod 'K.RoundUp (P 2) (P 4) ~ N 2)
+_test_Mod_RoundUp_P2_P4 =  Dict
+_test_Div_RoundUp_P2_P5 :: Dict (K.Div 'K.RoundUp (P 2) (P 5) ~ P 1)
+_test_Div_RoundUp_P2_P5 =  Dict
+_test_Mod_RoundUp_P2_P5 :: Dict (K.Mod 'K.RoundUp (P 2) (P 5) ~ N 3)
+_test_Mod_RoundUp_P2_P5 =  Dict
+_test_Div_RoundUp_P3_N1 :: Dict (K.Div 'K.RoundUp (P 3) (N 1) ~ N 3)
+_test_Div_RoundUp_P3_N1 =  Dict
+_test_Mod_RoundUp_P3_N1 :: Dict (K.Mod 'K.RoundUp (P 3) (N 1) ~ P 0)
+_test_Mod_RoundUp_P3_N1 =  Dict
+_test_Div_RoundUp_P3_N2 :: Dict (K.Div 'K.RoundUp (P 3) (N 2) ~ N 1)
+_test_Div_RoundUp_P3_N2 =  Dict
+_test_Mod_RoundUp_P3_N2 :: Dict (K.Mod 'K.RoundUp (P 3) (N 2) ~ P 1)
+_test_Mod_RoundUp_P3_N2 =  Dict
+_test_Div_RoundUp_P3_N3 :: Dict (K.Div 'K.RoundUp (P 3) (N 3) ~ N 1)
+_test_Div_RoundUp_P3_N3 =  Dict
+_test_Mod_RoundUp_P3_N3 :: Dict (K.Mod 'K.RoundUp (P 3) (N 3) ~ P 0)
+_test_Mod_RoundUp_P3_N3 =  Dict
+_test_Div_RoundUp_P3_N4 :: Dict (K.Div 'K.RoundUp (P 3) (N 4) ~ P 0)
+_test_Div_RoundUp_P3_N4 =  Dict
+_test_Mod_RoundUp_P3_N4 :: Dict (K.Mod 'K.RoundUp (P 3) (N 4) ~ P 3)
+_test_Mod_RoundUp_P3_N4 =  Dict
+_test_Div_RoundUp_P3_N5 :: Dict (K.Div 'K.RoundUp (P 3) (N 5) ~ P 0)
+_test_Div_RoundUp_P3_N5 =  Dict
+_test_Mod_RoundUp_P3_N5 :: Dict (K.Mod 'K.RoundUp (P 3) (N 5) ~ P 3)
+_test_Mod_RoundUp_P3_N5 =  Dict
+_test_Div_RoundUp_P3_P1 :: Dict (K.Div 'K.RoundUp (P 3) (P 1) ~ P 3)
+_test_Div_RoundUp_P3_P1 =  Dict
+_test_Mod_RoundUp_P3_P1 :: Dict (K.Mod 'K.RoundUp (P 3) (P 1) ~ P 0)
+_test_Mod_RoundUp_P3_P1 =  Dict
+_test_Div_RoundUp_P3_P2 :: Dict (K.Div 'K.RoundUp (P 3) (P 2) ~ P 2)
+_test_Div_RoundUp_P3_P2 =  Dict
+_test_Mod_RoundUp_P3_P2 :: Dict (K.Mod 'K.RoundUp (P 3) (P 2) ~ N 1)
+_test_Mod_RoundUp_P3_P2 =  Dict
+_test_Div_RoundUp_P3_P3 :: Dict (K.Div 'K.RoundUp (P 3) (P 3) ~ P 1)
+_test_Div_RoundUp_P3_P3 =  Dict
+_test_Mod_RoundUp_P3_P3 :: Dict (K.Mod 'K.RoundUp (P 3) (P 3) ~ P 0)
+_test_Mod_RoundUp_P3_P3 =  Dict
+_test_Div_RoundUp_P3_P4 :: Dict (K.Div 'K.RoundUp (P 3) (P 4) ~ P 1)
+_test_Div_RoundUp_P3_P4 =  Dict
+_test_Mod_RoundUp_P3_P4 :: Dict (K.Mod 'K.RoundUp (P 3) (P 4) ~ N 1)
+_test_Mod_RoundUp_P3_P4 =  Dict
+_test_Div_RoundUp_P3_P5 :: Dict (K.Div 'K.RoundUp (P 3) (P 5) ~ P 1)
+_test_Div_RoundUp_P3_P5 =  Dict
+_test_Mod_RoundUp_P3_P5 :: Dict (K.Mod 'K.RoundUp (P 3) (P 5) ~ N 2)
+_test_Mod_RoundUp_P3_P5 =  Dict
+_test_Div_RoundUp_P4_N1 :: Dict (K.Div 'K.RoundUp (P 4) (N 1) ~ N 4)
+_test_Div_RoundUp_P4_N1 =  Dict
+_test_Mod_RoundUp_P4_N1 :: Dict (K.Mod 'K.RoundUp (P 4) (N 1) ~ P 0)
+_test_Mod_RoundUp_P4_N1 =  Dict
+_test_Div_RoundUp_P4_N2 :: Dict (K.Div 'K.RoundUp (P 4) (N 2) ~ N 2)
+_test_Div_RoundUp_P4_N2 =  Dict
+_test_Mod_RoundUp_P4_N2 :: Dict (K.Mod 'K.RoundUp (P 4) (N 2) ~ P 0)
+_test_Mod_RoundUp_P4_N2 =  Dict
+_test_Div_RoundUp_P4_N3 :: Dict (K.Div 'K.RoundUp (P 4) (N 3) ~ N 1)
+_test_Div_RoundUp_P4_N3 =  Dict
+_test_Mod_RoundUp_P4_N3 :: Dict (K.Mod 'K.RoundUp (P 4) (N 3) ~ P 1)
+_test_Mod_RoundUp_P4_N3 =  Dict
+_test_Div_RoundUp_P4_N4 :: Dict (K.Div 'K.RoundUp (P 4) (N 4) ~ N 1)
+_test_Div_RoundUp_P4_N4 =  Dict
+_test_Mod_RoundUp_P4_N4 :: Dict (K.Mod 'K.RoundUp (P 4) (N 4) ~ P 0)
+_test_Mod_RoundUp_P4_N4 =  Dict
+_test_Div_RoundUp_P4_N5 :: Dict (K.Div 'K.RoundUp (P 4) (N 5) ~ P 0)
+_test_Div_RoundUp_P4_N5 =  Dict
+_test_Mod_RoundUp_P4_N5 :: Dict (K.Mod 'K.RoundUp (P 4) (N 5) ~ P 4)
+_test_Mod_RoundUp_P4_N5 =  Dict
+_test_Div_RoundUp_P4_P1 :: Dict (K.Div 'K.RoundUp (P 4) (P 1) ~ P 4)
+_test_Div_RoundUp_P4_P1 =  Dict
+_test_Mod_RoundUp_P4_P1 :: Dict (K.Mod 'K.RoundUp (P 4) (P 1) ~ P 0)
+_test_Mod_RoundUp_P4_P1 =  Dict
+_test_Div_RoundUp_P4_P2 :: Dict (K.Div 'K.RoundUp (P 4) (P 2) ~ P 2)
+_test_Div_RoundUp_P4_P2 =  Dict
+_test_Mod_RoundUp_P4_P2 :: Dict (K.Mod 'K.RoundUp (P 4) (P 2) ~ P 0)
+_test_Mod_RoundUp_P4_P2 =  Dict
+_test_Div_RoundUp_P4_P3 :: Dict (K.Div 'K.RoundUp (P 4) (P 3) ~ P 2)
+_test_Div_RoundUp_P4_P3 =  Dict
+_test_Mod_RoundUp_P4_P3 :: Dict (K.Mod 'K.RoundUp (P 4) (P 3) ~ N 2)
+_test_Mod_RoundUp_P4_P3 =  Dict
+_test_Div_RoundUp_P4_P4 :: Dict (K.Div 'K.RoundUp (P 4) (P 4) ~ P 1)
+_test_Div_RoundUp_P4_P4 =  Dict
+_test_Mod_RoundUp_P4_P4 :: Dict (K.Mod 'K.RoundUp (P 4) (P 4) ~ P 0)
+_test_Mod_RoundUp_P4_P4 =  Dict
+_test_Div_RoundUp_P4_P5 :: Dict (K.Div 'K.RoundUp (P 4) (P 5) ~ P 1)
+_test_Div_RoundUp_P4_P5 =  Dict
+_test_Mod_RoundUp_P4_P5 :: Dict (K.Mod 'K.RoundUp (P 4) (P 5) ~ N 1)
+_test_Mod_RoundUp_P4_P5 =  Dict
+_test_Div_RoundUp_P5_N1 :: Dict (K.Div 'K.RoundUp (P 5) (N 1) ~ N 5)
+_test_Div_RoundUp_P5_N1 =  Dict
+_test_Mod_RoundUp_P5_N1 :: Dict (K.Mod 'K.RoundUp (P 5) (N 1) ~ P 0)
+_test_Mod_RoundUp_P5_N1 =  Dict
+_test_Div_RoundUp_P5_N2 :: Dict (K.Div 'K.RoundUp (P 5) (N 2) ~ N 2)
+_test_Div_RoundUp_P5_N2 =  Dict
+_test_Mod_RoundUp_P5_N2 :: Dict (K.Mod 'K.RoundUp (P 5) (N 2) ~ P 1)
+_test_Mod_RoundUp_P5_N2 =  Dict
+_test_Div_RoundUp_P5_N3 :: Dict (K.Div 'K.RoundUp (P 5) (N 3) ~ N 1)
+_test_Div_RoundUp_P5_N3 =  Dict
+_test_Mod_RoundUp_P5_N3 :: Dict (K.Mod 'K.RoundUp (P 5) (N 3) ~ P 2)
+_test_Mod_RoundUp_P5_N3 =  Dict
+_test_Div_RoundUp_P5_N4 :: Dict (K.Div 'K.RoundUp (P 5) (N 4) ~ N 1)
+_test_Div_RoundUp_P5_N4 =  Dict
+_test_Mod_RoundUp_P5_N4 :: Dict (K.Mod 'K.RoundUp (P 5) (N 4) ~ P 1)
+_test_Mod_RoundUp_P5_N4 =  Dict
+_test_Div_RoundUp_P5_N5 :: Dict (K.Div 'K.RoundUp (P 5) (N 5) ~ N 1)
+_test_Div_RoundUp_P5_N5 =  Dict
+_test_Mod_RoundUp_P5_N5 :: Dict (K.Mod 'K.RoundUp (P 5) (N 5) ~ P 0)
+_test_Mod_RoundUp_P5_N5 =  Dict
+_test_Div_RoundUp_P5_P1 :: Dict (K.Div 'K.RoundUp (P 5) (P 1) ~ P 5)
+_test_Div_RoundUp_P5_P1 =  Dict
+_test_Mod_RoundUp_P5_P1 :: Dict (K.Mod 'K.RoundUp (P 5) (P 1) ~ P 0)
+_test_Mod_RoundUp_P5_P1 =  Dict
+_test_Div_RoundUp_P5_P2 :: Dict (K.Div 'K.RoundUp (P 5) (P 2) ~ P 3)
+_test_Div_RoundUp_P5_P2 =  Dict
+_test_Mod_RoundUp_P5_P2 :: Dict (K.Mod 'K.RoundUp (P 5) (P 2) ~ N 1)
+_test_Mod_RoundUp_P5_P2 =  Dict
+_test_Div_RoundUp_P5_P3 :: Dict (K.Div 'K.RoundUp (P 5) (P 3) ~ P 2)
+_test_Div_RoundUp_P5_P3 =  Dict
+_test_Mod_RoundUp_P5_P3 :: Dict (K.Mod 'K.RoundUp (P 5) (P 3) ~ N 1)
+_test_Mod_RoundUp_P5_P3 =  Dict
+_test_Div_RoundUp_P5_P4 :: Dict (K.Div 'K.RoundUp (P 5) (P 4) ~ P 2)
+_test_Div_RoundUp_P5_P4 =  Dict
+_test_Mod_RoundUp_P5_P4 :: Dict (K.Mod 'K.RoundUp (P 5) (P 4) ~ N 3)
+_test_Mod_RoundUp_P5_P4 =  Dict
+_test_Div_RoundUp_P5_P5 :: Dict (K.Div 'K.RoundUp (P 5) (P 5) ~ P 1)
+_test_Div_RoundUp_P5_P5 =  Dict
+_test_Mod_RoundUp_P5_P5 :: Dict (K.Mod 'K.RoundUp (P 5) (P 5) ~ P 0)
+_test_Mod_RoundUp_P5_P5 =  Dict
+_test_Div_RoundZero_N1_N1 :: Dict (K.Div 'K.RoundZero (N 1) (N 1) ~ P 1)
+_test_Div_RoundZero_N1_N1 =  Dict
+_test_Mod_RoundZero_N1_N1 :: Dict (K.Mod 'K.RoundZero (N 1) (N 1) ~ P 0)
+_test_Mod_RoundZero_N1_N1 =  Dict
+_test_Div_RoundZero_N1_N2 :: Dict (K.Div 'K.RoundZero (N 1) (N 2) ~ P 0)
+_test_Div_RoundZero_N1_N2 =  Dict
+_test_Mod_RoundZero_N1_N2 :: Dict (K.Mod 'K.RoundZero (N 1) (N 2) ~ N 1)
+_test_Mod_RoundZero_N1_N2 =  Dict
+_test_Div_RoundZero_N1_N3 :: Dict (K.Div 'K.RoundZero (N 1) (N 3) ~ P 0)
+_test_Div_RoundZero_N1_N3 =  Dict
+_test_Mod_RoundZero_N1_N3 :: Dict (K.Mod 'K.RoundZero (N 1) (N 3) ~ N 1)
+_test_Mod_RoundZero_N1_N3 =  Dict
+_test_Div_RoundZero_N1_N4 :: Dict (K.Div 'K.RoundZero (N 1) (N 4) ~ P 0)
+_test_Div_RoundZero_N1_N4 =  Dict
+_test_Mod_RoundZero_N1_N4 :: Dict (K.Mod 'K.RoundZero (N 1) (N 4) ~ N 1)
+_test_Mod_RoundZero_N1_N4 =  Dict
+_test_Div_RoundZero_N1_N5 :: Dict (K.Div 'K.RoundZero (N 1) (N 5) ~ P 0)
+_test_Div_RoundZero_N1_N5 =  Dict
+_test_Mod_RoundZero_N1_N5 :: Dict (K.Mod 'K.RoundZero (N 1) (N 5) ~ N 1)
+_test_Mod_RoundZero_N1_N5 =  Dict
+_test_Div_RoundZero_N1_P1 :: Dict (K.Div 'K.RoundZero (N 1) (P 1) ~ N 1)
+_test_Div_RoundZero_N1_P1 =  Dict
+_test_Mod_RoundZero_N1_P1 :: Dict (K.Mod 'K.RoundZero (N 1) (P 1) ~ P 0)
+_test_Mod_RoundZero_N1_P1 =  Dict
+_test_Div_RoundZero_N1_P2 :: Dict (K.Div 'K.RoundZero (N 1) (P 2) ~ P 0)
+_test_Div_RoundZero_N1_P2 =  Dict
+_test_Mod_RoundZero_N1_P2 :: Dict (K.Mod 'K.RoundZero (N 1) (P 2) ~ N 1)
+_test_Mod_RoundZero_N1_P2 =  Dict
+_test_Div_RoundZero_N1_P3 :: Dict (K.Div 'K.RoundZero (N 1) (P 3) ~ P 0)
+_test_Div_RoundZero_N1_P3 =  Dict
+_test_Mod_RoundZero_N1_P3 :: Dict (K.Mod 'K.RoundZero (N 1) (P 3) ~ N 1)
+_test_Mod_RoundZero_N1_P3 =  Dict
+_test_Div_RoundZero_N1_P4 :: Dict (K.Div 'K.RoundZero (N 1) (P 4) ~ P 0)
+_test_Div_RoundZero_N1_P4 =  Dict
+_test_Mod_RoundZero_N1_P4 :: Dict (K.Mod 'K.RoundZero (N 1) (P 4) ~ N 1)
+_test_Mod_RoundZero_N1_P4 =  Dict
+_test_Div_RoundZero_N1_P5 :: Dict (K.Div 'K.RoundZero (N 1) (P 5) ~ P 0)
+_test_Div_RoundZero_N1_P5 =  Dict
+_test_Mod_RoundZero_N1_P5 :: Dict (K.Mod 'K.RoundZero (N 1) (P 5) ~ N 1)
+_test_Mod_RoundZero_N1_P5 =  Dict
+_test_Div_RoundZero_N2_N1 :: Dict (K.Div 'K.RoundZero (N 2) (N 1) ~ P 2)
+_test_Div_RoundZero_N2_N1 =  Dict
+_test_Mod_RoundZero_N2_N1 :: Dict (K.Mod 'K.RoundZero (N 2) (N 1) ~ P 0)
+_test_Mod_RoundZero_N2_N1 =  Dict
+_test_Div_RoundZero_N2_N2 :: Dict (K.Div 'K.RoundZero (N 2) (N 2) ~ P 1)
+_test_Div_RoundZero_N2_N2 =  Dict
+_test_Mod_RoundZero_N2_N2 :: Dict (K.Mod 'K.RoundZero (N 2) (N 2) ~ P 0)
+_test_Mod_RoundZero_N2_N2 =  Dict
+_test_Div_RoundZero_N2_N3 :: Dict (K.Div 'K.RoundZero (N 2) (N 3) ~ P 0)
+_test_Div_RoundZero_N2_N3 =  Dict
+_test_Mod_RoundZero_N2_N3 :: Dict (K.Mod 'K.RoundZero (N 2) (N 3) ~ N 2)
+_test_Mod_RoundZero_N2_N3 =  Dict
+_test_Div_RoundZero_N2_N4 :: Dict (K.Div 'K.RoundZero (N 2) (N 4) ~ P 0)
+_test_Div_RoundZero_N2_N4 =  Dict
+_test_Mod_RoundZero_N2_N4 :: Dict (K.Mod 'K.RoundZero (N 2) (N 4) ~ N 2)
+_test_Mod_RoundZero_N2_N4 =  Dict
+_test_Div_RoundZero_N2_N5 :: Dict (K.Div 'K.RoundZero (N 2) (N 5) ~ P 0)
+_test_Div_RoundZero_N2_N5 =  Dict
+_test_Mod_RoundZero_N2_N5 :: Dict (K.Mod 'K.RoundZero (N 2) (N 5) ~ N 2)
+_test_Mod_RoundZero_N2_N5 =  Dict
+_test_Div_RoundZero_N2_P1 :: Dict (K.Div 'K.RoundZero (N 2) (P 1) ~ N 2)
+_test_Div_RoundZero_N2_P1 =  Dict
+_test_Mod_RoundZero_N2_P1 :: Dict (K.Mod 'K.RoundZero (N 2) (P 1) ~ P 0)
+_test_Mod_RoundZero_N2_P1 =  Dict
+_test_Div_RoundZero_N2_P2 :: Dict (K.Div 'K.RoundZero (N 2) (P 2) ~ N 1)
+_test_Div_RoundZero_N2_P2 =  Dict
+_test_Mod_RoundZero_N2_P2 :: Dict (K.Mod 'K.RoundZero (N 2) (P 2) ~ P 0)
+_test_Mod_RoundZero_N2_P2 =  Dict
+_test_Div_RoundZero_N2_P3 :: Dict (K.Div 'K.RoundZero (N 2) (P 3) ~ P 0)
+_test_Div_RoundZero_N2_P3 =  Dict
+_test_Mod_RoundZero_N2_P3 :: Dict (K.Mod 'K.RoundZero (N 2) (P 3) ~ N 2)
+_test_Mod_RoundZero_N2_P3 =  Dict
+_test_Div_RoundZero_N2_P4 :: Dict (K.Div 'K.RoundZero (N 2) (P 4) ~ P 0)
+_test_Div_RoundZero_N2_P4 =  Dict
+_test_Mod_RoundZero_N2_P4 :: Dict (K.Mod 'K.RoundZero (N 2) (P 4) ~ N 2)
+_test_Mod_RoundZero_N2_P4 =  Dict
+_test_Div_RoundZero_N2_P5 :: Dict (K.Div 'K.RoundZero (N 2) (P 5) ~ P 0)
+_test_Div_RoundZero_N2_P5 =  Dict
+_test_Mod_RoundZero_N2_P5 :: Dict (K.Mod 'K.RoundZero (N 2) (P 5) ~ N 2)
+_test_Mod_RoundZero_N2_P5 =  Dict
+_test_Div_RoundZero_N3_N1 :: Dict (K.Div 'K.RoundZero (N 3) (N 1) ~ P 3)
+_test_Div_RoundZero_N3_N1 =  Dict
+_test_Mod_RoundZero_N3_N1 :: Dict (K.Mod 'K.RoundZero (N 3) (N 1) ~ P 0)
+_test_Mod_RoundZero_N3_N1 =  Dict
+_test_Div_RoundZero_N3_N2 :: Dict (K.Div 'K.RoundZero (N 3) (N 2) ~ P 1)
+_test_Div_RoundZero_N3_N2 =  Dict
+_test_Mod_RoundZero_N3_N2 :: Dict (K.Mod 'K.RoundZero (N 3) (N 2) ~ N 1)
+_test_Mod_RoundZero_N3_N2 =  Dict
+_test_Div_RoundZero_N3_N3 :: Dict (K.Div 'K.RoundZero (N 3) (N 3) ~ P 1)
+_test_Div_RoundZero_N3_N3 =  Dict
+_test_Mod_RoundZero_N3_N3 :: Dict (K.Mod 'K.RoundZero (N 3) (N 3) ~ P 0)
+_test_Mod_RoundZero_N3_N3 =  Dict
+_test_Div_RoundZero_N3_N4 :: Dict (K.Div 'K.RoundZero (N 3) (N 4) ~ P 0)
+_test_Div_RoundZero_N3_N4 =  Dict
+_test_Mod_RoundZero_N3_N4 :: Dict (K.Mod 'K.RoundZero (N 3) (N 4) ~ N 3)
+_test_Mod_RoundZero_N3_N4 =  Dict
+_test_Div_RoundZero_N3_N5 :: Dict (K.Div 'K.RoundZero (N 3) (N 5) ~ P 0)
+_test_Div_RoundZero_N3_N5 =  Dict
+_test_Mod_RoundZero_N3_N5 :: Dict (K.Mod 'K.RoundZero (N 3) (N 5) ~ N 3)
+_test_Mod_RoundZero_N3_N5 =  Dict
+_test_Div_RoundZero_N3_P1 :: Dict (K.Div 'K.RoundZero (N 3) (P 1) ~ N 3)
+_test_Div_RoundZero_N3_P1 =  Dict
+_test_Mod_RoundZero_N3_P1 :: Dict (K.Mod 'K.RoundZero (N 3) (P 1) ~ P 0)
+_test_Mod_RoundZero_N3_P1 =  Dict
+_test_Div_RoundZero_N3_P2 :: Dict (K.Div 'K.RoundZero (N 3) (P 2) ~ N 1)
+_test_Div_RoundZero_N3_P2 =  Dict
+_test_Mod_RoundZero_N3_P2 :: Dict (K.Mod 'K.RoundZero (N 3) (P 2) ~ N 1)
+_test_Mod_RoundZero_N3_P2 =  Dict
+_test_Div_RoundZero_N3_P3 :: Dict (K.Div 'K.RoundZero (N 3) (P 3) ~ N 1)
+_test_Div_RoundZero_N3_P3 =  Dict
+_test_Mod_RoundZero_N3_P3 :: Dict (K.Mod 'K.RoundZero (N 3) (P 3) ~ P 0)
+_test_Mod_RoundZero_N3_P3 =  Dict
+_test_Div_RoundZero_N3_P4 :: Dict (K.Div 'K.RoundZero (N 3) (P 4) ~ P 0)
+_test_Div_RoundZero_N3_P4 =  Dict
+_test_Mod_RoundZero_N3_P4 :: Dict (K.Mod 'K.RoundZero (N 3) (P 4) ~ N 3)
+_test_Mod_RoundZero_N3_P4 =  Dict
+_test_Div_RoundZero_N3_P5 :: Dict (K.Div 'K.RoundZero (N 3) (P 5) ~ P 0)
+_test_Div_RoundZero_N3_P5 =  Dict
+_test_Mod_RoundZero_N3_P5 :: Dict (K.Mod 'K.RoundZero (N 3) (P 5) ~ N 3)
+_test_Mod_RoundZero_N3_P5 =  Dict
+_test_Div_RoundZero_N4_N1 :: Dict (K.Div 'K.RoundZero (N 4) (N 1) ~ P 4)
+_test_Div_RoundZero_N4_N1 =  Dict
+_test_Mod_RoundZero_N4_N1 :: Dict (K.Mod 'K.RoundZero (N 4) (N 1) ~ P 0)
+_test_Mod_RoundZero_N4_N1 =  Dict
+_test_Div_RoundZero_N4_N2 :: Dict (K.Div 'K.RoundZero (N 4) (N 2) ~ P 2)
+_test_Div_RoundZero_N4_N2 =  Dict
+_test_Mod_RoundZero_N4_N2 :: Dict (K.Mod 'K.RoundZero (N 4) (N 2) ~ P 0)
+_test_Mod_RoundZero_N4_N2 =  Dict
+_test_Div_RoundZero_N4_N3 :: Dict (K.Div 'K.RoundZero (N 4) (N 3) ~ P 1)
+_test_Div_RoundZero_N4_N3 =  Dict
+_test_Mod_RoundZero_N4_N3 :: Dict (K.Mod 'K.RoundZero (N 4) (N 3) ~ N 1)
+_test_Mod_RoundZero_N4_N3 =  Dict
+_test_Div_RoundZero_N4_N4 :: Dict (K.Div 'K.RoundZero (N 4) (N 4) ~ P 1)
+_test_Div_RoundZero_N4_N4 =  Dict
+_test_Mod_RoundZero_N4_N4 :: Dict (K.Mod 'K.RoundZero (N 4) (N 4) ~ P 0)
+_test_Mod_RoundZero_N4_N4 =  Dict
+_test_Div_RoundZero_N4_N5 :: Dict (K.Div 'K.RoundZero (N 4) (N 5) ~ P 0)
+_test_Div_RoundZero_N4_N5 =  Dict
+_test_Mod_RoundZero_N4_N5 :: Dict (K.Mod 'K.RoundZero (N 4) (N 5) ~ N 4)
+_test_Mod_RoundZero_N4_N5 =  Dict
+_test_Div_RoundZero_N4_P1 :: Dict (K.Div 'K.RoundZero (N 4) (P 1) ~ N 4)
+_test_Div_RoundZero_N4_P1 =  Dict
+_test_Mod_RoundZero_N4_P1 :: Dict (K.Mod 'K.RoundZero (N 4) (P 1) ~ P 0)
+_test_Mod_RoundZero_N4_P1 =  Dict
+_test_Div_RoundZero_N4_P2 :: Dict (K.Div 'K.RoundZero (N 4) (P 2) ~ N 2)
+_test_Div_RoundZero_N4_P2 =  Dict
+_test_Mod_RoundZero_N4_P2 :: Dict (K.Mod 'K.RoundZero (N 4) (P 2) ~ P 0)
+_test_Mod_RoundZero_N4_P2 =  Dict
+_test_Div_RoundZero_N4_P3 :: Dict (K.Div 'K.RoundZero (N 4) (P 3) ~ N 1)
+_test_Div_RoundZero_N4_P3 =  Dict
+_test_Mod_RoundZero_N4_P3 :: Dict (K.Mod 'K.RoundZero (N 4) (P 3) ~ N 1)
+_test_Mod_RoundZero_N4_P3 =  Dict
+_test_Div_RoundZero_N4_P4 :: Dict (K.Div 'K.RoundZero (N 4) (P 4) ~ N 1)
+_test_Div_RoundZero_N4_P4 =  Dict
+_test_Mod_RoundZero_N4_P4 :: Dict (K.Mod 'K.RoundZero (N 4) (P 4) ~ P 0)
+_test_Mod_RoundZero_N4_P4 =  Dict
+_test_Div_RoundZero_N4_P5 :: Dict (K.Div 'K.RoundZero (N 4) (P 5) ~ P 0)
+_test_Div_RoundZero_N4_P5 =  Dict
+_test_Mod_RoundZero_N4_P5 :: Dict (K.Mod 'K.RoundZero (N 4) (P 5) ~ N 4)
+_test_Mod_RoundZero_N4_P5 =  Dict
+_test_Div_RoundZero_N5_N1 :: Dict (K.Div 'K.RoundZero (N 5) (N 1) ~ P 5)
+_test_Div_RoundZero_N5_N1 =  Dict
+_test_Mod_RoundZero_N5_N1 :: Dict (K.Mod 'K.RoundZero (N 5) (N 1) ~ P 0)
+_test_Mod_RoundZero_N5_N1 =  Dict
+_test_Div_RoundZero_N5_N2 :: Dict (K.Div 'K.RoundZero (N 5) (N 2) ~ P 2)
+_test_Div_RoundZero_N5_N2 =  Dict
+_test_Mod_RoundZero_N5_N2 :: Dict (K.Mod 'K.RoundZero (N 5) (N 2) ~ N 1)
+_test_Mod_RoundZero_N5_N2 =  Dict
+_test_Div_RoundZero_N5_N3 :: Dict (K.Div 'K.RoundZero (N 5) (N 3) ~ P 1)
+_test_Div_RoundZero_N5_N3 =  Dict
+_test_Mod_RoundZero_N5_N3 :: Dict (K.Mod 'K.RoundZero (N 5) (N 3) ~ N 2)
+_test_Mod_RoundZero_N5_N3 =  Dict
+_test_Div_RoundZero_N5_N4 :: Dict (K.Div 'K.RoundZero (N 5) (N 4) ~ P 1)
+_test_Div_RoundZero_N5_N4 =  Dict
+_test_Mod_RoundZero_N5_N4 :: Dict (K.Mod 'K.RoundZero (N 5) (N 4) ~ N 1)
+_test_Mod_RoundZero_N5_N4 =  Dict
+_test_Div_RoundZero_N5_N5 :: Dict (K.Div 'K.RoundZero (N 5) (N 5) ~ P 1)
+_test_Div_RoundZero_N5_N5 =  Dict
+_test_Mod_RoundZero_N5_N5 :: Dict (K.Mod 'K.RoundZero (N 5) (N 5) ~ P 0)
+_test_Mod_RoundZero_N5_N5 =  Dict
+_test_Div_RoundZero_N5_P1 :: Dict (K.Div 'K.RoundZero (N 5) (P 1) ~ N 5)
+_test_Div_RoundZero_N5_P1 =  Dict
+_test_Mod_RoundZero_N5_P1 :: Dict (K.Mod 'K.RoundZero (N 5) (P 1) ~ P 0)
+_test_Mod_RoundZero_N5_P1 =  Dict
+_test_Div_RoundZero_N5_P2 :: Dict (K.Div 'K.RoundZero (N 5) (P 2) ~ N 2)
+_test_Div_RoundZero_N5_P2 =  Dict
+_test_Mod_RoundZero_N5_P2 :: Dict (K.Mod 'K.RoundZero (N 5) (P 2) ~ N 1)
+_test_Mod_RoundZero_N5_P2 =  Dict
+_test_Div_RoundZero_N5_P3 :: Dict (K.Div 'K.RoundZero (N 5) (P 3) ~ N 1)
+_test_Div_RoundZero_N5_P3 =  Dict
+_test_Mod_RoundZero_N5_P3 :: Dict (K.Mod 'K.RoundZero (N 5) (P 3) ~ N 2)
+_test_Mod_RoundZero_N5_P3 =  Dict
+_test_Div_RoundZero_N5_P4 :: Dict (K.Div 'K.RoundZero (N 5) (P 4) ~ N 1)
+_test_Div_RoundZero_N5_P4 =  Dict
+_test_Mod_RoundZero_N5_P4 :: Dict (K.Mod 'K.RoundZero (N 5) (P 4) ~ N 1)
+_test_Mod_RoundZero_N5_P4 =  Dict
+_test_Div_RoundZero_N5_P5 :: Dict (K.Div 'K.RoundZero (N 5) (P 5) ~ N 1)
+_test_Div_RoundZero_N5_P5 =  Dict
+_test_Mod_RoundZero_N5_P5 :: Dict (K.Mod 'K.RoundZero (N 5) (P 5) ~ P 0)
+_test_Mod_RoundZero_N5_P5 =  Dict
+_test_Div_RoundZero_P0_N1 :: Dict (K.Div 'K.RoundZero (P 0) (N 1) ~ P 0)
+_test_Div_RoundZero_P0_N1 =  Dict
+_test_Mod_RoundZero_P0_N1 :: Dict (K.Mod 'K.RoundZero (P 0) (N 1) ~ P 0)
+_test_Mod_RoundZero_P0_N1 =  Dict
+_test_Div_RoundZero_P0_N2 :: Dict (K.Div 'K.RoundZero (P 0) (N 2) ~ P 0)
+_test_Div_RoundZero_P0_N2 =  Dict
+_test_Mod_RoundZero_P0_N2 :: Dict (K.Mod 'K.RoundZero (P 0) (N 2) ~ P 0)
+_test_Mod_RoundZero_P0_N2 =  Dict
+_test_Div_RoundZero_P0_N3 :: Dict (K.Div 'K.RoundZero (P 0) (N 3) ~ P 0)
+_test_Div_RoundZero_P0_N3 =  Dict
+_test_Mod_RoundZero_P0_N3 :: Dict (K.Mod 'K.RoundZero (P 0) (N 3) ~ P 0)
+_test_Mod_RoundZero_P0_N3 =  Dict
+_test_Div_RoundZero_P0_N4 :: Dict (K.Div 'K.RoundZero (P 0) (N 4) ~ P 0)
+_test_Div_RoundZero_P0_N4 =  Dict
+_test_Mod_RoundZero_P0_N4 :: Dict (K.Mod 'K.RoundZero (P 0) (N 4) ~ P 0)
+_test_Mod_RoundZero_P0_N4 =  Dict
+_test_Div_RoundZero_P0_N5 :: Dict (K.Div 'K.RoundZero (P 0) (N 5) ~ P 0)
+_test_Div_RoundZero_P0_N5 =  Dict
+_test_Mod_RoundZero_P0_N5 :: Dict (K.Mod 'K.RoundZero (P 0) (N 5) ~ P 0)
+_test_Mod_RoundZero_P0_N5 =  Dict
+_test_Div_RoundZero_P0_P1 :: Dict (K.Div 'K.RoundZero (P 0) (P 1) ~ P 0)
+_test_Div_RoundZero_P0_P1 =  Dict
+_test_Mod_RoundZero_P0_P1 :: Dict (K.Mod 'K.RoundZero (P 0) (P 1) ~ P 0)
+_test_Mod_RoundZero_P0_P1 =  Dict
+_test_Div_RoundZero_P0_P2 :: Dict (K.Div 'K.RoundZero (P 0) (P 2) ~ P 0)
+_test_Div_RoundZero_P0_P2 =  Dict
+_test_Mod_RoundZero_P0_P2 :: Dict (K.Mod 'K.RoundZero (P 0) (P 2) ~ P 0)
+_test_Mod_RoundZero_P0_P2 =  Dict
+_test_Div_RoundZero_P0_P3 :: Dict (K.Div 'K.RoundZero (P 0) (P 3) ~ P 0)
+_test_Div_RoundZero_P0_P3 =  Dict
+_test_Mod_RoundZero_P0_P3 :: Dict (K.Mod 'K.RoundZero (P 0) (P 3) ~ P 0)
+_test_Mod_RoundZero_P0_P3 =  Dict
+_test_Div_RoundZero_P0_P4 :: Dict (K.Div 'K.RoundZero (P 0) (P 4) ~ P 0)
+_test_Div_RoundZero_P0_P4 =  Dict
+_test_Mod_RoundZero_P0_P4 :: Dict (K.Mod 'K.RoundZero (P 0) (P 4) ~ P 0)
+_test_Mod_RoundZero_P0_P4 =  Dict
+_test_Div_RoundZero_P0_P5 :: Dict (K.Div 'K.RoundZero (P 0) (P 5) ~ P 0)
+_test_Div_RoundZero_P0_P5 =  Dict
+_test_Mod_RoundZero_P0_P5 :: Dict (K.Mod 'K.RoundZero (P 0) (P 5) ~ P 0)
+_test_Mod_RoundZero_P0_P5 =  Dict
+_test_Div_RoundZero_P1_N1 :: Dict (K.Div 'K.RoundZero (P 1) (N 1) ~ N 1)
+_test_Div_RoundZero_P1_N1 =  Dict
+_test_Mod_RoundZero_P1_N1 :: Dict (K.Mod 'K.RoundZero (P 1) (N 1) ~ P 0)
+_test_Mod_RoundZero_P1_N1 =  Dict
+_test_Div_RoundZero_P1_N2 :: Dict (K.Div 'K.RoundZero (P 1) (N 2) ~ P 0)
+_test_Div_RoundZero_P1_N2 =  Dict
+_test_Mod_RoundZero_P1_N2 :: Dict (K.Mod 'K.RoundZero (P 1) (N 2) ~ P 1)
+_test_Mod_RoundZero_P1_N2 =  Dict
+_test_Div_RoundZero_P1_N3 :: Dict (K.Div 'K.RoundZero (P 1) (N 3) ~ P 0)
+_test_Div_RoundZero_P1_N3 =  Dict
+_test_Mod_RoundZero_P1_N3 :: Dict (K.Mod 'K.RoundZero (P 1) (N 3) ~ P 1)
+_test_Mod_RoundZero_P1_N3 =  Dict
+_test_Div_RoundZero_P1_N4 :: Dict (K.Div 'K.RoundZero (P 1) (N 4) ~ P 0)
+_test_Div_RoundZero_P1_N4 =  Dict
+_test_Mod_RoundZero_P1_N4 :: Dict (K.Mod 'K.RoundZero (P 1) (N 4) ~ P 1)
+_test_Mod_RoundZero_P1_N4 =  Dict
+_test_Div_RoundZero_P1_N5 :: Dict (K.Div 'K.RoundZero (P 1) (N 5) ~ P 0)
+_test_Div_RoundZero_P1_N5 =  Dict
+_test_Mod_RoundZero_P1_N5 :: Dict (K.Mod 'K.RoundZero (P 1) (N 5) ~ P 1)
+_test_Mod_RoundZero_P1_N5 =  Dict
+_test_Div_RoundZero_P1_P1 :: Dict (K.Div 'K.RoundZero (P 1) (P 1) ~ P 1)
+_test_Div_RoundZero_P1_P1 =  Dict
+_test_Mod_RoundZero_P1_P1 :: Dict (K.Mod 'K.RoundZero (P 1) (P 1) ~ P 0)
+_test_Mod_RoundZero_P1_P1 =  Dict
+_test_Div_RoundZero_P1_P2 :: Dict (K.Div 'K.RoundZero (P 1) (P 2) ~ P 0)
+_test_Div_RoundZero_P1_P2 =  Dict
+_test_Mod_RoundZero_P1_P2 :: Dict (K.Mod 'K.RoundZero (P 1) (P 2) ~ P 1)
+_test_Mod_RoundZero_P1_P2 =  Dict
+_test_Div_RoundZero_P1_P3 :: Dict (K.Div 'K.RoundZero (P 1) (P 3) ~ P 0)
+_test_Div_RoundZero_P1_P3 =  Dict
+_test_Mod_RoundZero_P1_P3 :: Dict (K.Mod 'K.RoundZero (P 1) (P 3) ~ P 1)
+_test_Mod_RoundZero_P1_P3 =  Dict
+_test_Div_RoundZero_P1_P4 :: Dict (K.Div 'K.RoundZero (P 1) (P 4) ~ P 0)
+_test_Div_RoundZero_P1_P4 =  Dict
+_test_Mod_RoundZero_P1_P4 :: Dict (K.Mod 'K.RoundZero (P 1) (P 4) ~ P 1)
+_test_Mod_RoundZero_P1_P4 =  Dict
+_test_Div_RoundZero_P1_P5 :: Dict (K.Div 'K.RoundZero (P 1) (P 5) ~ P 0)
+_test_Div_RoundZero_P1_P5 =  Dict
+_test_Mod_RoundZero_P1_P5 :: Dict (K.Mod 'K.RoundZero (P 1) (P 5) ~ P 1)
+_test_Mod_RoundZero_P1_P5 =  Dict
+_test_Div_RoundZero_P2_N1 :: Dict (K.Div 'K.RoundZero (P 2) (N 1) ~ N 2)
+_test_Div_RoundZero_P2_N1 =  Dict
+_test_Mod_RoundZero_P2_N1 :: Dict (K.Mod 'K.RoundZero (P 2) (N 1) ~ P 0)
+_test_Mod_RoundZero_P2_N1 =  Dict
+_test_Div_RoundZero_P2_N2 :: Dict (K.Div 'K.RoundZero (P 2) (N 2) ~ N 1)
+_test_Div_RoundZero_P2_N2 =  Dict
+_test_Mod_RoundZero_P2_N2 :: Dict (K.Mod 'K.RoundZero (P 2) (N 2) ~ P 0)
+_test_Mod_RoundZero_P2_N2 =  Dict
+_test_Div_RoundZero_P2_N3 :: Dict (K.Div 'K.RoundZero (P 2) (N 3) ~ P 0)
+_test_Div_RoundZero_P2_N3 =  Dict
+_test_Mod_RoundZero_P2_N3 :: Dict (K.Mod 'K.RoundZero (P 2) (N 3) ~ P 2)
+_test_Mod_RoundZero_P2_N3 =  Dict
+_test_Div_RoundZero_P2_N4 :: Dict (K.Div 'K.RoundZero (P 2) (N 4) ~ P 0)
+_test_Div_RoundZero_P2_N4 =  Dict
+_test_Mod_RoundZero_P2_N4 :: Dict (K.Mod 'K.RoundZero (P 2) (N 4) ~ P 2)
+_test_Mod_RoundZero_P2_N4 =  Dict
+_test_Div_RoundZero_P2_N5 :: Dict (K.Div 'K.RoundZero (P 2) (N 5) ~ P 0)
+_test_Div_RoundZero_P2_N5 =  Dict
+_test_Mod_RoundZero_P2_N5 :: Dict (K.Mod 'K.RoundZero (P 2) (N 5) ~ P 2)
+_test_Mod_RoundZero_P2_N5 =  Dict
+_test_Div_RoundZero_P2_P1 :: Dict (K.Div 'K.RoundZero (P 2) (P 1) ~ P 2)
+_test_Div_RoundZero_P2_P1 =  Dict
+_test_Mod_RoundZero_P2_P1 :: Dict (K.Mod 'K.RoundZero (P 2) (P 1) ~ P 0)
+_test_Mod_RoundZero_P2_P1 =  Dict
+_test_Div_RoundZero_P2_P2 :: Dict (K.Div 'K.RoundZero (P 2) (P 2) ~ P 1)
+_test_Div_RoundZero_P2_P2 =  Dict
+_test_Mod_RoundZero_P2_P2 :: Dict (K.Mod 'K.RoundZero (P 2) (P 2) ~ P 0)
+_test_Mod_RoundZero_P2_P2 =  Dict
+_test_Div_RoundZero_P2_P3 :: Dict (K.Div 'K.RoundZero (P 2) (P 3) ~ P 0)
+_test_Div_RoundZero_P2_P3 =  Dict
+_test_Mod_RoundZero_P2_P3 :: Dict (K.Mod 'K.RoundZero (P 2) (P 3) ~ P 2)
+_test_Mod_RoundZero_P2_P3 =  Dict
+_test_Div_RoundZero_P2_P4 :: Dict (K.Div 'K.RoundZero (P 2) (P 4) ~ P 0)
+_test_Div_RoundZero_P2_P4 =  Dict
+_test_Mod_RoundZero_P2_P4 :: Dict (K.Mod 'K.RoundZero (P 2) (P 4) ~ P 2)
+_test_Mod_RoundZero_P2_P4 =  Dict
+_test_Div_RoundZero_P2_P5 :: Dict (K.Div 'K.RoundZero (P 2) (P 5) ~ P 0)
+_test_Div_RoundZero_P2_P5 =  Dict
+_test_Mod_RoundZero_P2_P5 :: Dict (K.Mod 'K.RoundZero (P 2) (P 5) ~ P 2)
+_test_Mod_RoundZero_P2_P5 =  Dict
+_test_Div_RoundZero_P3_N1 :: Dict (K.Div 'K.RoundZero (P 3) (N 1) ~ N 3)
+_test_Div_RoundZero_P3_N1 =  Dict
+_test_Mod_RoundZero_P3_N1 :: Dict (K.Mod 'K.RoundZero (P 3) (N 1) ~ P 0)
+_test_Mod_RoundZero_P3_N1 =  Dict
+_test_Div_RoundZero_P3_N2 :: Dict (K.Div 'K.RoundZero (P 3) (N 2) ~ N 1)
+_test_Div_RoundZero_P3_N2 =  Dict
+_test_Mod_RoundZero_P3_N2 :: Dict (K.Mod 'K.RoundZero (P 3) (N 2) ~ P 1)
+_test_Mod_RoundZero_P3_N2 =  Dict
+_test_Div_RoundZero_P3_N3 :: Dict (K.Div 'K.RoundZero (P 3) (N 3) ~ N 1)
+_test_Div_RoundZero_P3_N3 =  Dict
+_test_Mod_RoundZero_P3_N3 :: Dict (K.Mod 'K.RoundZero (P 3) (N 3) ~ P 0)
+_test_Mod_RoundZero_P3_N3 =  Dict
+_test_Div_RoundZero_P3_N4 :: Dict (K.Div 'K.RoundZero (P 3) (N 4) ~ P 0)
+_test_Div_RoundZero_P3_N4 =  Dict
+_test_Mod_RoundZero_P3_N4 :: Dict (K.Mod 'K.RoundZero (P 3) (N 4) ~ P 3)
+_test_Mod_RoundZero_P3_N4 =  Dict
+_test_Div_RoundZero_P3_N5 :: Dict (K.Div 'K.RoundZero (P 3) (N 5) ~ P 0)
+_test_Div_RoundZero_P3_N5 =  Dict
+_test_Mod_RoundZero_P3_N5 :: Dict (K.Mod 'K.RoundZero (P 3) (N 5) ~ P 3)
+_test_Mod_RoundZero_P3_N5 =  Dict
+_test_Div_RoundZero_P3_P1 :: Dict (K.Div 'K.RoundZero (P 3) (P 1) ~ P 3)
+_test_Div_RoundZero_P3_P1 =  Dict
+_test_Mod_RoundZero_P3_P1 :: Dict (K.Mod 'K.RoundZero (P 3) (P 1) ~ P 0)
+_test_Mod_RoundZero_P3_P1 =  Dict
+_test_Div_RoundZero_P3_P2 :: Dict (K.Div 'K.RoundZero (P 3) (P 2) ~ P 1)
+_test_Div_RoundZero_P3_P2 =  Dict
+_test_Mod_RoundZero_P3_P2 :: Dict (K.Mod 'K.RoundZero (P 3) (P 2) ~ P 1)
+_test_Mod_RoundZero_P3_P2 =  Dict
+_test_Div_RoundZero_P3_P3 :: Dict (K.Div 'K.RoundZero (P 3) (P 3) ~ P 1)
+_test_Div_RoundZero_P3_P3 =  Dict
+_test_Mod_RoundZero_P3_P3 :: Dict (K.Mod 'K.RoundZero (P 3) (P 3) ~ P 0)
+_test_Mod_RoundZero_P3_P3 =  Dict
+_test_Div_RoundZero_P3_P4 :: Dict (K.Div 'K.RoundZero (P 3) (P 4) ~ P 0)
+_test_Div_RoundZero_P3_P4 =  Dict
+_test_Mod_RoundZero_P3_P4 :: Dict (K.Mod 'K.RoundZero (P 3) (P 4) ~ P 3)
+_test_Mod_RoundZero_P3_P4 =  Dict
+_test_Div_RoundZero_P3_P5 :: Dict (K.Div 'K.RoundZero (P 3) (P 5) ~ P 0)
+_test_Div_RoundZero_P3_P5 =  Dict
+_test_Mod_RoundZero_P3_P5 :: Dict (K.Mod 'K.RoundZero (P 3) (P 5) ~ P 3)
+_test_Mod_RoundZero_P3_P5 =  Dict
+_test_Div_RoundZero_P4_N1 :: Dict (K.Div 'K.RoundZero (P 4) (N 1) ~ N 4)
+_test_Div_RoundZero_P4_N1 =  Dict
+_test_Mod_RoundZero_P4_N1 :: Dict (K.Mod 'K.RoundZero (P 4) (N 1) ~ P 0)
+_test_Mod_RoundZero_P4_N1 =  Dict
+_test_Div_RoundZero_P4_N2 :: Dict (K.Div 'K.RoundZero (P 4) (N 2) ~ N 2)
+_test_Div_RoundZero_P4_N2 =  Dict
+_test_Mod_RoundZero_P4_N2 :: Dict (K.Mod 'K.RoundZero (P 4) (N 2) ~ P 0)
+_test_Mod_RoundZero_P4_N2 =  Dict
+_test_Div_RoundZero_P4_N3 :: Dict (K.Div 'K.RoundZero (P 4) (N 3) ~ N 1)
+_test_Div_RoundZero_P4_N3 =  Dict
+_test_Mod_RoundZero_P4_N3 :: Dict (K.Mod 'K.RoundZero (P 4) (N 3) ~ P 1)
+_test_Mod_RoundZero_P4_N3 =  Dict
+_test_Div_RoundZero_P4_N4 :: Dict (K.Div 'K.RoundZero (P 4) (N 4) ~ N 1)
+_test_Div_RoundZero_P4_N4 =  Dict
+_test_Mod_RoundZero_P4_N4 :: Dict (K.Mod 'K.RoundZero (P 4) (N 4) ~ P 0)
+_test_Mod_RoundZero_P4_N4 =  Dict
+_test_Div_RoundZero_P4_N5 :: Dict (K.Div 'K.RoundZero (P 4) (N 5) ~ P 0)
+_test_Div_RoundZero_P4_N5 =  Dict
+_test_Mod_RoundZero_P4_N5 :: Dict (K.Mod 'K.RoundZero (P 4) (N 5) ~ P 4)
+_test_Mod_RoundZero_P4_N5 =  Dict
+_test_Div_RoundZero_P4_P1 :: Dict (K.Div 'K.RoundZero (P 4) (P 1) ~ P 4)
+_test_Div_RoundZero_P4_P1 =  Dict
+_test_Mod_RoundZero_P4_P1 :: Dict (K.Mod 'K.RoundZero (P 4) (P 1) ~ P 0)
+_test_Mod_RoundZero_P4_P1 =  Dict
+_test_Div_RoundZero_P4_P2 :: Dict (K.Div 'K.RoundZero (P 4) (P 2) ~ P 2)
+_test_Div_RoundZero_P4_P2 =  Dict
+_test_Mod_RoundZero_P4_P2 :: Dict (K.Mod 'K.RoundZero (P 4) (P 2) ~ P 0)
+_test_Mod_RoundZero_P4_P2 =  Dict
+_test_Div_RoundZero_P4_P3 :: Dict (K.Div 'K.RoundZero (P 4) (P 3) ~ P 1)
+_test_Div_RoundZero_P4_P3 =  Dict
+_test_Mod_RoundZero_P4_P3 :: Dict (K.Mod 'K.RoundZero (P 4) (P 3) ~ P 1)
+_test_Mod_RoundZero_P4_P3 =  Dict
+_test_Div_RoundZero_P4_P4 :: Dict (K.Div 'K.RoundZero (P 4) (P 4) ~ P 1)
+_test_Div_RoundZero_P4_P4 =  Dict
+_test_Mod_RoundZero_P4_P4 :: Dict (K.Mod 'K.RoundZero (P 4) (P 4) ~ P 0)
+_test_Mod_RoundZero_P4_P4 =  Dict
+_test_Div_RoundZero_P4_P5 :: Dict (K.Div 'K.RoundZero (P 4) (P 5) ~ P 0)
+_test_Div_RoundZero_P4_P5 =  Dict
+_test_Mod_RoundZero_P4_P5 :: Dict (K.Mod 'K.RoundZero (P 4) (P 5) ~ P 4)
+_test_Mod_RoundZero_P4_P5 =  Dict
+_test_Div_RoundZero_P5_N1 :: Dict (K.Div 'K.RoundZero (P 5) (N 1) ~ N 5)
+_test_Div_RoundZero_P5_N1 =  Dict
+_test_Mod_RoundZero_P5_N1 :: Dict (K.Mod 'K.RoundZero (P 5) (N 1) ~ P 0)
+_test_Mod_RoundZero_P5_N1 =  Dict
+_test_Div_RoundZero_P5_N2 :: Dict (K.Div 'K.RoundZero (P 5) (N 2) ~ N 2)
+_test_Div_RoundZero_P5_N2 =  Dict
+_test_Mod_RoundZero_P5_N2 :: Dict (K.Mod 'K.RoundZero (P 5) (N 2) ~ P 1)
+_test_Mod_RoundZero_P5_N2 =  Dict
+_test_Div_RoundZero_P5_N3 :: Dict (K.Div 'K.RoundZero (P 5) (N 3) ~ N 1)
+_test_Div_RoundZero_P5_N3 =  Dict
+_test_Mod_RoundZero_P5_N3 :: Dict (K.Mod 'K.RoundZero (P 5) (N 3) ~ P 2)
+_test_Mod_RoundZero_P5_N3 =  Dict
+_test_Div_RoundZero_P5_N4 :: Dict (K.Div 'K.RoundZero (P 5) (N 4) ~ N 1)
+_test_Div_RoundZero_P5_N4 =  Dict
+_test_Mod_RoundZero_P5_N4 :: Dict (K.Mod 'K.RoundZero (P 5) (N 4) ~ P 1)
+_test_Mod_RoundZero_P5_N4 =  Dict
+_test_Div_RoundZero_P5_N5 :: Dict (K.Div 'K.RoundZero (P 5) (N 5) ~ N 1)
+_test_Div_RoundZero_P5_N5 =  Dict
+_test_Mod_RoundZero_P5_N5 :: Dict (K.Mod 'K.RoundZero (P 5) (N 5) ~ P 0)
+_test_Mod_RoundZero_P5_N5 =  Dict
+_test_Div_RoundZero_P5_P1 :: Dict (K.Div 'K.RoundZero (P 5) (P 1) ~ P 5)
+_test_Div_RoundZero_P5_P1 =  Dict
+_test_Mod_RoundZero_P5_P1 :: Dict (K.Mod 'K.RoundZero (P 5) (P 1) ~ P 0)
+_test_Mod_RoundZero_P5_P1 =  Dict
+_test_Div_RoundZero_P5_P2 :: Dict (K.Div 'K.RoundZero (P 5) (P 2) ~ P 2)
+_test_Div_RoundZero_P5_P2 =  Dict
+_test_Mod_RoundZero_P5_P2 :: Dict (K.Mod 'K.RoundZero (P 5) (P 2) ~ P 1)
+_test_Mod_RoundZero_P5_P2 =  Dict
+_test_Div_RoundZero_P5_P3 :: Dict (K.Div 'K.RoundZero (P 5) (P 3) ~ P 1)
+_test_Div_RoundZero_P5_P3 =  Dict
+_test_Mod_RoundZero_P5_P3 :: Dict (K.Mod 'K.RoundZero (P 5) (P 3) ~ P 2)
+_test_Mod_RoundZero_P5_P3 =  Dict
+_test_Div_RoundZero_P5_P4 :: Dict (K.Div 'K.RoundZero (P 5) (P 4) ~ P 1)
+_test_Div_RoundZero_P5_P4 =  Dict
+_test_Mod_RoundZero_P5_P4 :: Dict (K.Mod 'K.RoundZero (P 5) (P 4) ~ P 1)
+_test_Mod_RoundZero_P5_P4 =  Dict
+_test_Div_RoundZero_P5_P5 :: Dict (K.Div 'K.RoundZero (P 5) (P 5) ~ P 1)
+_test_Div_RoundZero_P5_P5 =  Dict
+_test_Mod_RoundZero_P5_P5 :: Dict (K.Mod 'K.RoundZero (P 5) (P 5) ~ P 0)
+_test_Mod_RoundZero_P5_P5 =  Dict
+
+
+
+divModTestCode :: String
+divModTestCode = unlines $ List.sort $ do
+  b <- [-5 .. 5]
+  guard (b P./= 0)
+  a <- [-5 .. 5]
+  r <- [minBound..maxBound]
+  let (q, m) = K.divMod r a b
+      sname :: String -> ShowS
+      sname t = showString "_test_"
+              . showString t
+              . showChar '_'
+              . showsPrec 0 r
+              . showChar '_'
+              . showChar (if a < 0 then 'N' else 'P')
+              . shows (abs a)
+              . showChar '_'
+              . showChar (if b < 0 then 'N' else 'P')
+              . shows (abs b)
+      sDiv :: ShowS
+      sDiv = sname "Div"
+           . showString " :: Dict (K.Div 'K."
+           . shows r
+           . showChar ' '
+           . K.showsPrecTypeLit 11 (K.fromPrelude a)
+           . showChar ' '
+           . K.showsPrecTypeLit 11 (K.fromPrelude b)
+           . showString " ~ "
+           . K.showsPrecTypeLit 0 (K.fromPrelude q)
+           . showString ")\n"
+           . sname "Div"
+           . showString " =  Dict"
+      sMod :: ShowS
+      sMod = sname "Mod"
+           . showString " :: Dict (K.Mod 'K."
+           . shows r
+           . showChar ' '
+           . K.showsPrecTypeLit 11 (K.fromPrelude a)
+           . showChar ' '
+           . K.showsPrecTypeLit 11 (K.fromPrelude b)
+           . showString " ~ "
+           . K.showsPrecTypeLit 0 (K.fromPrelude m)
+           . showString ")\n"
+           . sname "Mod"
+           . showString " =  Dict"
+      ss :: ShowS
+      ss = sDiv . showChar '\n' . sMod
+  pure (ss "")
 

@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: kind-integer
-version: 0.1.1
+version: 0.2
 license: BSD-3-Clause
 license-file: LICENSE
 extra-source-files: README.md CHANGELOG.md
@@ -26,6 +26,7 @@ common basic
   build-depends: base ==4.*
   default-extensions:
     DataKinds
+    MultiWayIf
     NoStarIsType
     PatternSynonyms
     TypeFamilies
