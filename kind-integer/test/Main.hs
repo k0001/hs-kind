@@ -8,6 +8,8 @@ import Data.Type.Ord (type (<=))
 import GHC.Exts (Constraint, proxy#)
 import System.Exit
 import Text.Read
+import Prelude hiding (Integer)
+import Prelude qualified as P
 
 import KindInteger (P, N)
 import KindInteger qualified as K
@@ -298,6 +300,112 @@ _testLog2 :: Dict
   , P 5 ~ K.Log2 (P 32)
   )
 
+_testAbs =  Dict
+_testAbs :: Dict
+  ( 0 ~ K.Abs (P 0)
+  , 0 ~ K.Abs (P 0)
+  , 1 ~ K.Abs (P 1)
+  , 1 ~ K.Abs (N 1)
+  , 2 ~ K.Abs (P 2)
+  , 2 ~ K.Abs (N 2)
+  )
+
+_testEven =  Dict
+_testEven :: Dict
+  ( 'True  ~ K.Even (P 0)
+  , 'True  ~ K.Even (P 0)
+  , 'False ~ K.Even (P 1)
+  , 'False ~ K.Even (N 1)
+  , 'True  ~ K.Even (P 2)
+  , 'True  ~ K.Even (N 2)
+  )
+
+_testOdd =  Dict
+_testOdd :: Dict
+  ( 'False  ~ K.Odd (P 0)
+  , 'False  ~ K.Odd (P 0)
+  , 'True   ~ K.Odd (P 1)
+  , 'True   ~ K.Odd (N 1)
+  , 'False  ~ K.Odd (P 2)
+  , 'False  ~ K.Odd (N 2)
+  )
+
+_testGCD =  Dict
+_testGCD :: Dict
+  ( 0 ~ K.GCD (P 0) (P 0)
+  , 0 ~ K.GCD (P 0) (N 0)
+  , 0 ~ K.GCD (N 0) (P 0)
+  , 0 ~ K.GCD (N 0) (N 0)
+
+  , 1 ~ K.GCD (P 1) (P 0)
+  , 1 ~ K.GCD (P 1) (N 0)
+  , 1 ~ K.GCD (N 1) (P 0)
+  , 1 ~ K.GCD (N 1) (N 0)
+
+  , 1 ~ K.GCD (P 0) (P 1)
+  , 1 ~ K.GCD (P 0) (N 1)
+  , 1 ~ K.GCD (N 0) (P 1)
+  , 1 ~ K.GCD (N 0) (N 1)
+
+  , 1 ~ K.GCD (P 1) (P 2)
+  , 1 ~ K.GCD (P 1) (N 2)
+  , 1 ~ K.GCD (N 1) (P 2)
+  , 1 ~ K.GCD (N 1) (N 2)
+
+  , 1 ~ K.GCD (P 2) (P 1)
+  , 1 ~ K.GCD (P 2) (N 1)
+  , 1 ~ K.GCD (N 2) (P 1)
+  , 1 ~ K.GCD (N 2) (N 1)
+
+  , 3 ~ K.GCD (P 6) (P 9)
+  , 3 ~ K.GCD (P 6) (N 9)
+  , 3 ~ K.GCD (N 6) (P 9)
+  , 3 ~ K.GCD (N 6) (N 9)
+
+  , 3 ~ K.GCD (P 9) (P 6)
+  , 3 ~ K.GCD (P 9) (N 6)
+  , 3 ~ K.GCD (N 9) (P 6)
+  , 3 ~ K.GCD (N 9) (N 6)
+  )
+
+_testLCM =  Dict
+_testLCM :: Dict
+  ( 0 ~ K.LCM (P 0) (P 0)
+  , 0 ~ K.LCM (P 0) (N 0)
+  , 0 ~ K.LCM (N 0) (P 0)
+  , 0 ~ K.LCM (N 0) (N 0)
+
+  , 0 ~ K.LCM (P 1) (P 0)
+  , 0 ~ K.LCM (P 1) (N 0)
+  , 0 ~ K.LCM (N 1) (P 0)
+  , 0 ~ K.LCM (N 1) (N 0)
+
+  , 0 ~ K.LCM (P 0) (P 1)
+  , 0 ~ K.LCM (P 0) (N 1)
+  , 0 ~ K.LCM (N 0) (P 1)
+  , 0 ~ K.LCM (N 0) (N 1)
+
+  , 2 ~ K.LCM (P 1) (P 2)
+  , 2 ~ K.LCM (P 1) (N 2)
+  , 2 ~ K.LCM (N 1) (P 2)
+  , 2 ~ K.LCM (N 1) (N 2)
+
+  , 2 ~ K.LCM (P 2) (P 1)
+  , 2 ~ K.LCM (P 2) (N 1)
+  , 2 ~ K.LCM (N 2) (P 1)
+  , 2 ~ K.LCM (N 2) (N 1)
+
+  , 18 ~ K.LCM (P 6) (P 9)
+  , 18 ~ K.LCM (P 6) (N 9)
+  , 18 ~ K.LCM (N 6) (P 9)
+  , 18 ~ K.LCM (N 6) (N 9)
+
+  , 18 ~ K.LCM (P 9) (P 6)
+  , 18 ~ K.LCM (P 9) (N 6)
+  , 18 ~ K.LCM (N 9) (P 6)
+  , 18 ~ K.LCM (N 9) (N 6)
+  )
+
 --------------------------------------------------------------------------------
 
 assert
@@ -350,6 +458,24 @@ main = testsMain
           | a == b    -> isJust    (K.sameInteger pa pb)
           | otherwise -> isNothing (K.sameInteger pa pb)
 
+  , assert "Eq fromPrelude" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      (a == b) == (K.fromPrelude a == K.fromPrelude b)
+
+  , assert "Ord fromPrelude" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      (a `compare` b) == (K.fromPrelude a `compare` K.fromPrelude b)
+
+  , assert "Show fromPrelude" $
+    flip all [-5 .. 5] $ \i ->
+      show i == show (K.fromPrelude i)
+
+  , assert "Read fromPrelude" $
+    flip all [-5 .. 5] $ \i ->
+      let str = show (i :: P.Integer)
+      in readMaybe @P.Integer str
+            == fmap K.toPrelude (readMaybe @K.Integer str)
+
   , assert "Eq SomeInteger" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
       (a == b) == (K.someIntegerVal a == K.someIntegerVal b)
@@ -364,8 +490,8 @@ main = testsMain
 
   , assert "Read SomeInteger" $
     flip all [-5 .. 5] $ \i ->
-      let str = show (i :: Integer)
-      in readMaybe @Integer str
+      let str = show (i :: P.Integer)
+      in readMaybe @P.Integer str
             == fmap (\(K.SomeInteger p) -> K.integerVal p)
                     (readMaybe @K.SomeInteger str)
 

@@ -155,9 +155,8 @@ toPrelude (Negative n) = negate (toInteger n)
 -- around for some reason. But, other than this, "KindInteger" doesn't offer
 -- any tool to deal with the internals of its 'Integer'.
 fromPrelude :: P.Integer -> Integer
-fromPrelude i = let n = fromInteger i
-                in  if i >= 0 then Positive n
-                              else Negative n
+fromPrelude i = if i >= 0 then Positive (fromInteger i)
+                          else Negative (fromInteger (negate i))
 
 --------------------------------------------------------------------------------
 
