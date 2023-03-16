@@ -19,16 +19,19 @@ module KindInteger
   , type P
   , type N
   , Normalize
+
+    -- * Prelude support
   , toPrelude
   , fromPrelude
 
-    -- * Types and values
+    -- * Types ⇔ Terms
   , KnownInteger(integerSing), integerVal, integerVal'
   , SomeInteger(..)
   , someIntegerVal
   , sameInteger
+  , showsPrecTypeLit
 
-    -- ** Singleton values
+    -- * Singletons
   , SInteger
   , pattern SInteger
   , fromSInteger
@@ -42,6 +45,8 @@ module KindInteger
     -- * Comparisons
   , CmpInteger
   , cmpInteger
+
+    -- * Extra
   , type (==?), type (==), type (/=?), type (/=)
   ) where
 
@@ -74,12 +79,45 @@ import Unsafe.Coerce(unsafeCoerce)
 -- @'P' 0@, but don't assume that this will be the case elsewhere. So, if you
 -- need to treat /zero/ specially in some situation, be sure to handle both the
 -- @'P' 0@ and @'N' 0@ cases.
+--
+-- __NB__: 'Integer' is mostly used as a kind, with its types constructed
+-- using '/'.  However, it might also be used as type, with its terms
+-- constructed using 'fromPrelude'. One reason why you may want a 'Integer'
+-- at the term-level is so that you embed it in larger data-types (for example,
+-- the "KindRational" module from the @kind-rational@ library embeds this
+-- 'I.Integer' in its 'KindRational.Rational' type)
 data Integer
   = Positive Natural
   | Negative Natural
 
-showsPrecInteger :: Int -> Integer -> ShowS
-showsPrecInteger p i = showParen (p > appPrec) $ case i of
+instance Eq Integer where
+  a == b = toPrelude a P.== toPrelude b
+
+instance Ord Integer where
+  compare a b = compare (toPrelude a) (toPrelude b)
+  a <= b = toPrelude a <= toPrelude b
+
+-- | Same as "Prelude" 'P.Integer'.
+instance Show Integer where
+  showsPrec p = showsPrec p . toPrelude
+
+-- | Same as "Prelude" 'P.Integer'.
+instance Read Integer where
+  readsPrec p xs = do (a, ys) <- readsPrec p xs
+                      [(fromPrelude a, ys)]
+
+-- | Shows the 'Integer' as it appears literally at the type-level.
+--
+-- This is different from normal 'show' for 'Rational', which shows
+-- the term-level value.
+--
+-- @
+-- 'shows' 0 ('fromPrelude' 8) \"z\" == \"8z\"
+--
+-- 'showsPrecTypeLit' 0 ('fromPrelude' 8) \"z\" == \"P 8z\"
+-- @
+showsPrecTypeLit :: Int -> Integer -> ShowS
+showsPrecTypeLit p i = showParen (p > appPrec) $ case i of
   Positive x -> showString "P " . shows x
   Negative x -> showString "N " . shows x
 
@@ -406,7 +444,7 @@ knownIntegerInstance si = withKnownInteger si KnownIntegeregerInstance
 instance Show (SInteger i) where
   showsPrec p (UnsafeSInteger i) = showParen (p > appPrec) $
     showString "SInteger @" .
-    showsPrecInteger appPrec1 (fromPrelude i)
+    showsPrec appPrec1 (fromPrelude i)
 
 instance TestEquality SInteger where
   testEquality (UnsafeSInteger x) (UnsafeSInteger y)

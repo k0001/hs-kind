@@ -24,16 +24,22 @@ module KindRational {--}
   , Den
 
     -- Prelude support
+  , rational
   , fromPrelude
   , toPrelude
 
     -- * Types ⇔ Terms
-  , KnownRational(rationalSing), rationalVal, rationalVal'
+  , KnownRational(rationalSing)
+  , rationalVal_
+  , rationalVal
+  , rationalVal'
   , SomeRational(..)
   , someRationalVal
+  , someRationalVal_
   , sameRational
+  , showsPrecTypeLit
 
-    -- * Singleton
+    -- * Singletons
   , SRational
   , pattern SRational
   , fromSRational
@@ -64,6 +70,8 @@ module KindRational {--}
     -- * Comparisons
   , CmpRational
   , cmpRational
+
+    -- * Extra
   , type (==?), type (==), type (/=?), type (/=)
   ) --}
   where
@@ -75,7 +83,8 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Prim (Proxy#)
+import GHC.Prim (proxy#, Proxy#)
+import GHC.Read qualified as Read
 import GHC.Real qualified as P (Ratio(..), reduce)
 import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
@@ -87,22 +96,59 @@ import KindInteger qualified as I
 import Numeric.Natural (Natural)
 import Prelude hiding (Rational, Integer, Num)
 import Prelude qualified as P
+import Text.ParserCombinators.ReadPrec as Read
+import Text.Read.Lex qualified as Read
 import Unsafe.Coerce(unsafeCoerce)
 
 --------------------------------------------------------------------------------
 
--- | Type-level version of 'P.Rational'.
+-- | Type-level version of 'P.Rational'. Use '/' to construct one, use '%' to
+-- pattern-match on it.
+--
+-- __NB__: 'Rational' is mostly used as a kind, with its types constructed
+-- using '/'.  However, it might also be used as type, with its terms
+-- constructed using 'rational' or 'fromPrelude'. One reason why you may want a
+-- 'Rational' at the term-level is so that you embed it in larger data-types
+-- (for example, this 'Rational' embeds the 'I.Integer' offered by the
+-- "KindInteger" module), but more importantly, this 'Rational' offers better
+-- safety than the 'P.Rational' from "Prelude", since it's not possible to
+-- construct one with a zero denominator, or so large that operating with it
+-- would exhaust system resources.
 data Rational = I.Integer :% Natural
 
-showsPrecInteger :: Int -> I.Integer -> ShowS
-showsPrecInteger p i = showParen (p > appPrec) $
-  case I.toPrelude i of
-    x | x >= 0    -> showString "P " . shows x
-      | otherwise -> showString "N " . shows (abs x)
+instance Eq Rational where
+  a == b = toPrelude a == toPrelude b
 
-showsPrecRational :: Int -> Rational -> ShowS
-showsPrecRational p (n :% d) = showParen (p > appPrec) $
-  showsPrecInteger appPrec n . showString " % " . shows d
+instance Ord Rational where
+  compare a b = compare (toPrelude a) (toPrelude b)
+  a <= b = toPrelude a <= toPrelude b
+
+-- | Same as "Prelude" 'P.Rational'.
+instance Show Rational where
+  showsPrec p = showsPrec p . toPrelude
+
+-- | Same as "Prelude" 'P.Rational'.
+instance Read Rational where
+  readPrec = Read.parens $ Read.prec 7 $ do  -- 7 is GHC.Real.ratioPrec
+    n <- Read.step Read.readPrec
+    Read.expectP (Read.Symbol "%")
+    d <- Read.step Read.readPrec
+    Just r <- pure (rational n d)
+    pure r
+
+-- | Shows the 'Rational' as it appears literally at the type-level.
+--
+-- This is different from normal 'show' for 'Rational', which shows
+-- the term-level value.
+--
+-- @
+-- 'shows' 0 ('intervalVal' @(1 '%' 2)) \"z\" == \"1 % 2z\"
+--
+-- 'showsPrecTypeLit' 0 ('intervalVal' @(1 '%' 2)) \"z\" == \"P 1 % 2z\"
+-- @
+showsPrecTypeLit :: Int -> Rational -> ShowS
+showsPrecTypeLit p (n :% d) = showParen (p > appPrec) $
+  showsPrec appPrec n . showString " % " . shows d
 
 -- | Make a term-level "KindRational" 'Rational' number, provided that
 -- the numerator is not @0@, and that its numerator and denominator are
@@ -112,7 +158,9 @@ showsPrecRational p (n :% d) = showParen (p > appPrec) $
 -- with functions such as 'someRationalVal'. Unfortunately, the
 -- 'P.Rational' from "Prelude" is not entirely safe. You can obtain one
 -- with 'rational' or with 'fromPrelude'.
-rational :: P.Integer -> P.Integer -> Maybe Rational
+rational :: P.Integer  -- ^ Numerator.
+         -> P.Integer  -- ^ Denominator.
+         -> Maybe Rational
 rational = \n d -> do
     guard (d /= 0 && abs n < max_ && abs d < max_)
     let (n' P.:% d') = P.reduce n d
@@ -203,7 +251,8 @@ type (/) :: kn -> kd -> Rational
 -- @
 --
 -- __NB__: It's not possible to pattern-match on @n '/' d@.
--- Instead, you must pattern match on @n' t'%' b'@ if necessary.
+-- Instead, you must pattern match on a 'Normalize'd @n' t'%' b'@ if
+-- necessary.
 type family n / d :: Rational where
   -- Natural/Natural
   (n :: Natural) / (d :: Natural) = Normalize (P n % d)
@@ -360,12 +409,17 @@ instance forall r n d.
   rationalSing = UnsafeSRational
     (I.fromPrelude (I.integerVal (Proxy @n)) :% N.natVal (Proxy @d))
 
--- | Term-level "Prelude" 'P.Rational' representation of the type-level
+-- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
 rationalVal :: forall r proxy. KnownRational r => proxy r -> Rational
-rationalVal _ = case rationalSing :: SRational r of UnsafeSRational x -> x
+rationalVal _ = rationalVal' (proxy# @r)
 
 -- | Term-level "Prelude" 'P.Rational' representation of the type-level
+-- 'Rational' @r@.
+rationalVal_ :: forall r proxy. KnownRational r => proxy r -> P.Rational
+rationalVal_ = toPrelude . rationalVal
+
+-- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
 rationalVal' :: forall r. KnownRational r => Proxy# r -> Rational
 rationalVal' _ = case rationalSing :: SRational r of UnsafeSRational x -> x
@@ -373,26 +427,35 @@ rationalVal' _ = case rationalSing :: SRational r of UnsafeSRational x -> x
 -- | This type represents unknown type-level 'Rational'.
 data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
 
--- | Convert a term-level 'Rational' into an unknown type-level 'Rational'.
+-- | Convert a term-level "KindRational" 'Rational' into an unknown
+-- type-level 'Rational'.
 someRationalVal :: Rational -> SomeRational
 someRationalVal r = withSomeSRational r (\(si :: SRational r) ->
                     withKnownRational si (SomeRational @r Proxy))
 
+-- | Convert a term-level "Prelude" 'Rational' into an unknown
+-- type-level 'Rational'.
+someRationalVal_ :: P.Rational -> SomeRational
+someRationalVal_ r0 = case fromPrelude r0 of
+  Just r1 -> someRationalVal r1
+  Nothing -> error "KindRational.someRationalVal_: \
+                   \malformed Prelude.Rational"
+
 instance Eq SomeRational where
-  SomeRational x == SomeRational y =
-    toPrelude (rationalVal x) P.== toPrelude (rationalVal y)
+  SomeRational x == SomeRational y = rationalVal x P.== rationalVal y
 
 instance Ord SomeRational where
+  SomeRational x <= SomeRational y =
+    rationalVal x <= rationalVal y
   compare (SomeRational x) (SomeRational y) =
-    compare (toPrelude (rationalVal x)) (toPrelude (rationalVal y))
+    compare (rationalVal x) (rationalVal y)
 
 instance Show SomeRational where
-  showsPrec p (SomeRational x) = showsPrec p (toPrelude (rationalVal x))
+  showsPrec p (SomeRational x) = showsPrec p (rationalVal x)
 
--- TODO
--- instance Read SomeRational where
---   readsPrec p xs = do (a, ys) <- readsPrec p xs
---                       [(someRationalVal a, ys)]
+instance Read SomeRational where
+  readsPrec p xs = do (a, ys) <- readsPrec p xs
+                      [(someRationalVal a, ys)]
 
 --------------------------------------------------------------------------------
 
@@ -432,63 +495,6 @@ type family Terminates_ (n :: Natural) :: Bool where
   Terminates_ 1 = 'True
   Terminates_ 2 = 'True
   Terminates_ 5 = 'True
-  Terminates_ 10 = 'True
-  Terminates_ 100 = 'True
-  Terminates_ 1000 = 'True
-  Terminates_ 10000 = 'True
-  Terminates_ 100000 = 'True
-  Terminates_ 1000000 = 'True
-  Terminates_ 10000000 = 'True
-  Terminates_ 100000000 = 'True
-  Terminates_ 1000000000 = 'True
-  Terminates_ 10000000000 = 'True
-  Terminates_ 100000000000 = 'True
-  Terminates_ 1000000000000 = 'True
-  Terminates_ 10000000000000 = 'True
-  Terminates_ 100000000000000 = 'True
-  Terminates_ 1000000000000000 = 'True
-  Terminates_ 10000000000000000 = 'True
-  Terminates_ 100000000000000000 = 'True
-  Terminates_ 1000000000000000000 = 'True
-  Terminates_ 10000000000000000000 = 'True
-  Terminates_ 100000000000000000000 = 'True
-  Terminates_ 1000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 10000000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 100000000000000000000000000000000000000000000000000000000 = 'True
-  Terminates_ 1000000000000000000000000000000000000000000000000000000000 = 'True
   Terminates_ d = Terminates_5 d (L.Mod d 5)
 
 -- @Terminates_5@ is here to prevent @Terminates_@ from recursing into
@@ -512,65 +518,6 @@ terminates = \(_ :% d) -> go (toInteger d)
       1 -> True
       2 -> True
       5 -> True
-      -- BEGIN OPTIMIZATIONS
-      10 -> True
-      100 -> True
-      1000 -> True
-      10000 -> True
-      100000 -> True
-      1000000 -> True
-      10000000 -> True
-      100000000 -> True
-      1000000000 -> True
-      10000000000 -> True
-      100000000000 -> True
-      1000000000000 -> True
-      10000000000000 -> True
-      100000000000000 -> True
-      1000000000000000 -> True
-      10000000000000000 -> True
-      100000000000000000 -> True
-      1000000000000000000 -> True
-      10000000000000000000 -> True
-      100000000000000000000 -> True
-      1000000000000000000000 -> True
-      10000000000000000000000 -> True
-      100000000000000000000000 -> True
-      1000000000000000000000000 -> True
-      10000000000000000000000000 -> True
-      100000000000000000000000000 -> True
-      1000000000000000000000000000 -> True
-      10000000000000000000000000000 -> True
-      100000000000000000000000000000 -> True
-      1000000000000000000000000000000 -> True
-      10000000000000000000000000000000 -> True
-      100000000000000000000000000000000 -> True
-      1000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000000000000000 -> True
-      10000000000000000000000000000000000000000000000000000000 -> True
-      100000000000000000000000000000000000000000000000000000000 -> True
-      1000000000000000000000000000000000000000000000000000000000 -> True
-      -- END OPTIMIZATIONS
       n | (q, 0) <- divMod n 5 -> go q
         | (q, 0) <- divMod n 2 -> go q
       _ -> False
@@ -650,7 +597,7 @@ cmpRational
   -> proxy2 b
   -> OrderingI a b
 cmpRational x y =
-  case compare (toPrelude (rationalVal x)) (toPrelude (rationalVal y)) of
+  case compare (rationalVal_ x) (rationalVal_ y) of
     EQ -> case unsafeCoerce Refl :: CmpRational a b :~: 'EQ of
       Refl -> case unsafeCoerce Refl :: a :~: b of
         Refl -> EQI
@@ -697,8 +644,7 @@ knownRationalInstance si = withKnownRational si KnownRationalegerInstance
 
 instance Show (SRational r) where
   showsPrec p (UnsafeSRational r) = showParen (p > appPrec) $
-    showString "SRational @" .
-    showsPrecRational appPrec1 r
+    showString "SRational @" . showsPrecTypeLit appPrec1 r
 
 instance TestEquality SRational where
   testEquality (UnsafeSRational x) (UnsafeSRational y) = do
