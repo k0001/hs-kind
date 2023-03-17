@@ -99,8 +99,8 @@ import Unsafe.Coerce(unsafeCoerce)
 -- the "KindRational" module from the @kind-rational@ library embeds this
 -- 'I.Integer' in its 'KindRational.Rational' type)
 data Integer
-  = Positive Natural
-  | Negative Natural
+  = P Natural
+  | N Natural
 
 instance Eq Integer where
   a == b = toPrelude a P.== toPrelude b
@@ -120,7 +120,7 @@ instance Read Integer where
 
 -- | Shows the 'Integer' as it appears literally at the type-level.
 --
--- This is different from normal 'show' for 'Rational', which shows
+-- This is different from normal 'show' for 'Integer', which shows
 -- the term-level value.
 --
 -- @
@@ -129,29 +129,29 @@ instance Read Integer where
 -- @
 showsPrecTypeLit :: Int -> Integer -> ShowS
 showsPrecTypeLit p i = showParen (p > appPrec) $ case i of
-  Positive x -> showString "P " . shows x
-  Negative x -> showString "N " . shows x
+  P x -> showString "P " . shows x
+  N x -> showString "N " . shows x
 
 -- | * A positive number /+x/ is represented as @'P' x@.
 --
 -- * /Zero/ can be represented as @'P' 0@ (see notes at 'Integer').
-type P (x :: Natural) = 'Positive x :: Integer
+type P (x :: Natural) = 'P x :: Integer
 
 -- | * A negative number /-x/ is represented as @'N' x@.
 --
 -- * /Zero/ can be represented as @'N' 0@ (but often isn't, see notes at 'Integer').
-type N (x :: Natural) = 'Negative x :: Integer
+type N (x :: Natural) = 'N x :: Integer
 
--- | Convert a term-level "KindRational" 'Rational' into a term-level
--- "Prelude" 'P.Rational'.
+-- | Convert a term-level "KindInteger" 'Integer' into a term-level
+-- "Prelude" 'P.Integer'.
 --
 -- @
 -- 'fromPrelude' . 'toPrelude' == 'id'
 -- 'toPrelude' . 'fromPrelude' == 'id'
 -- @
 toPrelude :: Integer -> P.Integer
-toPrelude (Positive n) = toInteger n
-toPrelude (Negative n) = negate (toInteger n)
+toPrelude (P n) = toInteger n
+toPrelude (N n) = negate (toInteger n)
 
 -- | Obtain a term-level "KindInteger" 'Integer' from a term-level
 -- "Prelude" 'P.Integer'. This can fail if the "Prelude" 'P.Integer' is
@@ -166,8 +166,8 @@ toPrelude (Negative n) = negate (toInteger n)
 -- around for some reason. But, other than this, "KindInteger" doesn't offer
 -- any tool to deal with the internals of its 'Integer'.
 fromPrelude :: P.Integer -> Integer
-fromPrelude i = if i >= 0 then Positive (fromInteger i)
-                          else Negative (fromInteger (negate i))
+fromPrelude i = if i >= 0 then P (fromInteger i)
+                          else N (fromInteger (negate i))
 
 --------------------------------------------------------------------------------
 
@@ -298,6 +298,12 @@ type (a :: Integer) - (b :: Integer) = a + Negate b :: Integer
 
 -- | Get both the quotient and the 'Mod'ulus of the 'Div'ision of
 -- type-level 'Integer's @a@ and @b@ using the specified 'Round'ing @r@.
+--
+-- @
+-- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer').
+--   (b '/=' 0) =>
+--     'DivMod' r a b '=='  '('Div' r a b, 'Mod' r a b)
+-- @
 type DivMod (r :: Round) (a :: Integer) (b :: Integer) =
   '( Div r a b, Mod r a b ) :: (Integer, Integer)
 
@@ -305,8 +311,9 @@ type DivMod (r :: Round) (a :: Integer) (b :: Integer) =
 -- using the specified 'Round'ing @r@.
 --
 -- @
--- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer'). (b '/=' 0) =>
---    'Mod' r a b  '=='  a '-' b '*' 'Div' r a b
+-- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer').
+--   (b '/=' 0) =>
+--     'Mod' r a b  '=='  a '-' b '*' 'Div' r a b
 -- @
 --
 -- * Division by /zero/ doesn't type-check.
@@ -565,7 +572,7 @@ div :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
     -> P.Integer  -- ^ Quotient @q@.
-div r = let f = divMod r in \a b -> fst (f a b)
+div r a b = fst (divMod r a b)
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
 -- Return the modulus @m@. See 'divMod'.
@@ -573,15 +580,16 @@ mod :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
     -> P.Integer  -- ^ Modulus @m@.
-mod r = let f = divMod r in \a b -> snd (f a b)
+mod r a b = snd (divMod r a b)
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
 -- Return the quotient @q@ and the modulus @m@.
 --
 -- @
--- forall (r :: 'Round') (a :: 'P.Integer') (b :: 'P.Integer'). /such that/ (b 'P./=' 0) =>
---   case 'divMod' r a b of
---     (q, m) -> m 'P.==' a 'P.-' b 'P.*' q
+-- forall (r :: 'Round') (a :: 'P.Integer') (b :: 'P.Integer').
+--   (b 'P./=' 0) =>
+--     case 'divMod' r a b of
+--       (q, m) -> m 'P.==' a 'P.-' b 'P.*' q
 -- @
 divMod
   :: Round
@@ -611,6 +619,7 @@ _divModRoundUpNoCheck :: P.Integer -> P.Integer -> (P.Integer, P.Integer)
 _divModRoundUpNoCheck a b =
   let q = negate (P.div (negate a) b)
   in (q, a - b * q)
+{-# INLINE _divModRoundUpNoCheck #-}
 
 _divModHalf
   :: (Bool ->
@@ -623,12 +632,13 @@ _divModHalf
   -> (P.Integer, P.Integer)
 _divModHalf f = \a (errDiv0 -> b) ->
   let neg  = xor (a < 0) (b < 0)
-      rat  = a P.% b
-      up   = _divModRoundUpNoCheck a b
       down = P.divMod a b
-  in  if | rat - toRational (fst down) < 1 P.:% 2 -> down
-         | toRational (fst up) - rat   < 1 P.:% 2 -> up
-         | otherwise -> f neg down up
+      up   = _divModRoundUpNoCheck a b
+  in  case compare (a P.% b - toRational (fst down)) (1 P.:% 2) of
+        LT -> down
+        GT -> up
+        EQ -> f neg down up
+{-# INLINE _divModHalf #-}
 
 --------------------------------------------------------------------------------
 -- Extras
