@@ -8,6 +8,7 @@ import Control.Applicative
 import Control.Monad
 import Data.List qualified as List
 import Data.Maybe
+import Data.Proxy
 import Data.Type.Ord (type (<=), type (<))
 import GHC.Exts (Constraint)
 import System.Exit
@@ -319,6 +320,62 @@ _testDivDif :: Dict
   , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfOdd (N 3 / 4)
   )
 
+_testTerminates =  Dict
+_testTerminates :: Dict
+  ( K.Terminating (0/1)
+  , K.Terminating (N 1/1)
+  , K.Terminating (2/1)
+  , K.Terminating (N 1/2)
+  , K.Terminating (1/4)
+  , K.Terminating (N 1/5)
+  , K.Terminating (1/10)
+  , K.Terminating (N 1/20)
+  , K.Terminating (1/50)
+  , K.Terminating (N 1/10000000)
+
+  , K.Terminating (3/1)
+  , K.Terminating (N 3/1)
+  , K.Terminating (3/2)
+  , K.Terminating (N 3/3)
+  , K.Terminating (3/4)
+  , K.Terminating (N 3/5)
+  , K.Terminating (3/6)
+  , K.Terminating (N 3/10)
+  , K.Terminating (3/20)
+  , K.Terminating (N 3/50)
+  , K.Terminating (3/10000000)
+
+  , 'True ~ K.Terminates (N 0/1)
+  , 'True ~ K.Terminates (1/1)
+  , 'True ~ K.Terminates (N 2/1)
+  , 'True ~ K.Terminates (1/2)
+  , 'True ~ K.Terminates (N 1/4)
+  , 'True ~ K.Terminates (1/5)
+  , 'True ~ K.Terminates (N 1/10)
+  , 'True ~ K.Terminates (1/20)
+  , 'True ~ K.Terminates (N 1/50)
+  , 'True ~ K.Terminates (1/10000000)
+
+  , 'True ~ K.Terminates (N 3/1)
+  , 'True ~ K.Terminates (3/1)
+  , 'True ~ K.Terminates (N 3/2)
+  , 'True ~ K.Terminates (3/3)
+  , 'True ~ K.Terminates (N 3/4)
+  , 'True ~ K.Terminates (3/5)
+  , 'True ~ K.Terminates (N 3/6)
+  , 'True ~ K.Terminates (3/10)
+  , 'True ~ K.Terminates (N 3/20)
+  , 'True ~ K.Terminates (3/50)
+  , 'True ~ K.Terminates (N 3/10000000)
+
+  , 'False ~ K.Terminates (1/3)
+  , 'False ~ K.Terminates (N 1/12)
+  , 'False ~ K.Terminates (1/15)
+  , 'False ~ K.Terminates (N 2/3)
+  , 'False ~ K.Terminates (75/7)
+  , 'False ~ K.Terminates (N 8/3)
+  )
+
 --------------------------------------------------------------------------------
 
 assert
@@ -391,16 +448,11 @@ main = testsMain $
             == fmap (\(K.SomeRational p) -> K.rationalVal p)
                     (readMaybe @K.SomeRational str)
 
-  ] <> testsDivModDif
+  ] <> testsDivModDif <> testsTerminating
 
 testsDivModDif :: [IO Bool]
 testsDivModDif = do
-  a :: P.Rational <- do
-    d :: P.Integer <- [-4 .. 4]
-    guard (d P./= 0)
-    n :: P.Integer <- [-4 .. 4]
-    pure (n P.% d)
-  let n P.:% d = a
+  a@(n P.:% d) <- rats 4
   r :: K.Round <- [minBound .. maxBound]
   let tname :: String -> ShowS
       tname t = showString t . showChar ' ' . shows r . showChar ' '
@@ -415,6 +467,53 @@ testsDivModDif = do
     , assert (tname "divDif/div" "") $ fst (K.divDif r a) == K.div r a
     , assert (tname "divDif/dif" "") $ snd (K.divDif r a) == K.dif r a
     ]
+
+testsTerminating  :: [IO Bool]
+testsTerminating = concat
+    [ do a <- ok
+         pure $ assert ("withTerminating(ok) (" <> show a <> ")") $
+           case K.someRationalVal a of
+             K.SomeRational (_ :: Proxy a) ->
+               isJust (K.withTerminating @a () :: Maybe ())
+
+    , do a <- no
+         pure $ assert ("withTerminating(no) (" <> show a <> ")") $
+           case K.someRationalVal a of
+             K.SomeRational (_ :: Proxy a) ->
+               isNothing (K.withTerminating @a () :: Maybe ())
+    ]
+  where
+   ok :: [P.Rational]
+   ok = [ 0 P.% 1
+        , -1 P.% 1
+        , 2 P.% 1
+        , -1 P.% 2
+        , 1 P.% 4
+        , -1 P.% 5
+        , 1 P.% 10
+        , -1 P.% 20
+        , 1 P.% 50
+        , -1 P.% 10000000
+        , 3 P.% 1
+        , -3 P.% 1
+        , 3 P.% 2
+        , -3 P.% 3
+        , 3 P.% 4
+        , -3 P.% 5
+        , 3 P.% 6
+        , -3 P.% 10
+        , 3 P.% 20
+        , -3 P.% 50
+        , 3 P.% 10000000
+        ]
+   no :: [P.Rational]
+   no = [ 1 P.% 3
+        , -1 P.% 12
+        , 1 P.% 15
+        , -2 P.% 3
+        , 75 P.% 7
+        , -8 P.% 3
+        ]
 
 
 _testSlash_Nat0_Nat1 = Dict @((P 0 % 1) ~ (0 / 1))
