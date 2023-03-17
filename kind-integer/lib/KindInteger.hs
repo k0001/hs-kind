@@ -1,4 +1,3 @@
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | This module provides a type-level representation for term-level
@@ -25,7 +24,7 @@ module KindInteger {--}
   , fromPrelude
 
     -- * Types ⇔ Terms
-  , KnownInteger(integerSing), integerVal, integerVal'
+  , KnownInteger(integerSing), integerVal
   , SomeInteger(..)
   , someIntegerVal
   , sameInteger
@@ -69,7 +68,6 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Prim (Proxy#)
 import GHC.Real qualified as P
 import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
@@ -189,10 +187,6 @@ instance L.KnownNat x => KnownInteger (N x) where
 -- | Term-level 'P.Integer' representation of the type-level 'Integer' @i@.
 integerVal :: forall i proxy. KnownInteger i => proxy i -> P.Integer
 integerVal _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
-
--- | Term-level 'P.Integer' representation of the type-level 'Integer' @i@.
-integerVal' :: forall i. KnownInteger i => Proxy# i -> P.Integer
-integerVal' _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
 
 -- | This type represents unknown type-level 'Integer'.
 data SomeInteger = forall n. KnownInteger n => SomeInteger (Proxy n)
