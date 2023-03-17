@@ -355,128 +355,6 @@ type family Add_ (a :: Rational) (r :: Rational) :: Rational where
 -- the type-level 'Rational' @a@.
 type (a :: Rational) - (b :: Rational) = a + Negate b :: Rational
 
---------------------------------------------------------------------------------
-
--- | This class gives the rational associated with a type-level rational.
--- There are instances of the class for every rational.
-class KnownRational (r :: Rational) where
-  rationalSing :: SRational r
-
-instance forall r n d.
-  ( Normalize r ~ n % d
-  , I.KnownInteger n
-  , L.KnownNat d
-  ) => KnownRational r where
-  rationalSing = UnsafeSRational
-    (I.fromPrelude (I.integerVal (Proxy @n)) :% N.natVal (Proxy @d))
-
--- | Term-level "KindRational" 'Rational' representation of the type-level
--- 'Rational' @r@.
-rationalVal' :: forall r proxy. KnownRational r => proxy r -> Rational
-rationalVal' _ = case rationalSing :: SRational r of
-                   UnsafeSRational x -> x
-
--- | Term-level "Prelude" 'P.Rational' representation of the type-level
--- 'Rational' @r@.
-rationalVal :: forall r proxy. KnownRational r => proxy r -> P.Rational
-rationalVal = toPrelude . rationalVal'
-
--- | This type represents unknown type-level 'Rational'.
-data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
-
--- | Convert a term-level "Prelude" 'Rational' into an unknown
--- type-level 'Rational'.
-someRationalVal :: P.Rational -> SomeRational
-someRationalVal r =
-  withSomeSRational (unsafeFromPrelude r) $ \(sr :: SRational r) ->
-    withKnownRational sr (SomeRational @r Proxy)
-
-instance Eq SomeRational where
-  SomeRational x == SomeRational y = rationalVal x P.== rationalVal y
-
-instance Ord SomeRational where
-  SomeRational x <= SomeRational y =
-    rationalVal x <= rationalVal y
-  compare (SomeRational x) (SomeRational y) =
-    compare (rationalVal x) (rationalVal y)
-
-instance Show SomeRational where
-  showsPrec p (SomeRational x) = showsPrec p (rationalVal x)
-
-instance Read SomeRational where
-  readsPrec p xs = do (a, ys) <- readsPrec p xs
-                      [(someRationalVal a, ys)]
-
---------------------------------------------------------------------------------
-
--- | 'Constraint' version of @'Terminates' r@. Satisfied by all type-level
--- 'Rational's that can be represented as a finite decimal number.
-
--- Written as a class rather than as a type-synonym so that downstream doesn't
--- need to use UndecidableSuperClasses.
-class (KnownRational r, Terminates r ~ True)
-  => Terminating (r :: Rational)
-
--- Note: Even if @Terminates r ~ 'False@, GHC shows our @TypeError@ first.
-instance
-  ( KnownRational r
-  , Terminates r ~ 'True
-  , If (Terminates r)
-       (() :: Constraint)
-       (L.TypeError ('L.Text "‘" 'L.:<>: 'L.ShowType r 'L.:<>:
-                     'L.Text "’ is not a terminating "
-                     'L.:<>: 'L.ShowType Rational))
-  ) => Terminating r
-
-withTerminating
-  :: forall r a
-  .  KnownRational r
-  => (Terminating r => a)
-  -> Maybe a
-withTerminating g = do
-  guard (terminates' (rationalVal' (Proxy @r)))
-  case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
-    (Dict :: Dict (Terminating r)) -> pure g
-
--- | Whether the type-level 'Rational' terminates. That is, whether
--- it can be fully represented as a finite decimal number.
-type Terminates (r :: Rational) = Terminates_ (Den r) :: Bool
-type family Terminates_ (n :: Natural) :: Bool where
-  Terminates_ 5 = 'True
-  Terminates_ 2 = 'True
-  Terminates_ 1 = 'True
-  Terminates_ d = Terminates_5 d (L.Mod d 5)
-
--- @Terminates_5@ is here to prevent @Terminates_@ from recursing into
--- @Terminates_ (Div d 5)@ if it would diverge.
-type family Terminates_5 (d :: Natural) (md5 :: Natural) :: Bool where
-  Terminates_5 d 0 = Terminates_ (L.Div d 5)
-  Terminates_5 d _ = Terminates_2 d (L.Mod d 2)
-
--- @Terminates_2@ is here to prevent @Terminates_5@ from recursing into
--- @Terminates_ (Div d 2)@ if it would diverge, and also to prevent calculating
--- @Mod d 2@ unless necessary.
-type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
-  Terminates_2 d 0 = Terminates_ (L.Div d 2)
-  Terminates_2 _ _ = 'False
-
--- | Term-level version of the "Terminates" function.
--- Takes a "Prelude" 'P.Rational' as input.
-terminates :: P.Rational -> Bool
-terminates = terminates' . unsafeFromPrelude
-
--- | Term-level version of the "Terminates" function.
--- Takes a "KindRational" 'P.Rational' as input.
-terminates' :: Rational -> Bool
-terminates' = go . den
-  where
-    go = \case
-      5 -> True
-      2 -> True
-      1 -> True
-      n | (q, 0) <- P.divMod n 5 -> go q
-        | (q, 0) <- P.divMod n 2 -> go q
-      _ -> False
 
 --------------------------------------------------------------------------------
 
@@ -599,6 +477,77 @@ divDif r = \a -> let q = f a in (q, a - toRational q)
 
 --------------------------------------------------------------------------------
 
+-- | 'Constraint' version of @'Terminates' r@. Satisfied by all type-level
+-- 'Rational's that can be represented as a finite decimal number.
+
+-- Written as a class rather than as a type-synonym so that downstream doesn't
+-- need to use UndecidableSuperClasses.
+class (KnownRational r, Terminates r ~ True)
+  => Terminating (r :: Rational)
+
+-- Note: Even if @Terminates r ~ 'False@, GHC shows our @TypeError@ first.
+instance
+  ( KnownRational r
+  , Terminates r ~ 'True
+  , If (Terminates r)
+       (() :: Constraint)
+       (L.TypeError ('L.Text "‘" 'L.:<>: 'L.ShowType r 'L.:<>:
+                     'L.Text "’ is not a terminating "
+                     'L.:<>: 'L.ShowType Rational))
+  ) => Terminating r
+
+withTerminating
+  :: forall r a
+  .  KnownRational r
+  => (Terminating r => a)
+  -> Maybe a
+withTerminating g = do
+  guard (terminates' (rationalVal' (Proxy @r)))
+  case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
+    (Dict :: Dict (Terminating r)) -> pure g
+
+-- | Whether the type-level 'Rational' terminates. That is, whether
+-- it can be fully represented as a finite decimal number.
+type Terminates (r :: Rational) = Terminates_ (Den r) :: Bool
+type family Terminates_ (n :: Natural) :: Bool where
+  Terminates_ 5 = 'True
+  Terminates_ 2 = 'True
+  Terminates_ 1 = 'True
+  Terminates_ d = Terminates_5 d (L.Mod d 5)
+
+-- @Terminates_5@ is here to prevent @Terminates_@ from recursing into
+-- @Terminates_ (Div d 5)@ if it would diverge.
+type family Terminates_5 (d :: Natural) (md5 :: Natural) :: Bool where
+  Terminates_5 d 0 = Terminates_ (L.Div d 5)
+  Terminates_5 d _ = Terminates_2 d (L.Mod d 2)
+
+-- @Terminates_2@ is here to prevent @Terminates_5@ from recursing into
+-- @Terminates_ (Div d 2)@ if it would diverge, and also to prevent calculating
+-- @Mod d 2@ unless necessary.
+type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
+  Terminates_2 d 0 = Terminates_ (L.Div d 2)
+  Terminates_2 _ _ = 'False
+
+-- | Term-level version of the "Terminates" function.
+-- Takes a "Prelude" 'P.Rational' as input.
+terminates :: P.Rational -> Bool
+terminates = terminates' . unsafeFromPrelude
+
+-- | Term-level version of the "Terminates" function.
+-- Takes a "KindRational" 'P.Rational' as input.
+terminates' :: Rational -> Bool
+terminates' = go . den
+  where
+    go = \case
+      5 -> True
+      2 -> True
+      1 -> True
+      n | (q, 0) <- P.divMod n 5 -> go q
+        | (q, 0) <- P.divMod n 2 -> go q
+      _ -> False
+
+--------------------------------------------------------------------------------
+
 -- | Comparison of type-level 'Rational's, as a function.
 type CmpRational (a :: Rational) (b :: Rational) =
   CmpRational_ (Normalize a) (Normalize b) :: Ordering
@@ -610,6 +559,57 @@ type family CmpRational_ (a :: Rational) (b :: Rational) :: Ordering where
 type instance Compare (a :: Rational) (b :: Rational) = CmpRational a b
 
 --------------------------------------------------------------------------------
+
+-- | This class gives the rational associated with a type-level rational.
+-- There are instances of the class for every rational.
+class KnownRational (r :: Rational) where
+  rationalSing :: SRational r
+
+instance forall r n d.
+  ( Normalize r ~ n % d
+  , I.KnownInteger n
+  , L.KnownNat d
+  ) => KnownRational r where
+  rationalSing = UnsafeSRational
+    (I.fromPrelude (I.integerVal (Proxy @n)) :% N.natVal (Proxy @d))
+
+-- | Term-level "KindRational" 'Rational' representation of the type-level
+-- 'Rational' @r@.
+rationalVal' :: forall r proxy. KnownRational r => proxy r -> Rational
+rationalVal' _ = case rationalSing :: SRational r of
+                   UnsafeSRational x -> x
+
+-- | Term-level "Prelude" 'P.Rational' representation of the type-level
+-- 'Rational' @r@.
+rationalVal :: forall r proxy. KnownRational r => proxy r -> P.Rational
+rationalVal = toPrelude . rationalVal'
+
+-- | This type represents unknown type-level 'Rational'.
+data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
+
+-- | Convert a term-level "Prelude" 'Rational' into an unknown
+-- type-level 'Rational'.
+someRationalVal :: P.Rational -> SomeRational
+someRationalVal r =
+  withSomeSRational (unsafeFromPrelude r) $ \(sr :: SRational r) ->
+    withKnownRational sr (SomeRational @r Proxy)
+
+instance Eq SomeRational where
+  SomeRational x == SomeRational y = rationalVal x P.== rationalVal y
+
+instance Ord SomeRational where
+  SomeRational x <= SomeRational y =
+    rationalVal x <= rationalVal y
+  compare (SomeRational x) (SomeRational y) =
+    compare (rationalVal x) (rationalVal y)
+
+instance Show SomeRational where
+  showsPrec p (SomeRational x) = showsPrec p (rationalVal x)
+
+instance Read SomeRational where
+  readsPrec p xs = do (a, ys) <- readsPrec p xs
+                      [(someRationalVal a, ys)]
+
 
 -- | We either get evidence that this function was instantiated with the
 -- same type-level 'Rational's, or 'Nothing'.
