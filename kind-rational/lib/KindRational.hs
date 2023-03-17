@@ -26,6 +26,7 @@ module KindRational {--}
   , rational
   , fromPrelude
   , toPrelude
+  , showsPrecTypeLit
 
     -- * Types ⇔ Terms
   , KnownRational(rationalSing)
@@ -33,7 +34,6 @@ module KindRational {--}
   , SomeRational(..)
   , someRationalVal
   , sameRational
-  , showsPrecTypeLit
 
     -- * Singletons
   , SRational
@@ -223,12 +223,12 @@ toPrelude r = I.toPrelude (num r) P.:% toInteger (den r)
 
 --------------------------------------------------------------------------------
 
--- | /'Num'erator/ of the type-level 'Rational'.
+-- | 'Normalize'd /'Num'erator/ of the type-level 'Rational'.
 type Num (r :: Rational) = Num_ (Normalize r) :: Integer
 type family Num_ (r :: Rational) :: Integer where
   Num_ (n :% _) = n
 
--- | /'Den'ominator/ of the type-level 'Rational'.
+-- | 'Normalize'd /'Den'ominator/ of the type-level 'Rational'.
 type Den (r :: Rational) = Den_ (Normalize r) :: Natural
 type family Den_ (r :: Rational) :: Natural where
   Den_ (_ :% d) = d
@@ -337,7 +337,7 @@ type (a :: Rational) * (b :: Rational) =
 type family Mul_ (a :: Rational) (b :: Rational) where
   Mul_ (n1 % d1) (n2 % d2) = Normalize ((n1 I.* n2) % (d1 L.* d2))
 
--- | /Reciprocal/ of the type-level 'Rational'.
+-- | /'Recip'rocal/ of the type-level 'Rational'.
 -- Also known as /multiplicative inverse/.
 type Recip (a :: Rational) = Recip_ (Normalize a) :: Rational
 type family Recip_ (a :: Rational) :: Rational where
@@ -395,7 +395,7 @@ type DivMod (r :: I.Round) (a :: Rational) =
 type DivMod_ (r :: I.Round) (a :: Rational) =
   I.DivMod r (Num_ a) (P (Den_ a)) :: (Integer, Integer)
 
--- | 'Dif'ference of the type type-level 'Rational' @a@ and the 'Div'ision of
+-- | 'Dif'ference of the type-level 'Rational' @a@ and the 'Div'ision of
 -- its 'Num'erator by its 'Den'ominator, using the specified 'I.Round'ing @r@.
 --
 -- @
