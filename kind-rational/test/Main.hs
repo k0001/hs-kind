@@ -71,6 +71,91 @@ _testNormalize :: Dict
   , N 1 % 1 ~ K.Normalize (N 4 % 4)
   )
 
+_testNegate  = Dict
+_testNegate :: Dict
+  ( P 0 % 1 ~ K.Negate (P 0 % 1)
+  , P 0 % 1 ~ K.Negate (P 0 % 2)
+  , P 0 % 1 ~ K.Negate (N 0 % 1)
+  , P 0 % 1 ~ K.Negate (N 0 % 2)
+
+  , P 1 % 1 ~ K.Negate (N 1 % 1)
+  , P 1 % 2 ~ K.Negate (N 1 % 2)
+  , P 1 % 1 ~ K.Negate (N 1 % 1)
+  , P 1 % 2 ~ K.Negate (N 1 % 2)
+
+  , N 1 % 1 ~ K.Negate (P 1 % 1)
+  , N 1 % 2 ~ K.Negate (P 1 % 2)
+  , N 1 % 1 ~ K.Negate (P 1 % 1)
+  , N 1 % 2 ~ K.Negate (P 1 % 2)
+
+  , P 1 % 1 ~ K.Negate (N 1 % 1)
+  , P 2 % 1 ~ K.Negate (N 2 % 1)
+  , P 1 % 1 ~ K.Negate (N 1 % 1)
+  , P 2 % 1 ~ K.Negate (N 2 % 1)
+
+  , N 1 % 1 ~ K.Negate (P 1 % 1)
+  , N 2 % 1 ~ K.Negate (P 2 % 1)
+  , N 1 % 1 ~ K.Negate (P 1 % 1)
+  , N 2 % 1 ~ K.Negate (P 2 % 1)
+  )
+
+_testSign  = Dict
+_testSign :: Dict
+  ( P 0 ~ K.Sign (P 0 % 1)
+  , P 0 ~ K.Sign (P 0 % 2)
+  , P 0 ~ K.Sign (N 0 % 1)
+  , P 0 ~ K.Sign (N 0 % 2)
+
+  , N 1 ~ K.Sign (N 1 % 1)
+  , N 1 ~ K.Sign (N 1 % 2)
+  , N 1 ~ K.Sign (N 1 % 1)
+  , N 1 ~ K.Sign (N 1 % 2)
+
+  , P 1 ~ K.Sign (P 1 % 1)
+  , P 1 ~ K.Sign (P 1 % 2)
+  , P 1 ~ K.Sign (P 1 % 1)
+  , P 1 ~ K.Sign (P 1 % 2)
+
+  , N 1 ~ K.Sign (N 1 % 1)
+  , N 1 ~ K.Sign (N 2 % 1)
+  , N 1 ~ K.Sign (N 1 % 1)
+  , N 1 ~ K.Sign (N 2 % 1)
+
+  , P 1 ~ K.Sign (P 1 % 1)
+  , P 1 ~ K.Sign (P 2 % 1)
+  , P 1 ~ K.Sign (P 1 % 1)
+  , P 1 ~ K.Sign (P 2 % 1)
+  )
+
+_testAbs  = Dict
+_testAbs :: Dict
+  ( P 0 % 1 ~ K.Abs (P 0 % 1)
+  , P 0 % 1 ~ K.Abs (P 0 % 2)
+  , P 0 % 1 ~ K.Abs (N 0 % 1)
+  , P 0 % 1 ~ K.Abs (N 0 % 2)
+
+  , P 1 % 1 ~ K.Abs (N 1 % 1)
+  , P 1 % 2 ~ K.Abs (N 1 % 2)
+  , P 1 % 1 ~ K.Abs (N 1 % 1)
+  , P 1 % 2 ~ K.Abs (N 1 % 2)
+
+  , P 1 % 1 ~ K.Abs (P 1 % 1)
+  , P 1 % 2 ~ K.Abs (P 1 % 2)
+  , P 1 % 1 ~ K.Abs (P 1 % 1)
+  , P 1 % 2 ~ K.Abs (P 1 % 2)
+
+  , P 1 % 1 ~ K.Abs (N 1 % 1)
+  , P 2 % 1 ~ K.Abs (N 2 % 1)
+  , P 1 % 1 ~ K.Abs (N 1 % 1)
+  , P 2 % 1 ~ K.Abs (N 2 % 1)
+
+  , P 1 % 1 ~ K.Abs (P 1 % 1)
+  , P 2 % 1 ~ K.Abs (P 2 % 1)
+  , P 1 % 1 ~ K.Abs (P 1 % 1)
+  , P 2 % 1 ~ K.Abs (P 2 % 1)
+  )
+
+
 _testEq =  Dict
 _testEq :: Dict
   (  1/2 K.== 1/2
