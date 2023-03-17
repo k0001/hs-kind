@@ -22,13 +22,13 @@ module KindInteger {--}
     -- * Prelude support
   , toPrelude
   , fromPrelude
+  , showsPrecTypeLit
 
     -- * Types ⇔ Terms
   , KnownInteger(integerSing), integerVal
   , SomeInteger(..)
   , someIntegerVal
   , sameInteger
-  , showsPrecTypeLit
 
     -- * Singletons
   , SInteger
@@ -93,14 +93,15 @@ import Unsafe.Coerce(unsafeCoerce)
 -- @'P' 0@ and @'N' 0@ cases.
 --
 -- __NB__: 'Integer' is mostly used as a kind, with its types constructed
--- using '/'.  However, it might also be used as type, with its terms
+-- using 'P' and 'N'.  However, it might also be used as type, with its terms
 -- constructed using 'fromPrelude'. One reason why you may want a 'Integer'
 -- at the term-level is so that you embed it in larger data-types (for example,
--- the "KindRational" module from the @kind-rational@ library embeds this
--- 'I.Integer' in its 'KindRational.Rational' type)
+-- the "KindRational" module from the
+-- [@kind-rational@](https://hackage.haskell.org/package/kind-rational)
+-- library embeds this 'I.Integer' in its 'KindRational.Rational' type)
 data Integer
-  = P Natural
-  | N Natural
+  = P_ Natural
+  | N_ Natural
 
 instance Eq Integer where
   a == b = toPrelude a P.== toPrelude b
@@ -129,18 +130,18 @@ instance Read Integer where
 -- @
 showsPrecTypeLit :: Int -> Integer -> ShowS
 showsPrecTypeLit p i = showParen (p > appPrec) $ case i of
-  P x -> showString "P " . shows x
-  N x -> showString "N " . shows x
+  P_ x -> showString "P " . shows x
+  N_ x -> showString "N " . shows x
 
 -- | * A positive number /+x/ is represented as @'P' x@.
 --
 -- * /Zero/ can be represented as @'P' 0@ (see notes at 'Integer').
-type P (x :: Natural) = 'P x :: Integer
+type P (x :: Natural) = 'P_ x :: Integer
 
 -- | * A negative number /-x/ is represented as @'N' x@.
 --
 -- * /Zero/ can be represented as @'N' 0@ (but often isn't, see notes at 'Integer').
-type N (x :: Natural) = 'N x :: Integer
+type N (x :: Natural) = 'N_ x :: Integer
 
 -- | Convert a term-level "KindInteger" 'Integer' into a term-level
 -- "Prelude" 'P.Integer'.
@@ -150,8 +151,8 @@ type N (x :: Natural) = 'N x :: Integer
 -- 'toPrelude' . 'fromPrelude' == 'id'
 -- @
 toPrelude :: Integer -> P.Integer
-toPrelude (P n) = toInteger n
-toPrelude (N n) = negate (toInteger n)
+toPrelude (P_ n) = toInteger n
+toPrelude (N_ n) = negate (toInteger n)
 
 -- | Obtain a term-level "KindInteger" 'Integer' from a term-level
 -- "Prelude" 'P.Integer'. This can fail if the "Prelude" 'P.Integer' is
@@ -166,8 +167,8 @@ toPrelude (N n) = negate (toInteger n)
 -- around for some reason. But, other than this, "KindInteger" doesn't offer
 -- any tool to deal with the internals of its 'Integer'.
 fromPrelude :: P.Integer -> Integer
-fromPrelude i = if i >= 0 then P (fromInteger i)
-                          else N (fromInteger (negate i))
+fromPrelude i = if i >= 0 then P_ (fromInteger i)
+                          else N_ (fromInteger (negate i))
 
 --------------------------------------------------------------------------------
 
