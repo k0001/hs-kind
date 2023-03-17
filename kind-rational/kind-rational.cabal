@@ -23,7 +23,9 @@ source-repository head
 common basic
   default-language: GHC2021
   ghc-options: -O2 -Wall -Werror=incomplete-patterns
-  build-depends: base ==4.*, kind-integer
+  build-depends:
+    base ==4.*,
+    kind-integer >=0.2,
   default-extensions:
     DataKinds
     NoStarIsType
