@@ -1,4 +1,3 @@
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
@@ -31,7 +30,6 @@ module KindRational {--}
     -- * Types ⇔ Terms
   , KnownRational(rationalSing)
   , rationalVal
-  , rationalVal'
   , SomeRational(..)
   , someRationalVal
   , sameRational
@@ -45,50 +43,29 @@ module KindRational {--}
   , withKnownRational
 
     -- * Arithmethic
-  , type (+), type (*), type (-)
-  , Negate, Sign, Abs, Div, Mod, Quot, Rem, Recip
-    -- ** Term-level
-    --
-    -- | As a convenience, we offer term-level versions of some of the type-level
-    -- arithmetic functions.
-  , div, mod, quot, rem
-
-    -- * Rounding
-  , RoundUp
-  , RoundDown
-  , RoundZero
-  , RoundAway
-  , RoundHalfUp
-  , RoundHalfDown
-  , RoundHalfZero
-  , RoundHalfAway
-  , RoundHalfEven
-  , RoundHalfOdd
-
-    -- ** Term-level
-    --
-    -- | As a convenience, we offer term-level versions of the type-level
-    -- rounding functions.
-  , roundUp
-  , roundDown
-  , roundZero
-  , roundAway
-  , roundHalfUp
-  , roundHalfDown
-  , roundHalfZero
-  , roundHalfAway
-  , roundHalfEven
-  , roundHalfOdd
+  , type (+)
+  , type (*)
+  , type (-)
+  , Negate
+  , Sign
+  , Abs
+  , Recip
+  , Div
+  , div
+  , Mod
+  , mod
+  , Dif
+  , dif
+  , DivMod
+  , divMod
+  , DivDif
+  , divDif
+  , I.Round(..)
 
     -- * Decimals
   , Terminating
   , withTerminating
   , Terminates
-
-    -- ** Term-level
-    --
-    -- | As a convenience, we offer term-level versions of the type-level
-    -- rounding functions.
   , terminates
 
     -- * Comparisons
@@ -109,9 +86,8 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Prim (proxy#, Proxy#)
 import GHC.Read qualified as Read
-import GHC.Real qualified as P (Ratio(..), reduce)
+import GHC.Real qualified as P (Ratio(..), (%))
 import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
 import GHC.TypeNats qualified as N
@@ -120,7 +96,7 @@ import KindInteger (Integer, N, P)
 import KindInteger (type (==?), type (==), type (/=?), type (/=))
 import KindInteger qualified as I
 import Numeric.Natural (Natural)
-import Prelude hiding (Rational, Integer, Num, div, mod, quot, rem)
+import Prelude hiding (Rational, Integer, Num, div, mod, divMod)
 import Prelude qualified as P
 import Text.ParserCombinators.ReadPrec as Read
 import Text.Read.Lex qualified as Read
@@ -131,7 +107,7 @@ import Unsafe.Coerce(unsafeCoerce)
 -- | Type-level version of 'P.Rational'. Use '/' to construct one, use '%' to
 -- pattern-match on it.
 --
--- __NB__: 'Rational' is mostly used as a kind, with its types constructed
+-- 'Rational' is mostly used as a kind, with its types constructed
 -- using '/'.  However, it might also be used as type, with its terms
 -- constructed using 'rational' or 'fromPrelude'. One reason why you may want a
 -- 'Rational' at the term-level is so that you embed it in larger data-types
@@ -145,9 +121,23 @@ import Unsafe.Coerce(unsafeCoerce)
 -- Internally, however, the beforementioned checks are always performed, and
 -- fail with 'error' if necessary. If you want to be sure those 'error's never
 -- happen, just filter your "Prelude" 'Rational's with 'fromPrelude'. In
--- practice, it's very unlikely that you will be affected by this, unless if
--- you are unsafely constructing "Prelude" 'Rational's.
-data Rational = I.Integer :% Natural
+-- practice, it's very unlikely that you will be affected by this unless if
+-- you are unsafelly constructing "Prelude" 'Rational's.
+data Rational
+  = -- | This constructor is /unsafe/ because it doesn't check for the things
+    -- that 'rational' checks for.
+    --
+    -- * At the term-level, safely construct a 'Rational' using 'rational'
+    -- or 'fromPrelude' instead.
+    --
+    -- * At the type-level, safely construct a 'Rational' using '/'.
+    I.Integer :% Natural
+
+num :: Rational -> I.Integer
+num (n :% _) = n
+
+den :: Rational -> Natural
+den (_ :% d) = d
 
 instance Eq Rational where
   a == b = toPrelude a == toPrelude b
@@ -163,9 +153,9 @@ instance Show Rational where
 -- | Same as "Prelude" 'P.Rational'.
 instance Read Rational where
   readPrec = Read.parens $ Read.prec 7 $ do  -- 7 is GHC.Real.ratioPrec
-    n <- Read.step Read.readPrec
+    n :: P.Integer <- Read.step Read.readPrec
     Read.expectP (Read.Symbol "%")
-    d <- Read.step Read.readPrec
+    d :: P.Integer <- Read.step Read.readPrec
     Just r <- pure (rational n d)
     pure r
 
@@ -175,23 +165,21 @@ instance Read Rational where
 -- the term-level value.
 --
 -- @
--- 'shows' 0 ('intervalVal' @(1 '%' 2)) \"z\" == \"1 % 2z\"
---
--- 'showsPrecTypeLit' 0 ('intervalVal' @(1 '%' 2)) \"z\" == \"P 1 % 2z\"
+-- 'shows'            0 ('rationalVal' ('Proxy' \@(1'/'2))) \"z\" == \"1 % 2z\"
+-- 'showsPrecTypeLit' 0 ('rationalVal' ('Proxy' \@(1'/'2))) \"z\" == \"P 1 % 2z\"
 -- @
 showsPrecTypeLit :: Int -> Rational -> ShowS
-showsPrecTypeLit p (n :% d) = showParen (p > appPrec) $
-  showsPrec appPrec n . showString " % " . shows d
+showsPrecTypeLit p r = showParen (p > appPrec) $
+  showsPrec appPrec (num r) . showString " % " . shows (den r)
 
 -- | Make a term-level "KindRational" 'Rational' number, provided that
 -- the numerator is not @0@, and that its numerator and denominator are
--- not so large that they would exhaust system resources.
-rational :: P.Integer  -- ^ Numerator.
-         -> P.Integer  -- ^ Denominator.
-         -> Maybe Rational
-rational = \n d -> do
+-- not so large that they would exhaust system resources. The 'Rational'
+-- is 'Normalize'd.
+rational :: (Integral num, Integral den) => num -> den -> Maybe Rational
+rational = \(toInteger -> n) (toInteger -> d) -> do
     guard (d /= 0 && abs n < max_ && abs d < max_)
-    let (n' P.:% d') = P.reduce n d
+    let n' P.:% d' = n P.% d
     pure (I.fromPrelude n' :% fromInteger d')
   where
     max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
@@ -216,11 +204,6 @@ unsafeFromPrelude prefix = \r0 -> case fromPrelude r0 of
   Nothing -> error ("KindRational." <> prefix <>
                     ": bad Prelude Rational (" <> show r0 <> ")")
 
--- | Like 'unsafeFromPrelude', but returns a "Prelude" 'P.Rational'.
-unsafeCheckPrelude :: String -> P.Rational -> P.Rational
-unsafeCheckPrelude pre = toPrelude . unsafeFromPrelude pre
-
-
 -- | Convert a term-level "KindRational" 'Rational' into a term-level
 -- "Prelude" 'P.Rational'.
 --
@@ -229,7 +212,7 @@ unsafeCheckPrelude pre = toPrelude . unsafeFromPrelude pre
 -- 'fmap' 'toPrelude' . 'fromPrelude' == 'Just'
 -- @
 toPrelude :: Rational -> P.Rational
-toPrelude (n :% d) = I.toPrelude n P.:% toInteger d
+toPrelude r = I.toPrelude (num r) P.:% toInteger (den r)
 
 --------------------------------------------------------------------------------
 
@@ -247,17 +230,21 @@ type family Den_ (r :: Rational) :: Natural where
 --
 -- __NB:__ When /constructing/ a 'Rational' number, prefer to use '/',
 -- which not only accepts more polymorphic inputs, but also 'Normalize's
--- the type-level 'Rational'.
+-- the type-level 'Rational'. Also note that while @n '%' 0@ is a valid
+-- type, all tools in the "KindRational" will reject such input.
 type (n :: I.Integer) % (d :: Natural) = n ':% d :: Rational
 
 -- | Normalize a type-level 'Rational' so that a /0/ denominator fails to
 -- type-check, and that the 'Num'erator and denominator have no common factors.
 --
--- __NB__: All of the functions in the "KindRational" module accept both
+-- Only 'Normalize'd 'Rational's can be reliably constrained for equality
+-- using '~'.
+--
+-- All of the functions in the "KindRational" module accept both
 -- 'Normalize'd and non-'Normalize'd inputs, but they always produce
 -- 'Normalize'd output.
 type family Normalize (r :: Rational) :: Rational where
-  Normalize (_ % 0) = L.TypeError ('L.Text "KindRational: Denominator is 0")
+  Normalize (_ % 0) = L.TypeError ('L.Text "KindRational: Denominator is zero")
   Normalize (P 0 % _) = P 0 % 1
   Normalize (N 0 % _) = P 0 % 1
   Normalize (P n % d) = P (L.Div n (GCD n d)) % L.Div d (GCD n d)
@@ -270,7 +257,7 @@ infixl 7 *, /
 
 
 type (/) :: kn -> kd -> Rational
--- | @n@ '/' @d@ constructs and 'Normalize's a type-level 'Rational'
+-- | @n'/'d@ constructs and 'Normalize's a type-level 'Rational'
 -- with numerator @n@ and denominator @d@.
 --
 -- This type-family accepts any combination of 'Natural', 'Integer' and
@@ -290,9 +277,8 @@ type (/) :: kn -> kd -> Rational
 -- ('/') :: 'Rational' -> 'Rational' -> 'Rational'
 -- @
 --
--- __NB__: It's not possible to pattern-match on @n '/' d@.
--- Instead, you must pattern match on a 'Normalize'd @n' t'%' b'@ if
--- necessary.
+-- It's not possible to pattern-match on @n'/'d@.  Instead, you must
+-- pattern match on @x'%'y@, where @x'%'y ~ n'/'d@.
 type family n / d :: Rational where
   -- Natural/Natural
   (n :: Natural) / (d :: Natural) = Normalize (P n % d)
@@ -364,200 +350,6 @@ type (a :: Rational) - (b :: Rational) = a + Negate b :: Rational
 
 --------------------------------------------------------------------------------
 
--- | Round a type-level 'Rational' number towards /zero/.
--- Also known as /truncate/.
-type RoundZero (r :: Rational) = Quot r :: Integer
-
--- | Term-level version of 'RoundZero'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundZero :: P.Rational -> P.Integer
-roundZero (unsafeCheckPrelude "roundZero" -> r) = P.truncate r
-
--- | Round a type-level 'Rational' number towards /±infinity/,
--- that is, /away/ from zero.
-type RoundAway (r :: Rational) = RoundAway_ r :: Integer
-type family RoundAway_ (r :: Rational) :: Integer where
-  RoundAway_ (P n % d) = RoundUp   (P n % d)
-  RoundAway_ (N n % d) = RoundDown (N n % d)
-
--- | Term-level version of 'RoundAway'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundAway :: P.Rational -> P.Integer
-roundAway (unsafeCheckPrelude "roundAway" -> r)
-  | r >= 0    = ceiling r
-  | otherwise = floor r
-
--- | Round a type-level 'Rational' number towards /negative infinity/.
--- Also known as /floor/.
-type RoundDown (r :: Rational) = Div r :: Integer
-
--- | Term-level version of 'RoundDown'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundDown :: P.Rational -> P.Integer
-roundDown (unsafeCheckPrelude "roundDown" -> r) = floor r
-
--- | Round a type-level 'Rational' number towards /positive infinity/.
--- Also known as /ceiling/.
-type RoundUp (r :: Rational) = RoundUp_ (Normalize r) :: Integer
-type family RoundUp_ (r :: Rational) :: Integer where
-  RoundUp_ (n % d) = P 1 I.+ RoundDown ((n I.- P 1) / d)
-
--- | Term-level version of 'RoundUp'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundUp :: P.Rational -> P.Integer
-roundUp (unsafeCheckPrelude "roundUp" -> r) = ceiling r
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards the
--- 'I.Even' one.
-type RoundHalfEven (r :: Rational) =
-  RoundHalfEven_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfEven_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfEven_ r f c where
-  RoundHalfEven_ r f c = If (r - f % 1 <? P 1 % 2) f
-                            (If (c % 1 - r <? P 1 % 2) c
-                                (If (I.Even f) f c))
-
--- | Term-level version of 'RoundHalfEven'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfEven :: P.Rational -> P.Integer
-roundHalfEven (unsafeCheckPrelude "roundHalfEven" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | even f      = f
-  | otherwise   = c
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards the
--- 'I.Odd' one.
-type RoundHalfOdd (r :: Rational) =
-  RoundHalfOdd_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfOdd_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfOdd_ r f c where
-  RoundHalfOdd_ r f c = If (r - f % 1 <? P 1 % 2) f
-                           (If (c % 1 - r <? P 1 % 2) c
-                               (If (I.Odd f) f c))
-
--- | Term-level version of 'RoundHalfOdd'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfOdd :: P.Rational -> P.Integer
-roundHalfOdd (unsafeCheckPrelude "roundHalfOdd" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | odd f       = f
-  | otherwise   = c
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards
--- /positive infinity/.
-type RoundHalfUp (r :: Rational) =
-  RoundHalfUp_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfUp_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfUp_ r f c where
-  RoundHalfUp_ r f c = If (r - f % 1 <? P 1 % 2) f c
-
--- | Term-level version of 'RoundHalfUp'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfUp :: P.Rational -> P.Integer
-roundHalfUp (unsafeCheckPrelude "roundHalfUp" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | otherwise   = c
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards
--- /negative infinity/.
-type RoundHalfDown (r :: Rational) =
-  RoundHalfDown_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfDown_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfDown_ r f c where
-  RoundHalfDown_ r f c = If (c % 1 - r <? P 1 % 2) c f
-
--- | Term-level version of 'RoundHalfDown'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfDown :: P.Rational -> P.Integer
-roundHalfDown (unsafeCheckPrelude "roundHalfDown" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | otherwise   = f
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards /zero/.
-type RoundHalfZero (r :: Rational) =
-  RoundHalfZero_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfZero_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfZero_ r f c where
-  RoundHalfZero_ r f c = If (r - f % 1 <? P 1 % 2) f
-                            (If (c % 1 - r <? P 1 % 2) c
-                                (RoundZero r))
-
--- | Term-level version of 'RoundHalfZero'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfZero :: P.Rational -> P.Integer
-roundHalfZero (unsafeCheckPrelude "roundHalfZero" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | r >= 0      = f
-  | otherwise   = c
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
--- | Round a type-level 'Rational' towards the closest type-level 'Integer'.
--- If equidistant to the two closests 'Integer's , round towards /±infinity/,
--- that is, /away/ from zero.
-type RoundHalfAway (r :: Rational) =
-  RoundHalfAway_ (Normalize r) (RoundDown r) (RoundUp r) :: Integer
-type RoundHalfAway_ :: Rational -> Integer -> Integer -> Integer
-type family RoundHalfAway_ r f c where
-  RoundHalfAway_ (P n % d) f c = RoundHalfUp_   (P n % d) f c
-  RoundHalfAway_ (N n % d) f c = RoundHalfDown_ (P n % d) f c
-
--- | Term-level version of 'RoundHalfAway'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-roundHalfAway :: P.Rational -> P.Integer
-roundHalfAway (unsafeCheckPrelude "roundHalfAway" -> r)
-  | r - fr < hr = f
-  | cr - r < hr = c
-  | r >= 0      = c
-  | otherwise   = f
-  where
-    hr = 1 P.:% 2
-    f  = floor r
-    fr = f P.:% 1
-    c  = ceiling r
-    cr = c P.:% 1
-
---------------------------------------------------------------------------------
-
 -- | This class gives the rational associated with a type-level rational.
 -- There are instances of the class for every rational.
 class KnownRational (r :: Rational) where
@@ -573,20 +365,14 @@ instance forall r n d.
 
 -- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
-rationalVal_ :: forall r proxy. KnownRational r => proxy r -> Rational
-rationalVal_ _ = case rationalSing :: SRational r of
+rationalVal' :: forall r proxy. KnownRational r => proxy r -> Rational
+rationalVal' _ = case rationalSing :: SRational r of
                    UnsafeSRational x -> x
 
 -- | Term-level "Prelude" 'P.Rational' representation of the type-level
 -- 'Rational' @r@.
 rationalVal :: forall r proxy. KnownRational r => proxy r -> P.Rational
-rationalVal _ = rationalVal' (proxy# @r)
-
--- | Term-level "Prelude" 'P.Rational' representation of the type-level
--- 'Rational' @r@.
-rationalVal' :: forall r. KnownRational r => Proxy# r -> P.Rational
-rationalVal' _ = case rationalSing :: SRational r of
-                   UnsafeSRational x -> toPrelude x
+rationalVal = toPrelude . rationalVal'
 
 -- | This type represents unknown type-level 'Rational'.
 data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
@@ -641,7 +427,7 @@ withTerminating
   => (Terminating r => a)
   -> Maybe a
 withTerminating g = do
-  guard (terminates_ (rationalVal_ (Proxy @r)))
+  guard (terminates' (rationalVal' (Proxy @r)))
   case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
     (Dict :: Dict (Terminating r)) -> pure g
 
@@ -649,9 +435,9 @@ withTerminating g = do
 -- it can be fully represented as a finite decimal number.
 type Terminates (r :: Rational) = Terminates_ (Den r) :: Bool
 type family Terminates_ (n :: Natural) :: Bool where
-  Terminates_ 1 = 'True
-  Terminates_ 2 = 'True
   Terminates_ 5 = 'True
+  Terminates_ 2 = 'True
+  Terminates_ 1 = 'True
   Terminates_ d = Terminates_5 d (L.Mod d 5)
 
 -- @Terminates_5@ is here to prevent @Terminates_@ from recursing into
@@ -670,86 +456,133 @@ type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
 -- | Term-level version of the "Terminates" function.
 -- Takes a "Prelude" 'P.Rational' as input.
 terminates :: P.Rational -> Bool
-terminates (unsafeFromPrelude "terminates" -> r) = terminates_ r
+terminates (unsafeFromPrelude "terminates" -> r) = terminates' r
 
--- | Whether the given 'Rational' terminates. That is, whether
--- it can be represented as a finite decimal number.
-terminates_ :: Rational -> Bool
-terminates_ = \(_ :% d) -> go (toInteger d)
+-- | Term-level version of the "Terminates" function.
+-- Takes a "KindRational" 'P.Rational' as input.
+terminates' :: Rational -> Bool
+terminates' = go . den
   where
     go = \case
-      0 -> error "KindRational.terminates_: impossible"
-      1 -> True
-      2 -> True
       5 -> True
-      n | (q, 0) <- divMod n 5 -> go q
-        | (q, 0) <- divMod n 2 -> go q
+      2 -> True
+      1 -> True
+      n | (q, 0) <- P.divMod n 5 -> go q
+        | (q, 0) <- P.divMod n 2 -> go q
       _ -> False
 
 --------------------------------------------------------------------------------
 
--- | Division ('floor'ed) of the 'Num'erator by the 'Den'ominator of a
--- type-level 'Rational' number.
+-- | Quotient of the 'Div'ision of the 'Num'erator of type-level 'Rational' @a@
+-- by its 'Den'ominator, using the specified 'I.Round'ing @r@.
 --
 -- @
--- forall (r :: 'Rational').
---   'Num' r  == 'Div' r '*' 'Den' r + 'Mod' r
+-- forall (r :: 'I.Round') (a :: 'Rational').
+--   ('Den' a '/=' 0) =>
+--     'Mod' r a  '=='  'Num' a 'I.-' 'P' ('Den' a) 'I.*' 'Div' r a
 -- @
-type Div (r :: Rational) = Div_ (Normalize r) :: Integer
-type family Div_ (r :: Rational) :: Integer where
-  Div_ (n % d) = I.Div n (P d)
+type Div (r :: I.Round) (a :: Rational) =
+  Div_ r (Normalize a) :: Integer
+type Div_ (r :: I.Round) (a :: Rational) =
+  I.Div r (Num_ a) (P (Den_ a)) :: Integer
+
+-- | 'Mod'ulus of the division of the 'Num'erator of type-level 'Rational'
+-- @a@ by its 'Den'ominator, using the specified 'I.Round'ing @r@.
+--
+-- @
+-- forall (r :: 'I.Round') (a :: 'Rational').
+--   ('Den' a '/=' 0) =>
+--     'Mod' r a  '=='  'Num' a 'I.-' 'P' ('Den' a) 'I.*' 'Div' r a
+-- @
+type Mod (r :: I.Round) (a :: Rational) = Snd (DivMod r a) :: Integer
+
+-- | Get both the quotient and the 'Mod'ulus of the 'Div'ision of the
+-- 'Num'erator of type-level 'Rational' @a@ by its 'Den'ominator,
+-- using the specified 'I.Round'ing @r@.
+--
+-- @
+-- forall (r :: 'I.Round') (a :: 'Rational').
+--   ('Den' a '/=' 0) =>
+--     'DivMod' r a  '=='  '( 'Div' r a, 'Mod' r a )
+-- @
+type DivMod (r :: I.Round) (a :: Rational) =
+  DivMod_ r (Normalize a) :: (Integer, Integer)
+type DivMod_ (r :: I.Round) (a :: Rational) =
+  I.DivMod r (Num_ a) (P (Den_ a)) :: (Integer, Integer)
+
+-- | 'Dif'ference of the type type-level 'Rational' @a@ and the 'Div'ision of
+-- its 'Num'erator by its 'Den'ominator, using the specified 'I.Round'ing @r@.
+--
+-- @
+-- forall (r :: 'I.Round') (a :: 'Rational').
+--   ('Den' a '/=' 0) =>
+--     'Dif' r a  '=='  a '-' 'Div' r a '%' 1
+-- @
+type Dif (r :: I.Round) (a :: Rational) = Snd (DivDif r a) :: Rational
+
+-- | Get both the quotient and the 'Dif'ference of the 'Div'ision of the
+-- 'Num'erator of type-level 'Rational' @a@ by its 'Den'ominator,
+-- using the specified 'I.Round'ing @r@.
+--
+-- @
+-- forall (r :: 'I.Round') (a :: 'Rational').
+--   ('Den' a '/=' 0) =>
+--     'DivDif' r a  '=='  '( 'Div' r a, 'Dif' r a )
+-- @
+type DivDif (r :: I.Round) (a :: Rational) =
+  DivDif_ r (Normalize a) :: (Integer, Rational)
+type DivDif_ (r :: I.Round) (a :: Rational) =
+  DivDif__ a (Div_ r a) :: (Integer, Rational)
+type DivDif__ (a :: Rational) (q :: Integer) =
+  '(q, a - q :% 1) :: (Integer, Rational)
 
 -- | Term-level version of 'Div'.
+--
 -- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-div :: P.Rational -> P.Integer
-div (unsafeCheckPrelude "div" -> n P.:% d) = P.div n d
+div :: I.Round -> P.Rational -> P.Integer
+div r = \(n P.:% d) -> f n d
+  where f = I.div r
 
--- | Remainder of the division ('floor'ed) of the 'Num'erator by the
--- 'Den'ominator of a type-level 'Rational' number.
+-- | Term-level version of 'Div'.
+--
+-- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
+mod :: I.Round -> P.Rational -> P.Integer
+mod r = \(n P.:% d) -> f n d
+  where f = I.mod r
+
+-- | Term-level version of 'DivMod'.
+-- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
+-- 'P.Integer's /(quotient, modulus)/.
 --
 -- @
--- forall (r :: 'Rational').
---   'Mod' r  '=='  'Num' r 'I.-' 'Den' r 'I.*' 'Div' r
+-- forall ('r' :: 'I.Round') (a :: 'P.Rational').
+--   ('P.denominator' a 'P./=' 0) =>
+--     'divMod' r a  'P.=='  ('div' r a, 'mod' r a)
 -- @
-type Mod (r :: Rational) = Mod_ (Normalize r) :: Integer
-type Mod_ (r :: Rational) = Num_ r I.- P (Den_ r) I.* (Div_ r) :: Integer
+divMod :: I.Round -> P.Rational -> (P.Integer, P.Integer)
+divMod r = \(n P.:% d) -> f n d
+  where f = I.divMod r
 
--- | Term-level version of 'Mod'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-mod :: P.Rational -> P.Integer
-mod (unsafeCheckPrelude "mod" -> (n P.:% d)) = n P.- d * P.div n d
+-- | Term-level version of 'Dif'.
+--
+-- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Rational'.
+dif :: I.Round -> P.Rational -> P.Rational
+dif r = \a -> a - toRational (f a)
+  where f = div r
 
--- | Division ('truncate'd) of the 'Num'erator by the 'Den'ominator of a
--- type-level 'Rational' number.
+-- | Term-level version of 'DivDif'.
+--
+-- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
+-- 'P.Rational's /(quotient, difference)/.
 --
 -- @
--- forall (r :: 'Rational').
---   r  ==  'Quot' r + 'Rem' r
+-- forall ('r' :: 'I.Round') (a :: 'P.Rational').
+--   ('P.denominator' a 'P./=' 0) =>
+--     'divDif' r a  'P.=='  ('div' r a, 'dif' r a)
 -- @
-type Quot (r :: Rational) = Quot_ (Normalize r) :: Integer
-type family Quot_ (r :: Rational) :: Integer where
-  Quot_ (n % d) = I.Quot n (P d)
-
--- | Term-level version of 'Quot'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-quot :: P.Rational -> P.Integer
-quot (unsafeCheckPrelude "quot" -> n P.:% d) = P.quot n d
-
--- | Remainder of the division ('truncate'd) of the 'Num'erator by the
--- 'Den'ominator of a type-level 'Rational' number.
---
--- @
--- forall (r :: 'Rational').
---   'Rem' r  '=='  'Num' r 'I.-' 'Den' r 'I.*' 'Quot' r
--- @
-type Rem (r :: Rational) = Rem_ (Normalize r) :: Integer
-type Rem_ (r :: Rational) = Num_ r I.- P (Den_ r) I.* (Quot_ r) :: Integer
-
--- | Term-level version of 'Rem'.
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-quotRem :: P.Rational -> (P.Integer, P.Integer)
-quotRem (unsafeCheckPrelude "rem" -> (n P.:% d)) =
- (P.quot n d, n P.- d * P.quot n d)
+divDif :: I.Round -> P.Rational -> (P.Integer, P.Rational)
+divDif r = \a -> let q = f a in (q, a - toRational q)
+  where f = div r
 
 --------------------------------------------------------------------------------
 
@@ -865,5 +698,7 @@ withSomeSRational r k = k (UnsafeSRational r)
 -- | /Greatest Common Divisor/ of 'Natural' numbers @a@ and @b@.
 type GCD (a :: Natural) (b :: Natural) = I.GCD (P a) (P b) :: Natural
 
-data Dict c where
-  Dict :: c => Dict c
+data Dict c where Dict :: c => Dict c
+
+type family Snd (ab :: (a, b)) :: b where Snd '(a, b) = b
+
