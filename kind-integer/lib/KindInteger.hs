@@ -126,8 +126,7 @@ instance Read Integer where
 -- the term-level value.
 --
 -- @
--- 'shows' 0 ('fromPrelude' 8) \"z\" == \"8z\"
---
+-- 'shows'            0 ('fromPrelude' 8) \"z\" == \"8z\"
 -- 'showsPrecTypeLit' 0 ('fromPrelude' 8) \"z\" == \"P 8z\"
 -- @
 showsPrecTypeLit :: Int -> Integer -> ShowS
