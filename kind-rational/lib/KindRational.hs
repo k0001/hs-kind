@@ -79,6 +79,7 @@ module KindRational {--}
   ) --}
   where
 
+import qualified Control.Exception as Ex
 import Control.Monad
 import Data.Proxy
 import Data.Type.Bool (If)
@@ -119,8 +120,8 @@ import Unsafe.Coerce(unsafeCoerce)
 -- ergonomic reasons, all of the functions exported by this module take
 -- "Prelude" 'Rational's as input and produce "Prelude" 'Rational's as outputs.
 -- Internally, however, the beforementioned checks are always performed, and
--- fail with 'error' if necessary. If you want to be sure those 'error's never
--- happen, just filter your "Prelude" 'Rational's with 'fromPrelude'. In
+-- fail with 'Ex.throw' if necessary. If you want to be sure those 'error's
+-- never happen, just filter your "Prelude" 'Rational's with 'fromPrelude'. In
 -- practice, it's very unlikely that you will be affected by this unless if
 -- you are unsafelly constructing "Prelude" 'Rational's.
 data Rational
@@ -170,7 +171,7 @@ instance Read Rational where
 -- @
 showsPrecTypeLit :: Int -> Rational -> ShowS
 showsPrecTypeLit p r = showParen (p > appPrec) $
-  showsPrec appPrec (num r) . showString " % " . shows (den r)
+  I.showsPrecTypeLit appPrec (num r) . showString " % " . shows (den r)
 
 -- | Make a term-level "KindRational" 'Rational' number, provided that
 -- the numerator is not @0@, and that its numerator and denominator are
@@ -178,9 +179,9 @@ showsPrecTypeLit p r = showParen (p > appPrec) $
 -- is 'Normalize'd.
 rational :: (Integral num, Integral den) => num -> den -> Maybe Rational
 rational = \(toInteger -> n) (toInteger -> d) -> do
-    guard (d /= 0 && abs n < max_ && abs d < max_)
-    let n' P.:% d' = n P.% d
-    pure (I.fromPrelude n' :% fromInteger d')
+    guard (d /= 0 && abs n <= max_ && abs d <= max_)
+    pure $ let n1 P.:% d1 = n P.% d
+           in I.fromPrelude n1 :% fromInteger d1
   where
     max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
     max_ = 10 ^ (1000 :: Int)
@@ -196,13 +197,19 @@ rational = \(toInteger -> n) (toInteger -> d) -> do
 fromPrelude :: P.Rational -> Maybe Rational
 fromPrelude (n P.:% d) = rational n d
 
--- | Like 'fromPrelude', but fails with 'error' in situations where
+-- | Like 'fromPrelude', but 'Ex.throw's in situations where
 -- 'fromPrelude' fails with 'Nothing'.
-unsafeFromPrelude :: String -> P.Rational -> Rational
-unsafeFromPrelude prefix = \r0 -> case fromPrelude r0 of
-  Just r1 -> r1
-  Nothing -> error ("KindRational." <> prefix <>
-                    ": bad Prelude Rational (" <> show r0 <> ")")
+unsafeFromPrelude :: P.Rational -> Rational
+unsafeFromPrelude = \case
+    n P.:% d
+     | d == 0 -> Ex.throw Ex.RatioZeroDenominator
+     | abs n > max_ || abs d > max_ -> Ex.throw Ex.Overflow
+     | otherwise ->
+       let n1 P.:% d1 = n P.% d
+       in I.fromPrelude n1 :% fromInteger d1
+  where
+    max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
+    max_ = 10 ^ (1000 :: Int)
 
 -- | Convert a term-level "KindRational" 'Rational' into a term-level
 -- "Prelude" 'P.Rational'.
@@ -380,9 +387,9 @@ data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
 -- | Convert a term-level "Prelude" 'Rational' into an unknown
 -- type-level 'Rational'.
 someRationalVal :: P.Rational -> SomeRational
-someRationalVal (unsafeFromPrelude "someRationalVal" -> r) =
-  withSomeSRational r (\(sr :: SRational r) ->
-  withKnownRational sr (SomeRational @r Proxy))
+someRationalVal r =
+  withSomeSRational (unsafeFromPrelude r) $ \(sr :: SRational r) ->
+    withKnownRational sr (SomeRational @r Proxy)
 
 instance Eq SomeRational where
   SomeRational x == SomeRational y = rationalVal x P.== rationalVal y
@@ -456,7 +463,7 @@ type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
 -- | Term-level version of the "Terminates" function.
 -- Takes a "Prelude" 'P.Rational' as input.
 terminates :: P.Rational -> Bool
-terminates (unsafeFromPrelude "terminates" -> r) = terminates' r
+terminates = terminates' . unsafeFromPrelude
 
 -- | Term-level version of the "Terminates" function.
 -- Takes a "KindRational" 'P.Rational' as input.
@@ -503,7 +510,7 @@ type Mod (r :: I.Round) (a :: Rational) = Snd (DivMod r a) :: Integer
 -- @
 -- forall (r :: 'I.Round') (a :: 'Rational').
 --   ('Den' a '/=' 0) =>
---     'DivMod' r a  '=='  '( 'Div' r a, 'Mod' r a )
+--     'DivMod' r a  '=='  '('Div' r a, 'Mod' r a)
 -- @
 type DivMod (r :: I.Round) (a :: Rational) =
   DivMod_ r (Normalize a) :: (Integer, Integer)
@@ -518,6 +525,12 @@ type DivMod_ (r :: I.Round) (a :: Rational) =
 --   ('Den' a '/=' 0) =>
 --     'Dif' r a  '=='  a '-' 'Div' r a '%' 1
 -- @
+--
+-- Note: We use the word /difference/ because talking about /remainder/ in this
+-- context can be confusing, considering "Prelude"'s `rem`ainder function.
+-- However, strictly speaking, @`Dif` r a@ is the 'Rational' that /remiains/
+-- after performing the 'I.Round'ed 'Div'ision. So, yes, 'Dif' could potentially
+-- have been called @Rem@ instead.
 type Dif (r :: I.Round) (a :: Rational) = Snd (DivDif r a) :: Rational
 
 -- | Get both the quotient and the 'Dif'ference of the 'Div'ision of the
@@ -527,7 +540,7 @@ type Dif (r :: I.Round) (a :: Rational) = Snd (DivDif r a) :: Rational
 -- @
 -- forall (r :: 'I.Round') (a :: 'Rational').
 --   ('Den' a '/=' 0) =>
---     'DivDif' r a  '=='  '( 'Div' r a, 'Dif' r a )
+--     'DivDif' r a  '=='  '('Div' r a, 'Dif' r a)
 -- @
 type DivDif (r :: I.Round) (a :: Rational) =
   DivDif_ r (Normalize a) :: (Integer, Rational)

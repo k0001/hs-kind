@@ -375,12 +375,15 @@ testsDivMod = do
   guard (b P./= 0)
   a :: P.Integer <- [-5 .. 5]
   r :: K.Round <- [minBound .. maxBound]
-  let tname :: ShowS
-      tname = showString "divMod " . shows r . showChar ' '
-            . shows a . showChar ' ' . shows b
-  pure $ assert (tname "") $
-    case K.divMod r a b of
-      (q, m) -> m == a - b * q
+  let tname :: String -> ShowS
+      tname t = showString t . showChar ' ' . shows r . showChar ' '
+              . shows a . showChar ' ' . shows b
+  [ assert (tname "divMod" "") $ case K.divMod r a b of
+                                   (q, m) -> m == a - b * q
+    , assert (tname "div" "") $ fst (K.divMod r a b) == K.div r a b
+    , assert (tname "mod" "") $ snd (K.divMod r a b) == K.mod r a b
+    ]
+
 
 --------------------------------------------------------------------------------
 

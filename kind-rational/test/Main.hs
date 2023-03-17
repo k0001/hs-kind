@@ -1,12 +1,15 @@
-{-# LANGUAGE MagicHash #-}
-module Main (main) where
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+module Main {--}
+  ( main
+  ) --}
+  where
 
 import Control.Applicative
 import Control.Monad
+import Data.List qualified as List
 import Data.Maybe
-import Data.Proxy
-import Data.Type.Ord (type (<=))
-import GHC.Exts (Constraint, proxy#)
+import Data.Type.Ord (type (<=), type (<))
+import GHC.Exts (Constraint)
 import System.Exit
 import Text.Read
 import GHC.Real qualified as P
@@ -14,7 +17,7 @@ import Prelude hiding (Rational, Integer)
 import Prelude qualified as P
 
 import KindInteger (P, N)
-import KindInteger qualified as I
+import KindRational (type (%), type (/))
 import KindRational qualified as K
 
 --------------------------------------------------------------------------------
@@ -24,285 +27,298 @@ data Dict (c :: Constraint) where
 
 --------------------------------------------------------------------------------
 
--- _testEq =  Dict
--- _testEq :: Dict
---   ( P 0 K.== P 0,   'True ~ (P 0 K.==? P 0)
---   , N 0 K.== N 0,   'True ~ (N 0 K.==? N 0)
---   , P 0 K.== N 0,   'True ~ (P 0 K.==? N 0)
---   , N 0 K.== P 0,   'True ~ (N 0 K.==? P 0)
---
---   , P 0 K./= P 1,   'True ~ (P 0 K./=? P 1)
---   , P 0 K./= N 1,   'True ~ (P 0 K./=? N 1)
---
---   , N 0 K./= N 1,   'True ~ (N 0 K./=? N 1)
---   , N 0 K./= N 1,   'True ~ (N 0 K./=? N 1)
---
---   , P 1 K./= P 0,   'True ~ (P 1 K./=? P 0)
---   , P 1 K./= N 0,   'True ~ (P 1 K./=? N 0)
---
---   , N 1 K./= N 0,   'True ~ (N 1 K./=? N 0)
---   , N 1 K./= N 0,   'True ~ (N 1 K./=? N 0)
---   )
---
--- _testCmp =  Dict
--- _testCmp :: Dict
---   ( P 0 <= P 0
---   , P 0 <= N 0
---   , N 0 <= P 0
---   , N 0 <= N 0
---
---   , N 2 <= N 1
---   , N 1 <= N 0
---   , N 0 <= P 1
---
---   , P 0 <= P 1
---   , P 1 <= P 2
---   )
---
--- _testAdd  = Dict
--- _testAdd :: Dict
---   ( P 0 ~ P 0 K.+ P 0
---   , P 0 ~ N 0 K.+ N 0
---   , P 0 ~ P 0 K.+ N 0
---   , P 0 ~ N 0 K.+ P 0
---
---   , P 1 ~ P 1 K.+ P 0
---   , N 1 ~ N 1 K.+ N 0
---   , P 1 ~ P 1 K.+ N 0
---   , N 1 ~ N 1 K.+ P 0
---
---   , P 1 ~ P 0 K.+ P 1
---   , N 1 ~ N 0 K.+ N 1
---   , N 1 ~ P 0 K.+ N 1
---   , P 1 ~ N 0 K.+ P 1
---
---   , P 2 ~ P 1 K.+ P 1
---   , N 2 ~ N 1 K.+ N 1
---   , P 0 ~ P 1 K.+ N 1
---   , P 0 ~ N 1 K.+ P 1
---   )
---
--- _testMul  = Dict
--- _testMul :: Dict
---   ( P 0 ~ P 0 K.* P 0
---   , P 0 ~ N 0 K.* N 0
---   , P 0 ~ P 0 K.* N 0
---   , P 0 ~ N 0 K.* P 0
---
---   , P 0 ~ P 1 K.* P 0
---   , P 0 ~ N 1 K.* N 0
---   , P 0 ~ P 1 K.* N 0
---   , P 0 ~ N 1 K.* P 0
---
---   , P 0 ~ P 0 K.* P 1
---   , P 0 ~ N 0 K.* N 1
---   , P 0 ~ P 0 K.* N 1
---   , P 0 ~ N 0 K.* P 1
---
---   , P 1 ~ P 1 K.* P 1
---   , P 1 ~ N 1 K.* N 1
---   , N 1 ~ P 1 K.* N 1
---   , N 1 ~ N 1 K.* P 1
---
---   , P 2 ~ P 2 K.* P 1
---   , P 2 ~ N 2 K.* N 1
---   , N 2 ~ P 2 K.* N 1
---   , N 2 ~ N 2 K.* P 1
---
---   , P 6 ~ P 2 K.* P 3
---   , P 6 ~ N 2 K.* N 3
---   , N 6 ~ P 2 K.* N 3
---   , N 6 ~ N 2 K.* P 3
---   )
---
--- _testDiv  = Dict
--- _testDiv :: Dict
---   ( P 0 ~ P 0 `K.Div` P 1
---   , P 0 ~ N 0 `K.Div` N 1
---   , P 0 ~ P 0 `K.Div` N 1
---   , P 0 ~ N 0 `K.Div` P 1
---
---   , P 1 ~ P 1 `K.Div` P 1
---   , P 1 ~ N 1 `K.Div` N 1
---   , N 1 ~ P 1 `K.Div` N 1
---   , N 1 ~ N 1 `K.Div` P 1
---
---   , P 2 ~ P 2 `K.Div` P 1
---   , P 2 ~ N 2 `K.Div` N 1
---   , N 2 ~ P 2 `K.Div` N 1
---   , N 2 ~ N 2 `K.Div` P 1
---
---   , P 1 ~ P 2 `K.Div` P 2
---   , P 1 ~ N 2 `K.Div` N 2
---   , N 1 ~ P 2 `K.Div` N 2
---   , N 1 ~ N 2 `K.Div` P 2
---
---   , P 1 ~ P 3 `K.Div` P 2
---   , P 1 ~ N 3 `K.Div` N 2
---   , N 2 ~ P 3 `K.Div` N 2
---   , N 2 ~ N 3 `K.Div` P 2
---
---   , P 0 ~ P 0 `K.Div` P 1
---   , P 0 ~ N 0 `K.Div` N 1
---   , P 0 ~ P 0 `K.Div` N 1
---   , P 0 ~ N 0 `K.Div` P 1
---
---   , P 0 ~ P 1 `K.Div` P 2
---   , P 0 ~ N 1 `K.Div` N 2
---   , N 1 ~ P 1 `K.Div` N 2
---   , N 1 ~ N 1 `K.Div` P 2
---   )
---
--- _testMod  = Dict
--- _testMod :: Dict
---   ( P 0 ~ P 0 `K.Mod` P 1
---   , P 0 ~ N 0 `K.Mod` N 1
---   , P 0 ~ P 0 `K.Mod` N 1
---   , P 0 ~ N 0 `K.Mod` P 1
---
---   , P 0 ~ P 1 `K.Mod` P 1
---   , P 0 ~ N 1 `K.Mod` N 1
---   , P 0 ~ P 1 `K.Mod` N 1
---   , P 0 ~ N 1 `K.Mod` P 1
---
---   , P 0 ~ P 2 `K.Mod` P 1
---   , P 0 ~ N 2 `K.Mod` N 1
---   , P 0 ~ P 2 `K.Mod` N 1
---   , P 0 ~ N 2 `K.Mod` P 1
---
---   , P 0 ~ P 2 `K.Mod` P 2
---   , P 0 ~ N 2 `K.Mod` N 2
---   , P 0 ~ P 2 `K.Mod` N 2
---   , P 0 ~ N 2 `K.Mod` P 2
---
---   , P 1 ~ P 3 `K.Mod` P 2
---   , N 1 ~ N 3 `K.Mod` N 2
---   , N 1 ~ P 3 `K.Mod` N 2
---   , P 1 ~ N 3 `K.Mod` P 2
---
---   , P 0 ~ P 0 `K.Mod` P 1
---   , P 0 ~ N 0 `K.Mod` N 1
---   , P 0 ~ P 0 `K.Mod` N 1
---   , P 0 ~ N 0 `K.Mod` P 1
---
---   , P 1 ~ P 1 `K.Mod` P 2
---   , N 1 ~ N 1 `K.Mod` N 2
---   , N 1 ~ P 1 `K.Mod` N 2
---   , P 1 ~ N 1 `K.Mod` P 2
---   )
---
--- _testQuot  = Dict
--- _testQuot :: Dict
---   ( P 0 ~ P 0 `K.Quot` P 1
---   , P 0 ~ N 0 `K.Quot` N 1
---   , P 0 ~ P 0 `K.Quot` N 1
---   , P 0 ~ N 0 `K.Quot` P 1
---
---   , P 1 ~ P 1 `K.Quot` P 1
---   , P 1 ~ N 1 `K.Quot` N 1
---   , N 1 ~ P 1 `K.Quot` N 1
---   , N 1 ~ N 1 `K.Quot` P 1
---
---   , P 2 ~ P 2 `K.Quot` P 1
---   , P 2 ~ N 2 `K.Quot` N 1
---   , N 2 ~ P 2 `K.Quot` N 1
---   , N 2 ~ N 2 `K.Quot` P 1
---
---   , P 1 ~ P 2 `K.Quot` P 2
---   , P 1 ~ N 2 `K.Quot` N 2
---   , N 1 ~ P 2 `K.Quot` N 2
---   , N 1 ~ N 2 `K.Quot` P 2
---
---   , P 1 ~ P 3 `K.Quot` P 2
---   , P 1 ~ N 3 `K.Quot` N 2
---   , N 1 ~ P 3 `K.Quot` N 2
---   , N 1 ~ N 3 `K.Quot` P 2
---
---   , P 0 ~ P 0 `K.Quot` P 1
---   , P 0 ~ N 0 `K.Quot` N 1
---   , P 0 ~ P 0 `K.Quot` N 1
---   , P 0 ~ N 0 `K.Quot` P 1
---
---   , P 0 ~ P 1 `K.Quot` P 2
---   , P 0 ~ N 1 `K.Quot` N 2
---   , P 0 ~ P 1 `K.Quot` N 2
---   , P 0 ~ N 1 `K.Quot` P 2
---   )
---
--- _testRem  = Dict
--- _testRem :: Dict
---   ( P 0 ~ P 0 `K.Rem` P 1
---   , P 0 ~ N 0 `K.Rem` N 1
---   , P 0 ~ P 0 `K.Rem` N 1
---   , P 0 ~ N 0 `K.Rem` P 1
---
---   , P 0 ~ P 1 `K.Rem` P 1
---   , P 0 ~ N 1 `K.Rem` N 1
---   , P 0 ~ P 1 `K.Rem` N 1
---   , P 0 ~ N 1 `K.Rem` P 1
---
---   , P 0 ~ P 2 `K.Rem` P 1
---   , P 0 ~ N 2 `K.Rem` N 1
---   , P 0 ~ P 2 `K.Rem` N 1
---   , P 0 ~ N 2 `K.Rem` P 1
---
---   , P 0 ~ P 2 `K.Rem` P 2
---   , P 0 ~ N 2 `K.Rem` N 2
---   , P 0 ~ P 2 `K.Rem` N 2
---   , P 0 ~ N 2 `K.Rem` P 2
---
---   , P 1 ~ P 3 `K.Rem` P 2
---   , N 1 ~ N 3 `K.Rem` N 2
---   , P 1 ~ P 3 `K.Rem` N 2
---   , N 1 ~ N 3 `K.Rem` P 2
---
---   , P 0 ~ P 0 `K.Rem` P 1
---   , P 0 ~ N 0 `K.Rem` N 1
---   , P 0 ~ P 0 `K.Rem` N 1
---   , P 0 ~ N 0 `K.Rem` P 1
---
---   , P 1 ~ P 1 `K.Rem` P 2
---   , N 1 ~ N 1 `K.Rem` N 2
---   , P 1 ~ P 1 `K.Rem` N 2
---   , N 1 ~ N 1 `K.Rem` P 2
---   )
---
--- _testLog2 =  Dict
--- _testLog2 :: Dict
---   ( P 0 ~ K.Log2 (P 1)
---   , P 1 ~ K.Log2 (P 2)
---   , P 1 ~ K.Log2 (P 3)
---   , P 2 ~ K.Log2 (P 4)
---   , P 2 ~ K.Log2 (P 5)
---   , P 2 ~ K.Log2 (P 6)
---   , P 2 ~ K.Log2 (P 7)
---   , P 3 ~ K.Log2 (P 8)
---   , P 3 ~ K.Log2 (P 9)
---   , P 3 ~ K.Log2 (P 10)
---   , P 3 ~ K.Log2 (P 11)
---   , P 3 ~ K.Log2 (P 12)
---   , P 3 ~ K.Log2 (P 13)
---   , P 3 ~ K.Log2 (P 14)
---   , P 3 ~ K.Log2 (P 15)
---   , P 4 ~ K.Log2 (P 16)
---   , P 4 ~ K.Log2 (P 17)
---   , P 4 ~ K.Log2 (P 18)
---   , P 4 ~ K.Log2 (P 19)
---   , P 4 ~ K.Log2 (P 20)
---   , P 4 ~ K.Log2 (P 21)
---   , P 4 ~ K.Log2 (P 22)
---   , P 4 ~ K.Log2 (P 23)
---   , P 4 ~ K.Log2 (P 24)
---   , P 4 ~ K.Log2 (P 25)
---   , P 4 ~ K.Log2 (P 26)
---   , P 4 ~ K.Log2 (P 27)
---   , P 4 ~ K.Log2 (P 28)
---   , P 4 ~ K.Log2 (P 29)
---   , P 4 ~ K.Log2 (P 30)
---   , P 4 ~ K.Log2 (P 31)
---   , P 5 ~ K.Log2 (P 32)
---   )
---
+_testNormalize =  Dict
+_testNormalize :: Dict
+  ( P 0 % 1 ~ K.Normalize (P 0 % 1)
+  , P 1 % 1 ~ K.Normalize (P 1 % 1)
+  , P 2 % 1 ~ K.Normalize (P 2 % 1)
+  , P 3 % 1 ~ K.Normalize (P 3 % 1)
+  , P 4 % 1 ~ K.Normalize (P 4 % 1)
+  , P 0 % 1 ~ K.Normalize (P 0 % 2)
+  , P 1 % 1 ~ K.Normalize (P 2 % 2)
+  , P 3 % 2 ~ K.Normalize (P 3 % 2)
+  , P 2 % 1 ~ K.Normalize (P 4 % 2)
+  , P 0 % 1 ~ K.Normalize (P 0 % 3)
+  , P 1 % 3 ~ K.Normalize (P 1 % 3)
+  , P 2 % 3 ~ K.Normalize (P 2 % 3)
+  , P 1 % 1 ~ K.Normalize (P 3 % 3)
+  , P 4 % 3 ~ K.Normalize (P 4 % 3)
+  , P 0 % 1 ~ K.Normalize (P 0 % 4)
+  , P 1 % 4 ~ K.Normalize (P 1 % 4)
+  , P 1 % 2 ~ K.Normalize (P 2 % 4)
+  , P 3 % 4 ~ K.Normalize (P 3 % 4)
+  , P 1 % 1 ~ K.Normalize (P 4 % 4)
+  , P 0 % 1 ~ K.Normalize (N 0 % 1)
+  , N 1 % 1 ~ K.Normalize (N 1 % 1)
+  , N 2 % 1 ~ K.Normalize (N 2 % 1)
+  , N 3 % 1 ~ K.Normalize (N 3 % 1)
+  , N 4 % 1 ~ K.Normalize (N 4 % 1)
+  , P 0 % 1 ~ K.Normalize (N 0 % 2)
+  , N 1 % 2 ~ K.Normalize (N 1 % 2)
+  , N 1 % 1 ~ K.Normalize (N 2 % 2)
+  , N 3 % 2 ~ K.Normalize (N 3 % 2)
+  , N 2 % 1 ~ K.Normalize (N 4 % 2)
+  , P 0 % 1 ~ K.Normalize (N 0 % 3)
+  , N 1 % 3 ~ K.Normalize (N 1 % 3)
+  , N 2 % 3 ~ K.Normalize (N 2 % 3)
+  , N 1 % 1 ~ K.Normalize (N 3 % 3)
+  , N 4 % 3 ~ K.Normalize (N 4 % 3)
+  , P 0 % 1 ~ K.Normalize (N 0 % 4)
+  , N 1 % 4 ~ K.Normalize (N 1 % 4)
+  , N 1 % 2 ~ K.Normalize (N 2 % 4)
+  , N 3 % 4 ~ K.Normalize (N 3 % 4)
+  , N 1 % 1 ~ K.Normalize (N 4 % 4)
+  )
+
+_testEq =  Dict
+_testEq :: Dict
+  (  1/2 K.== 1/2
+  , (1/2 K.==? 1/2) ~ 'True
+
+  ,  1/2 K.== 2/4
+  , (1/2 K.==? 2/4) ~ 'True
+
+  ,  1/2 K./= 3/4
+  , (1/2 K.==? 3/4) ~ 'False
+  , (1/2 K./=? 3/4) ~ 'True
+  )
+
+_testCmp =  Dict
+_testCmp :: Dict
+  ( 1/4 <= 1/4
+  , 2/8 <= 1/4
+  , 1/4 <= 1/2
+  , 1/4 <= 2/4
+  , 2/8 <= 1/2
+  , 1/4 <  1/2
+  , 1/4 <  2/4
+  , 2/8 <  1/2
+  , 2/8 <  2/4
+  )
+
+_testAdd =  Dict
+_testAdd :: Dict
+  ( (P 0 / 1) ~ (N 0 / 1) K.+ (N 0 / 1)
+  , (N 0 / 1) ~ (N 5 / 1) K.+ (P 5 / 1)
+  , (N 5 / 9) ~ (N 0 / 1) K.+ (N 5 / 9)
+  , (N 9 / 2) ~ (N 3 / 2) K.+ (N 3 / 1)
+  , (9 / 2) ~ (3 / 2) K.+ (3 / 1)
+  , (N 11 / 3)~ (N 3 / 1) K.+ (N 2 / 3)
+  )
+
+_testMul =  Dict
+_testMul :: Dict
+  ( (0 / 1) ~ (N 0 / 1) K.* (N 0 / 1)
+  , (N 25 / 1) ~ (N 5 / 1) K.* (5 / 1)
+  , (N 1 / 1) ~ (N 5 / 1) K.* (1 / 5)
+  , (5 / 9) ~ (N 1 / 1) K.* (N 5 / 9)
+  , (9 / 1) ~ (N 3 / 1) K.* (N 3 / 1)
+  , (2 / 1) ~ (N 3 / 1) K.* (N 2 / 3)
+  , (1 / 1) ~ (P 3 / 2) K.* (P 2 / 3)
+  )
+
+_testRecip =  Dict
+_testRecip :: Dict
+  ( (1 / 1) ~ K.Recip (1 / 1)
+  , (1 / 2) ~ K.Recip (2 / 1)
+  , (4 / 3) ~ K.Recip (3 / 4)
+  , (N 1 / 1) ~ K.Recip (N 1 / 1)
+  , (N 1 / 2) ~ K.Recip (N 2 / 1)
+  , (N 4 / 3) ~ K.Recip (N 3 / 4)
+  )
+
+-- Most tests for these are in kind-integer.
+_testDivMod =  Dict
+_testDivMod :: Dict
+  ( '(P 1, P 1) ~ K.DivMod 'K.RoundDown (3 / 2)
+  , '(P 2, N 1) ~ K.DivMod 'K.RoundUp (3 / 2)
+  , '(P 1, P 1) ~ K.DivMod 'K.RoundZero (3 / 2)
+  , '(P 2, N 1) ~ K.DivMod 'K.RoundAway (3 / 2)
+  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfDown (3 / 2)
+  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfUp (3 / 2)
+  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfZero (3 / 2)
+  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfAway (3 / 2)
+  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfEven (3 / 2)
+  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfOdd (3 / 2)
+
+  , '(N 2, P 1) ~ K.DivMod 'K.RoundDown (N 3 / 2)
+  , '(N 1, N 1) ~ K.DivMod 'K.RoundUp (N 3 / 2)
+  , '(N 1, N 1) ~ K.DivMod 'K.RoundZero (N 3 / 2)
+  , '(N 2, P 1) ~ K.DivMod 'K.RoundAway (N 3 / 2)
+  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfDown (N 3 / 2)
+  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfUp (N 3 / 2)
+  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfZero (N 3 / 2)
+  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfAway (N 3 / 2)
+  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfEven (N 3 / 2)
+  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfOdd (N 3 / 2)
+  )
+
+_testDiv =  Dict
+_testDiv :: Dict
+  ( P 1 ~ K.Div 'K.RoundDown (3 / 2)
+  , P 2 ~ K.Div 'K.RoundUp (3 / 2)
+  , P 1 ~ K.Div 'K.RoundZero (3 / 2)
+  , P 2 ~ K.Div 'K.RoundAway (3 / 2)
+  , P 1 ~ K.Div 'K.RoundHalfDown (3 / 2)
+  , P 2 ~ K.Div 'K.RoundHalfUp (3 / 2)
+  , P 1 ~ K.Div 'K.RoundHalfZero (3 / 2)
+  , P 2 ~ K.Div 'K.RoundHalfAway (3 / 2)
+  , P 2 ~ K.Div 'K.RoundHalfEven (3 / 2)
+  , P 1 ~ K.Div 'K.RoundHalfOdd (3 / 2)
+
+  , N 2 ~ K.Div 'K.RoundDown (N 3 / 2)
+  , N 1 ~ K.Div 'K.RoundUp (N 3 / 2)
+  , N 1 ~ K.Div 'K.RoundZero (N 3 / 2)
+  , N 2 ~ K.Div 'K.RoundAway (N 3 / 2)
+  , N 2 ~ K.Div 'K.RoundHalfDown (N 3 / 2)
+  , N 1 ~ K.Div 'K.RoundHalfUp (N 3 / 2)
+  , N 1 ~ K.Div 'K.RoundHalfZero (N 3 / 2)
+  , N 2 ~ K.Div 'K.RoundHalfAway (N 3 / 2)
+  , N 2 ~ K.Div 'K.RoundHalfEven (N 3 / 2)
+  , N 1 ~ K.Div 'K.RoundHalfOdd (N 3 / 2)
+
+  , P 0 ~ K.Div 'K.RoundDown (3 / 4)
+  , P 1 ~ K.Div 'K.RoundUp (3 / 4)
+  , P 0 ~ K.Div 'K.RoundZero (3 / 4)
+  , P 1 ~ K.Div 'K.RoundAway (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfDown (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfUp (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfZero (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfAway (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfEven (3 / 4)
+  , P 1 ~ K.Div 'K.RoundHalfOdd (3 / 4)
+
+  , N 1 ~ K.Div 'K.RoundDown (N 3 / 4)
+  , P 0 ~ K.Div 'K.RoundUp (N 3 / 4)
+  , P 0 ~ K.Div 'K.RoundZero (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundAway (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfDown (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfUp (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfZero (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfAway (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfEven (N 3 / 4)
+  , N 1 ~ K.Div 'K.RoundHalfOdd (N 3 / 4)
+  )
+
+_testMod =  Dict
+_testMod :: Dict
+  ( P 1 ~ K.Mod 'K.RoundDown (3 / 2)
+  , N 1 ~ K.Mod 'K.RoundUp (3 / 2)
+  , P 1 ~ K.Mod 'K.RoundZero (3 / 2)
+  , N 1 ~ K.Mod 'K.RoundAway (3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfDown (3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfUp (3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfZero (3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfAway (3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfEven (3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfOdd (3 / 2)
+
+  , P 1 ~ K.Mod 'K.RoundDown (N 3 / 2)
+  , N 1 ~ K.Mod 'K.RoundUp (N 3 / 2)
+  , N 1 ~ K.Mod 'K.RoundZero (N 3 / 2)
+  , P 1 ~ K.Mod 'K.RoundAway (N 3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfDown (N 3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfUp (N 3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfZero (N 3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfAway (N 3 / 2)
+  , P 1 ~ K.Mod 'K.RoundHalfEven (N 3 / 2)
+  , N 1 ~ K.Mod 'K.RoundHalfOdd (N 3 / 2)
+  )
+
+_testDif =  Dict
+_testDif :: Dict
+  ( P 1 / 2 ~ K.Dif 'K.RoundDown (3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundUp (3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundZero (3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundAway (3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfDown (3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfUp (3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfZero (3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfAway (3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfEven (3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfOdd (3 / 2)
+
+  , P 1 / 2 ~ K.Dif 'K.RoundDown (N 3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundUp (N 3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundZero (N 3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundAway (N 3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfDown (N 3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfUp (N 3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfZero (N 3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfAway (N 3 / 2)
+  , P 1 / 2 ~ K.Dif 'K.RoundHalfEven (N 3 / 2)
+  , N 1 / 2 ~ K.Dif 'K.RoundHalfOdd (N 3 / 2)
+
+  , P 3 / 4 ~ K.Dif 'K.RoundDown (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundUp (3 / 4)
+  , P 3 / 4 ~ K.Dif 'K.RoundZero (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundAway (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfDown (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfUp (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfZero (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfAway (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfEven (3 / 4)
+  , N 1 / 4 ~ K.Dif 'K.RoundHalfOdd (3 / 4)
+
+  , P 1 / 4 ~ K.Dif 'K.RoundDown (N 3 / 4)
+  , N 3 / 4 ~ K.Dif 'K.RoundUp (N 3 / 4)
+  , N 3 / 4 ~ K.Dif 'K.RoundZero (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundAway (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfDown (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfUp (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfZero (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfAway (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfEven (N 3 / 4)
+  , P 1 / 4 ~ K.Dif 'K.RoundHalfOdd (N 3 / 4)
+  )
+
+_testDivDif =  Dict
+_testDivDif :: Dict
+  ( '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundDown (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundUp (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundZero (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundAway (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfDown (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfUp (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfZero (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfAway (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfEven (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfOdd (3 / 2)
+
+  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundDown (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundUp (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundZero (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundAway (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfDown (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfUp (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfZero (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfAway (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfEven (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfOdd (N 3 / 2)
+
+  , '(P 0, P 3 / 4) ~ K.DivDif 'K.RoundDown (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundUp (3 / 4)
+  , '(P 0, P 3 / 4) ~ K.DivDif 'K.RoundZero (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundAway (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfDown (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfUp (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfZero (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfAway (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfEven (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfOdd (3 / 4)
+
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundDown (N 3 / 4)
+  , '(P 0, N 3 / 4) ~ K.DivDif 'K.RoundUp (N 3 / 4)
+  , '(P 0, N 3 / 4) ~ K.DivDif 'K.RoundZero (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundAway (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfDown (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfUp (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfZero (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfAway (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfEven (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfOdd (N 3 / 4)
+  )
+
 --------------------------------------------------------------------------------
 
 assert
@@ -315,12 +331,13 @@ assert n x = do
 
 testsMain :: [IO Bool] -> IO a
 testsMain xs = do
-  oks <- sequence xs
-  if and oks
-     then do putStrLn "All tests passed successfully."
-             exitSuccess
-     else do putStrLn "Some tests failed."
-             exitFailure
+  res <- sequence xs
+  let (oks, bads) = List.partition id res
+  putStrLn ("[TOTAL] OK: " <> show (length oks) <>
+            ". FAIL: " <> show (length bads) <> ".")
+  case bads of
+    [] -> exitSuccess
+    _  -> exitFailure
 
 rats :: P.Integer -> [P.Rational]
 rats i = do n <- [negate i .. i]
@@ -329,71 +346,1332 @@ rats i = do n <- [negate i .. i]
             pure (n P.% d)
 
 main :: IO ()
-main = testsMain
-  [ assert "integerVal . someIntegerVal == id" $
-    flip all (rats 5) $ \r ->
+main = testsMain $
+  [ assert "rationalVal . someRationalVal == id" $
+    flip all (rats 4) $ \r ->
       case K.someRationalVal r of
         K.SomeRational pa ->
           r == K.rationalVal pa
 
-  , assert "integerVal' . someIntegerVal == id" $
-    flip all (rats 5) $ \r ->
-      case K.someRationalVal r of
-        K.SomeRational (_ :: Proxy a) ->
-          r == K.rationalVal' (proxy# @a)
-
-  , assert "sameIntegerVal a a" $
-    flip all (rats 5) $ \r ->
+  , assert "sameRationalVal a a" $
+    flip all (rats 4) $ \r ->
       case K.someRationalVal r of
         K.SomeRational pa ->
           isJust (K.sameRational pa pa)
 
-  , assert "sameIntegerVal a a'" $
-    flip all (rats 5) $ \a ->
+  , assert "sameRationalVal a a'" $
+    flip all (rats 4) $ \a ->
       case (K.someRationalVal a, K.someRationalVal a) of
         (K.SomeRational pa1, K.SomeRational pa2) ->
           isJust (K.sameRational pa1 pa2)
 
-  , assert "sameIntegerVal a b" $
-    flip all (liftA2 (,) (rats 5) (rats 5)) $ \(a, b) ->
+  , assert "sameRationalVal a b" $
+    flip all (liftA2 (,) (rats 4) (rats 4)) $ \(a, b) ->
       case (K.someRationalVal a, K.someRationalVal b) of
         (K.SomeRational pa, K.SomeRational pb)
           | a == b    -> isJust    (K.sameRational pa pb)
           | otherwise -> isNothing (K.sameRational pa pb)
 
-  , assert "Eq SomeInteger" $
-    flip all (liftA2 (,) (rats 5) (rats 5))$ \(a, b) ->
+  , assert "Eq SomeRational" $
+    flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
       (a == b) == (K.someRationalVal a == K.someRationalVal b)
 
-  , assert "Ord SomeInteger" $
-    flip all (liftA2 (,) (rats 5) (rats 5))$ \(a, b) ->
+  , assert "Ord SomeRational" $
+    flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
       (a `compare` b) == (K.someRationalVal a `compare` K.someRationalVal b)
 
-  , assert "Show SomeInteger" $
-    flip all (rats 5) $ \a ->
+  , assert "Show SomeRational" $
+    flip all (rats 4) $ \a ->
       show a == show (K.someRationalVal a)
 
-  , assert "Read SomeInteger" $
-    flip all (rats 5) $ \r ->
+  , assert "Read SomeRational" $
+    flip all (rats 4) $ \r ->
       let str = show r
       in readMaybe @P.Rational str
             == fmap (\(K.SomeRational p) -> K.rationalVal p)
                     (readMaybe @K.SomeRational str)
 
-  , assert "div" $
-    flip all (rats 5) $ \r ->
-      let (n P.:% d) = r
-      in P.div n d == K.div r
+  ] <> testsDivModDif
 
-  , assert "mod" $
-    flip all (rats 5) $ \r ->
-      let (n P.:% d) = r
-      in  P.mod n d == K.mod r
+testsDivModDif :: [IO Bool]
+testsDivModDif = do
+  a :: P.Rational <- do
+    d :: P.Integer <- [-4 .. 4]
+    guard (d P./= 0)
+    n :: P.Integer <- [-4 .. 4]
+    pure (n P.% d)
+  let n P.:% d = a
+  r :: K.Round <- [minBound .. maxBound]
+  let tname :: String -> ShowS
+      tname t = showString t . showChar ' ' . shows r . showChar ' '
+              . shows n . showChar ' ' . shows d
+  [ assert (tname "divMod" "") $ case K.divMod r a of
+                                   (q, m) -> m == n - d * q
+    , assert (tname "divMod/div" "") $ fst (K.divMod r a) == K.div r a
+    , assert (tname "divMod/mod" "") $ snd (K.divMod r a) == K.mod r a
 
-  , assert "quot" $
-    flip all (rats 5) $ \r ->
-      let (n P.:% d) = r
-      in P.quot n d == K.quot r
-  ]
+    , assert (tname "divDif" "") $ case K.divDif r a of
+                                     (q, x) -> a == toRational q + x
+    , assert (tname "divDif/div" "") $ fst (K.divDif r a) == K.div r a
+    , assert (tname "divDif/dif" "") $ snd (K.divDif r a) == K.dif r a
+    ]
 
 
+_testSlash_Nat0_Nat1 = Dict @((P 0 % 1) ~ (0 / 1))
+_testSlash_Nat0_Nat2 = Dict @((P 0 % 1) ~ (0 / 2))
+_testSlash_Nat0_Nat3 = Dict @((P 0 % 1) ~ (0 / 3))
+_testSlash_Nat0_Nat4 = Dict @((P 0 % 1) ~ (0 / 4))
+_testSlash_Nat0_IntN4 = Dict @((P 0 % 1) ~ (0 / (N 4)))
+_testSlash_Nat0_IntN3 = Dict @((P 0 % 1) ~ (0 / (N 3)))
+_testSlash_Nat0_IntN2 = Dict @((P 0 % 1) ~ (0 / (N 2)))
+_testSlash_Nat0_IntN1 = Dict @((P 0 % 1) ~ (0 / (N 1)))
+_testSlash_Nat0_IntP1 = Dict @((P 0 % 1) ~ (0 / (P 1)))
+_testSlash_Nat0_IntP2 = Dict @((P 0 % 1) ~ (0 / (P 2)))
+_testSlash_Nat0_IntP3 = Dict @((P 0 % 1) ~ (0 / (P 3)))
+_testSlash_Nat0_IntP4 = Dict @((P 0 % 1) ~ (0 / (P 4)))
+_testSlash_Nat0_Rat4N1 = Dict @((P 0 % 1) ~ (0 / (N 4 % 1)))
+_testSlash_Nat0_Rat3N1 = Dict @((P 0 % 1) ~ (0 / (N 3 % 1)))
+_testSlash_Nat0_Rat2N1 = Dict @((P 0 % 1) ~ (0 / (N 2 % 1)))
+_testSlash_Nat0_Rat3N2 = Dict @((P 0 % 1) ~ (0 / (N 3 % 2)))
+_testSlash_Nat0_Rat4N3 = Dict @((P 0 % 1) ~ (0 / (N 4 % 3)))
+_testSlash_Nat0_Rat1N1 = Dict @((P 0 % 1) ~ (0 / (N 1 % 1)))
+_testSlash_Nat0_Rat3N4 = Dict @((P 0 % 1) ~ (0 / (N 3 % 4)))
+_testSlash_Nat0_Rat2N3 = Dict @((P 0 % 1) ~ (0 / (N 2 % 3)))
+_testSlash_Nat0_Rat1N2 = Dict @((P 0 % 1) ~ (0 / (N 1 % 2)))
+_testSlash_Nat0_Rat1N3 = Dict @((P 0 % 1) ~ (0 / (N 1 % 3)))
+_testSlash_Nat0_Rat1N4 = Dict @((P 0 % 1) ~ (0 / (N 1 % 4)))
+_testSlash_Nat0_Rat1P4 = Dict @((P 0 % 1) ~ (0 / (P 1 % 4)))
+_testSlash_Nat0_Rat1P3 = Dict @((P 0 % 1) ~ (0 / (P 1 % 3)))
+_testSlash_Nat0_Rat1P2 = Dict @((P 0 % 1) ~ (0 / (P 1 % 2)))
+_testSlash_Nat0_Rat2P3 = Dict @((P 0 % 1) ~ (0 / (P 2 % 3)))
+_testSlash_Nat0_Rat3P4 = Dict @((P 0 % 1) ~ (0 / (P 3 % 4)))
+_testSlash_Nat0_Rat1P1 = Dict @((P 0 % 1) ~ (0 / (P 1 % 1)))
+_testSlash_Nat0_Rat4P3 = Dict @((P 0 % 1) ~ (0 / (P 4 % 3)))
+_testSlash_Nat0_Rat3P2 = Dict @((P 0 % 1) ~ (0 / (P 3 % 2)))
+_testSlash_Nat0_Rat2P1 = Dict @((P 0 % 1) ~ (0 / (P 2 % 1)))
+_testSlash_Nat0_Rat3P1 = Dict @((P 0 % 1) ~ (0 / (P 3 % 1)))
+_testSlash_Nat0_Rat4P1 = Dict @((P 0 % 1) ~ (0 / (P 4 % 1)))
+_testSlash_Nat1_Nat1 = Dict @((P 1 % 1) ~ (1 / 1))
+_testSlash_Nat1_Nat2 = Dict @((P 1 % 2) ~ (1 / 2))
+_testSlash_Nat1_Nat3 = Dict @((P 1 % 3) ~ (1 / 3))
+_testSlash_Nat1_Nat4 = Dict @((P 1 % 4) ~ (1 / 4))
+_testSlash_Nat1_IntN4 = Dict @((N 1 % 4) ~ (1 / (N 4)))
+_testSlash_Nat1_IntN3 = Dict @((N 1 % 3) ~ (1 / (N 3)))
+_testSlash_Nat1_IntN2 = Dict @((N 1 % 2) ~ (1 / (N 2)))
+_testSlash_Nat1_IntN1 = Dict @((N 1 % 1) ~ (1 / (N 1)))
+_testSlash_Nat1_IntP1 = Dict @((P 1 % 1) ~ (1 / (P 1)))
+_testSlash_Nat1_IntP2 = Dict @((P 1 % 2) ~ (1 / (P 2)))
+_testSlash_Nat1_IntP3 = Dict @((P 1 % 3) ~ (1 / (P 3)))
+_testSlash_Nat1_IntP4 = Dict @((P 1 % 4) ~ (1 / (P 4)))
+_testSlash_Nat1_Rat4N1 = Dict @((N 1 % 4) ~ (1 / (N 4 % 1)))
+_testSlash_Nat1_Rat3N1 = Dict @((N 1 % 3) ~ (1 / (N 3 % 1)))
+_testSlash_Nat1_Rat2N1 = Dict @((N 1 % 2) ~ (1 / (N 2 % 1)))
+_testSlash_Nat1_Rat3N2 = Dict @((N 2 % 3) ~ (1 / (N 3 % 2)))
+_testSlash_Nat1_Rat4N3 = Dict @((N 3 % 4) ~ (1 / (N 4 % 3)))
+_testSlash_Nat1_Rat1N1 = Dict @((N 1 % 1) ~ (1 / (N 1 % 1)))
+_testSlash_Nat1_Rat3N4 = Dict @((N 4 % 3) ~ (1 / (N 3 % 4)))
+_testSlash_Nat1_Rat2N3 = Dict @((N 3 % 2) ~ (1 / (N 2 % 3)))
+_testSlash_Nat1_Rat1N2 = Dict @((N 2 % 1) ~ (1 / (N 1 % 2)))
+_testSlash_Nat1_Rat1N3 = Dict @((N 3 % 1) ~ (1 / (N 1 % 3)))
+_testSlash_Nat1_Rat1N4 = Dict @((N 4 % 1) ~ (1 / (N 1 % 4)))
+_testSlash_Nat1_Rat1P4 = Dict @((P 4 % 1) ~ (1 / (P 1 % 4)))
+_testSlash_Nat1_Rat1P3 = Dict @((P 3 % 1) ~ (1 / (P 1 % 3)))
+_testSlash_Nat1_Rat1P2 = Dict @((P 2 % 1) ~ (1 / (P 1 % 2)))
+_testSlash_Nat1_Rat2P3 = Dict @((P 3 % 2) ~ (1 / (P 2 % 3)))
+_testSlash_Nat1_Rat3P4 = Dict @((P 4 % 3) ~ (1 / (P 3 % 4)))
+_testSlash_Nat1_Rat1P1 = Dict @((P 1 % 1) ~ (1 / (P 1 % 1)))
+_testSlash_Nat1_Rat4P3 = Dict @((P 3 % 4) ~ (1 / (P 4 % 3)))
+_testSlash_Nat1_Rat3P2 = Dict @((P 2 % 3) ~ (1 / (P 3 % 2)))
+_testSlash_Nat1_Rat2P1 = Dict @((P 1 % 2) ~ (1 / (P 2 % 1)))
+_testSlash_Nat1_Rat3P1 = Dict @((P 1 % 3) ~ (1 / (P 3 % 1)))
+_testSlash_Nat1_Rat4P1 = Dict @((P 1 % 4) ~ (1 / (P 4 % 1)))
+_testSlash_Nat2_Nat1 = Dict @((P 2 % 1) ~ (2 / 1))
+_testSlash_Nat2_Nat2 = Dict @((P 1 % 1) ~ (2 / 2))
+_testSlash_Nat2_Nat3 = Dict @((P 2 % 3) ~ (2 / 3))
+_testSlash_Nat2_Nat4 = Dict @((P 1 % 2) ~ (2 / 4))
+_testSlash_Nat2_IntN4 = Dict @((N 1 % 2) ~ (2 / (N 4)))
+_testSlash_Nat2_IntN3 = Dict @((N 2 % 3) ~ (2 / (N 3)))
+_testSlash_Nat2_IntN2 = Dict @((N 1 % 1) ~ (2 / (N 2)))
+_testSlash_Nat2_IntN1 = Dict @((N 2 % 1) ~ (2 / (N 1)))
+_testSlash_Nat2_IntP1 = Dict @((P 2 % 1) ~ (2 / (P 1)))
+_testSlash_Nat2_IntP2 = Dict @((P 1 % 1) ~ (2 / (P 2)))
+_testSlash_Nat2_IntP3 = Dict @((P 2 % 3) ~ (2 / (P 3)))
+_testSlash_Nat2_IntP4 = Dict @((P 1 % 2) ~ (2 / (P 4)))
+_testSlash_Nat2_Rat4N1 = Dict @((N 1 % 2) ~ (2 / (N 4 % 1)))
+_testSlash_Nat2_Rat3N1 = Dict @((N 2 % 3) ~ (2 / (N 3 % 1)))
+_testSlash_Nat2_Rat2N1 = Dict @((N 1 % 1) ~ (2 / (N 2 % 1)))
+_testSlash_Nat2_Rat3N2 = Dict @((N 4 % 3) ~ (2 / (N 3 % 2)))
+_testSlash_Nat2_Rat4N3 = Dict @((N 3 % 2) ~ (2 / (N 4 % 3)))
+_testSlash_Nat2_Rat1N1 = Dict @((N 2 % 1) ~ (2 / (N 1 % 1)))
+_testSlash_Nat2_Rat3N4 = Dict @((N 8 % 3) ~ (2 / (N 3 % 4)))
+_testSlash_Nat2_Rat2N3 = Dict @((N 3 % 1) ~ (2 / (N 2 % 3)))
+_testSlash_Nat2_Rat1N2 = Dict @((N 4 % 1) ~ (2 / (N 1 % 2)))
+_testSlash_Nat2_Rat1N3 = Dict @((N 6 % 1) ~ (2 / (N 1 % 3)))
+_testSlash_Nat2_Rat1N4 = Dict @((N 8 % 1) ~ (2 / (N 1 % 4)))
+_testSlash_Nat2_Rat1P4 = Dict @((P 8 % 1) ~ (2 / (P 1 % 4)))
+_testSlash_Nat2_Rat1P3 = Dict @((P 6 % 1) ~ (2 / (P 1 % 3)))
+_testSlash_Nat2_Rat1P2 = Dict @((P 4 % 1) ~ (2 / (P 1 % 2)))
+_testSlash_Nat2_Rat2P3 = Dict @((P 3 % 1) ~ (2 / (P 2 % 3)))
+_testSlash_Nat2_Rat3P4 = Dict @((P 8 % 3) ~ (2 / (P 3 % 4)))
+_testSlash_Nat2_Rat1P1 = Dict @((P 2 % 1) ~ (2 / (P 1 % 1)))
+_testSlash_Nat2_Rat4P3 = Dict @((P 3 % 2) ~ (2 / (P 4 % 3)))
+_testSlash_Nat2_Rat3P2 = Dict @((P 4 % 3) ~ (2 / (P 3 % 2)))
+_testSlash_Nat2_Rat2P1 = Dict @((P 1 % 1) ~ (2 / (P 2 % 1)))
+_testSlash_Nat2_Rat3P1 = Dict @((P 2 % 3) ~ (2 / (P 3 % 1)))
+_testSlash_Nat2_Rat4P1 = Dict @((P 1 % 2) ~ (2 / (P 4 % 1)))
+_testSlash_Nat3_Nat1 = Dict @((P 3 % 1) ~ (3 / 1))
+_testSlash_Nat3_Nat2 = Dict @((P 3 % 2) ~ (3 / 2))
+_testSlash_Nat3_Nat3 = Dict @((P 1 % 1) ~ (3 / 3))
+_testSlash_Nat3_Nat4 = Dict @((P 3 % 4) ~ (3 / 4))
+_testSlash_Nat3_IntN4 = Dict @((N 3 % 4) ~ (3 / (N 4)))
+_testSlash_Nat3_IntN3 = Dict @((N 1 % 1) ~ (3 / (N 3)))
+_testSlash_Nat3_IntN2 = Dict @((N 3 % 2) ~ (3 / (N 2)))
+_testSlash_Nat3_IntN1 = Dict @((N 3 % 1) ~ (3 / (N 1)))
+_testSlash_Nat3_IntP1 = Dict @((P 3 % 1) ~ (3 / (P 1)))
+_testSlash_Nat3_IntP2 = Dict @((P 3 % 2) ~ (3 / (P 2)))
+_testSlash_Nat3_IntP3 = Dict @((P 1 % 1) ~ (3 / (P 3)))
+_testSlash_Nat3_IntP4 = Dict @((P 3 % 4) ~ (3 / (P 4)))
+_testSlash_Nat3_Rat4N1 = Dict @((N 3 % 4) ~ (3 / (N 4 % 1)))
+_testSlash_Nat3_Rat3N1 = Dict @((N 1 % 1) ~ (3 / (N 3 % 1)))
+_testSlash_Nat3_Rat2N1 = Dict @((N 3 % 2) ~ (3 / (N 2 % 1)))
+_testSlash_Nat3_Rat3N2 = Dict @((N 2 % 1) ~ (3 / (N 3 % 2)))
+_testSlash_Nat3_Rat4N3 = Dict @((N 9 % 4) ~ (3 / (N 4 % 3)))
+_testSlash_Nat3_Rat1N1 = Dict @((N 3 % 1) ~ (3 / (N 1 % 1)))
+_testSlash_Nat3_Rat3N4 = Dict @((N 4 % 1) ~ (3 / (N 3 % 4)))
+_testSlash_Nat3_Rat2N3 = Dict @((N 9 % 2) ~ (3 / (N 2 % 3)))
+_testSlash_Nat3_Rat1N2 = Dict @((N 6 % 1) ~ (3 / (N 1 % 2)))
+_testSlash_Nat3_Rat1N3 = Dict @((N 9 % 1) ~ (3 / (N 1 % 3)))
+_testSlash_Nat3_Rat1N4 = Dict @((N 12 % 1) ~ (3 / (N 1 % 4)))
+_testSlash_Nat3_Rat1P4 = Dict @((P 12 % 1) ~ (3 / (P 1 % 4)))
+_testSlash_Nat3_Rat1P3 = Dict @((P 9 % 1) ~ (3 / (P 1 % 3)))
+_testSlash_Nat3_Rat1P2 = Dict @((P 6 % 1) ~ (3 / (P 1 % 2)))
+_testSlash_Nat3_Rat2P3 = Dict @((P 9 % 2) ~ (3 / (P 2 % 3)))
+_testSlash_Nat3_Rat3P4 = Dict @((P 4 % 1) ~ (3 / (P 3 % 4)))
+_testSlash_Nat3_Rat1P1 = Dict @((P 3 % 1) ~ (3 / (P 1 % 1)))
+_testSlash_Nat3_Rat4P3 = Dict @((P 9 % 4) ~ (3 / (P 4 % 3)))
+_testSlash_Nat3_Rat3P2 = Dict @((P 2 % 1) ~ (3 / (P 3 % 2)))
+_testSlash_Nat3_Rat2P1 = Dict @((P 3 % 2) ~ (3 / (P 2 % 1)))
+_testSlash_Nat3_Rat3P1 = Dict @((P 1 % 1) ~ (3 / (P 3 % 1)))
+_testSlash_Nat3_Rat4P1 = Dict @((P 3 % 4) ~ (3 / (P 4 % 1)))
+_testSlash_Nat4_Nat1 = Dict @((P 4 % 1) ~ (4 / 1))
+_testSlash_Nat4_Nat2 = Dict @((P 2 % 1) ~ (4 / 2))
+_testSlash_Nat4_Nat3 = Dict @((P 4 % 3) ~ (4 / 3))
+_testSlash_Nat4_Nat4 = Dict @((P 1 % 1) ~ (4 / 4))
+_testSlash_Nat4_IntN4 = Dict @((N 1 % 1) ~ (4 / (N 4)))
+_testSlash_Nat4_IntN3 = Dict @((N 4 % 3) ~ (4 / (N 3)))
+_testSlash_Nat4_IntN2 = Dict @((N 2 % 1) ~ (4 / (N 2)))
+_testSlash_Nat4_IntN1 = Dict @((N 4 % 1) ~ (4 / (N 1)))
+_testSlash_Nat4_IntP1 = Dict @((P 4 % 1) ~ (4 / (P 1)))
+_testSlash_Nat4_IntP2 = Dict @((P 2 % 1) ~ (4 / (P 2)))
+_testSlash_Nat4_IntP3 = Dict @((P 4 % 3) ~ (4 / (P 3)))
+_testSlash_Nat4_IntP4 = Dict @((P 1 % 1) ~ (4 / (P 4)))
+_testSlash_Nat4_Rat4N1 = Dict @((N 1 % 1) ~ (4 / (N 4 % 1)))
+_testSlash_Nat4_Rat3N1 = Dict @((N 4 % 3) ~ (4 / (N 3 % 1)))
+_testSlash_Nat4_Rat2N1 = Dict @((N 2 % 1) ~ (4 / (N 2 % 1)))
+_testSlash_Nat4_Rat3N2 = Dict @((N 8 % 3) ~ (4 / (N 3 % 2)))
+_testSlash_Nat4_Rat4N3 = Dict @((N 3 % 1) ~ (4 / (N 4 % 3)))
+_testSlash_Nat4_Rat1N1 = Dict @((N 4 % 1) ~ (4 / (N 1 % 1)))
+_testSlash_Nat4_Rat3N4 = Dict @((N 16 % 3) ~ (4 / (N 3 % 4)))
+_testSlash_Nat4_Rat2N3 = Dict @((N 6 % 1) ~ (4 / (N 2 % 3)))
+_testSlash_Nat4_Rat1N2 = Dict @((N 8 % 1) ~ (4 / (N 1 % 2)))
+_testSlash_Nat4_Rat1N3 = Dict @((N 12 % 1) ~ (4 / (N 1 % 3)))
+_testSlash_Nat4_Rat1N4 = Dict @((N 16 % 1) ~ (4 / (N 1 % 4)))
+_testSlash_Nat4_Rat1P4 = Dict @((P 16 % 1) ~ (4 / (P 1 % 4)))
+_testSlash_Nat4_Rat1P3 = Dict @((P 12 % 1) ~ (4 / (P 1 % 3)))
+_testSlash_Nat4_Rat1P2 = Dict @((P 8 % 1) ~ (4 / (P 1 % 2)))
+_testSlash_Nat4_Rat2P3 = Dict @((P 6 % 1) ~ (4 / (P 2 % 3)))
+_testSlash_Nat4_Rat3P4 = Dict @((P 16 % 3) ~ (4 / (P 3 % 4)))
+_testSlash_Nat4_Rat1P1 = Dict @((P 4 % 1) ~ (4 / (P 1 % 1)))
+_testSlash_Nat4_Rat4P3 = Dict @((P 3 % 1) ~ (4 / (P 4 % 3)))
+_testSlash_Nat4_Rat3P2 = Dict @((P 8 % 3) ~ (4 / (P 3 % 2)))
+_testSlash_Nat4_Rat2P1 = Dict @((P 2 % 1) ~ (4 / (P 2 % 1)))
+_testSlash_Nat4_Rat3P1 = Dict @((P 4 % 3) ~ (4 / (P 3 % 1)))
+_testSlash_Nat4_Rat4P1 = Dict @((P 1 % 1) ~ (4 / (P 4 % 1)))
+_testSlash_IntN4_Nat1 = Dict @((N 4 % 1) ~ ((N 4) / 1))
+_testSlash_IntN4_Nat2 = Dict @((N 2 % 1) ~ ((N 4) / 2))
+_testSlash_IntN4_Nat3 = Dict @((N 4 % 3) ~ ((N 4) / 3))
+_testSlash_IntN4_Nat4 = Dict @((N 1 % 1) ~ ((N 4) / 4))
+_testSlash_IntN4_IntN4 = Dict @((P 1 % 1) ~ ((N 4) / (N 4)))
+_testSlash_IntN4_IntN3 = Dict @((P 4 % 3) ~ ((N 4) / (N 3)))
+_testSlash_IntN4_IntN2 = Dict @((P 2 % 1) ~ ((N 4) / (N 2)))
+_testSlash_IntN4_IntN1 = Dict @((P 4 % 1) ~ ((N 4) / (N 1)))
+_testSlash_IntN4_IntP1 = Dict @((N 4 % 1) ~ ((N 4) / (P 1)))
+_testSlash_IntN4_IntP2 = Dict @((N 2 % 1) ~ ((N 4) / (P 2)))
+_testSlash_IntN4_IntP3 = Dict @((N 4 % 3) ~ ((N 4) / (P 3)))
+_testSlash_IntN4_IntP4 = Dict @((N 1 % 1) ~ ((N 4) / (P 4)))
+_testSlash_IntN4_Rat4N1 = Dict @((P 1 % 1) ~ ((N 4) / (N 4 % 1)))
+_testSlash_IntN4_Rat3N1 = Dict @((P 4 % 3) ~ ((N 4) / (N 3 % 1)))
+_testSlash_IntN4_Rat2N1 = Dict @((P 2 % 1) ~ ((N 4) / (N 2 % 1)))
+_testSlash_IntN4_Rat3N2 = Dict @((P 8 % 3) ~ ((N 4) / (N 3 % 2)))
+_testSlash_IntN4_Rat4N3 = Dict @((P 3 % 1) ~ ((N 4) / (N 4 % 3)))
+_testSlash_IntN4_Rat1N1 = Dict @((P 4 % 1) ~ ((N 4) / (N 1 % 1)))
+_testSlash_IntN4_Rat3N4 = Dict @((P 16 % 3) ~ ((N 4) / (N 3 % 4)))
+_testSlash_IntN4_Rat2N3 = Dict @((P 6 % 1) ~ ((N 4) / (N 2 % 3)))
+_testSlash_IntN4_Rat1N2 = Dict @((P 8 % 1) ~ ((N 4) / (N 1 % 2)))
+_testSlash_IntN4_Rat1N3 = Dict @((P 12 % 1) ~ ((N 4) / (N 1 % 3)))
+_testSlash_IntN4_Rat1N4 = Dict @((P 16 % 1) ~ ((N 4) / (N 1 % 4)))
+_testSlash_IntN4_Rat1P4 = Dict @((N 16 % 1) ~ ((N 4) / (P 1 % 4)))
+_testSlash_IntN4_Rat1P3 = Dict @((N 12 % 1) ~ ((N 4) / (P 1 % 3)))
+_testSlash_IntN4_Rat1P2 = Dict @((N 8 % 1) ~ ((N 4) / (P 1 % 2)))
+_testSlash_IntN4_Rat2P3 = Dict @((N 6 % 1) ~ ((N 4) / (P 2 % 3)))
+_testSlash_IntN4_Rat3P4 = Dict @((N 16 % 3) ~ ((N 4) / (P 3 % 4)))
+_testSlash_IntN4_Rat1P1 = Dict @((N 4 % 1) ~ ((N 4) / (P 1 % 1)))
+_testSlash_IntN4_Rat4P3 = Dict @((N 3 % 1) ~ ((N 4) / (P 4 % 3)))
+_testSlash_IntN4_Rat3P2 = Dict @((N 8 % 3) ~ ((N 4) / (P 3 % 2)))
+_testSlash_IntN4_Rat2P1 = Dict @((N 2 % 1) ~ ((N 4) / (P 2 % 1)))
+_testSlash_IntN4_Rat3P1 = Dict @((N 4 % 3) ~ ((N 4) / (P 3 % 1)))
+_testSlash_IntN4_Rat4P1 = Dict @((N 1 % 1) ~ ((N 4) / (P 4 % 1)))
+_testSlash_IntN3_Nat1 = Dict @((N 3 % 1) ~ ((N 3) / 1))
+_testSlash_IntN3_Nat2 = Dict @((N 3 % 2) ~ ((N 3) / 2))
+_testSlash_IntN3_Nat3 = Dict @((N 1 % 1) ~ ((N 3) / 3))
+_testSlash_IntN3_Nat4 = Dict @((N 3 % 4) ~ ((N 3) / 4))
+_testSlash_IntN3_IntN4 = Dict @((P 3 % 4) ~ ((N 3) / (N 4)))
+_testSlash_IntN3_IntN3 = Dict @((P 1 % 1) ~ ((N 3) / (N 3)))
+_testSlash_IntN3_IntN2 = Dict @((P 3 % 2) ~ ((N 3) / (N 2)))
+_testSlash_IntN3_IntN1 = Dict @((P 3 % 1) ~ ((N 3) / (N 1)))
+_testSlash_IntN3_IntP1 = Dict @((N 3 % 1) ~ ((N 3) / (P 1)))
+_testSlash_IntN3_IntP2 = Dict @((N 3 % 2) ~ ((N 3) / (P 2)))
+_testSlash_IntN3_IntP3 = Dict @((N 1 % 1) ~ ((N 3) / (P 3)))
+_testSlash_IntN3_IntP4 = Dict @((N 3 % 4) ~ ((N 3) / (P 4)))
+_testSlash_IntN3_Rat4N1 = Dict @((P 3 % 4) ~ ((N 3) / (N 4 % 1)))
+_testSlash_IntN3_Rat3N1 = Dict @((P 1 % 1) ~ ((N 3) / (N 3 % 1)))
+_testSlash_IntN3_Rat2N1 = Dict @((P 3 % 2) ~ ((N 3) / (N 2 % 1)))
+_testSlash_IntN3_Rat3N2 = Dict @((P 2 % 1) ~ ((N 3) / (N 3 % 2)))
+_testSlash_IntN3_Rat4N3 = Dict @((P 9 % 4) ~ ((N 3) / (N 4 % 3)))
+_testSlash_IntN3_Rat1N1 = Dict @((P 3 % 1) ~ ((N 3) / (N 1 % 1)))
+_testSlash_IntN3_Rat3N4 = Dict @((P 4 % 1) ~ ((N 3) / (N 3 % 4)))
+_testSlash_IntN3_Rat2N3 = Dict @((P 9 % 2) ~ ((N 3) / (N 2 % 3)))
+_testSlash_IntN3_Rat1N2 = Dict @((P 6 % 1) ~ ((N 3) / (N 1 % 2)))
+_testSlash_IntN3_Rat1N3 = Dict @((P 9 % 1) ~ ((N 3) / (N 1 % 3)))
+_testSlash_IntN3_Rat1N4 = Dict @((P 12 % 1) ~ ((N 3) / (N 1 % 4)))
+_testSlash_IntN3_Rat1P4 = Dict @((N 12 % 1) ~ ((N 3) / (P 1 % 4)))
+_testSlash_IntN3_Rat1P3 = Dict @((N 9 % 1) ~ ((N 3) / (P 1 % 3)))
+_testSlash_IntN3_Rat1P2 = Dict @((N 6 % 1) ~ ((N 3) / (P 1 % 2)))
+_testSlash_IntN3_Rat2P3 = Dict @((N 9 % 2) ~ ((N 3) / (P 2 % 3)))
+_testSlash_IntN3_Rat3P4 = Dict @((N 4 % 1) ~ ((N 3) / (P 3 % 4)))
+_testSlash_IntN3_Rat1P1 = Dict @((N 3 % 1) ~ ((N 3) / (P 1 % 1)))
+_testSlash_IntN3_Rat4P3 = Dict @((N 9 % 4) ~ ((N 3) / (P 4 % 3)))
+_testSlash_IntN3_Rat3P2 = Dict @((N 2 % 1) ~ ((N 3) / (P 3 % 2)))
+_testSlash_IntN3_Rat2P1 = Dict @((N 3 % 2) ~ ((N 3) / (P 2 % 1)))
+_testSlash_IntN3_Rat3P1 = Dict @((N 1 % 1) ~ ((N 3) / (P 3 % 1)))
+_testSlash_IntN3_Rat4P1 = Dict @((N 3 % 4) ~ ((N 3) / (P 4 % 1)))
+_testSlash_IntN2_Nat1 = Dict @((N 2 % 1) ~ ((N 2) / 1))
+_testSlash_IntN2_Nat2 = Dict @((N 1 % 1) ~ ((N 2) / 2))
+_testSlash_IntN2_Nat3 = Dict @((N 2 % 3) ~ ((N 2) / 3))
+_testSlash_IntN2_Nat4 = Dict @((N 1 % 2) ~ ((N 2) / 4))
+_testSlash_IntN2_IntN4 = Dict @((P 1 % 2) ~ ((N 2) / (N 4)))
+_testSlash_IntN2_IntN3 = Dict @((P 2 % 3) ~ ((N 2) / (N 3)))
+_testSlash_IntN2_IntN2 = Dict @((P 1 % 1) ~ ((N 2) / (N 2)))
+_testSlash_IntN2_IntN1 = Dict @((P 2 % 1) ~ ((N 2) / (N 1)))
+_testSlash_IntN2_IntP1 = Dict @((N 2 % 1) ~ ((N 2) / (P 1)))
+_testSlash_IntN2_IntP2 = Dict @((N 1 % 1) ~ ((N 2) / (P 2)))
+_testSlash_IntN2_IntP3 = Dict @((N 2 % 3) ~ ((N 2) / (P 3)))
+_testSlash_IntN2_IntP4 = Dict @((N 1 % 2) ~ ((N 2) / (P 4)))
+_testSlash_IntN2_Rat4N1 = Dict @((P 1 % 2) ~ ((N 2) / (N 4 % 1)))
+_testSlash_IntN2_Rat3N1 = Dict @((P 2 % 3) ~ ((N 2) / (N 3 % 1)))
+_testSlash_IntN2_Rat2N1 = Dict @((P 1 % 1) ~ ((N 2) / (N 2 % 1)))
+_testSlash_IntN2_Rat3N2 = Dict @((P 4 % 3) ~ ((N 2) / (N 3 % 2)))
+_testSlash_IntN2_Rat4N3 = Dict @((P 3 % 2) ~ ((N 2) / (N 4 % 3)))
+_testSlash_IntN2_Rat1N1 = Dict @((P 2 % 1) ~ ((N 2) / (N 1 % 1)))
+_testSlash_IntN2_Rat3N4 = Dict @((P 8 % 3) ~ ((N 2) / (N 3 % 4)))
+_testSlash_IntN2_Rat2N3 = Dict @((P 3 % 1) ~ ((N 2) / (N 2 % 3)))
+_testSlash_IntN2_Rat1N2 = Dict @((P 4 % 1) ~ ((N 2) / (N 1 % 2)))
+_testSlash_IntN2_Rat1N3 = Dict @((P 6 % 1) ~ ((N 2) / (N 1 % 3)))
+_testSlash_IntN2_Rat1N4 = Dict @((P 8 % 1) ~ ((N 2) / (N 1 % 4)))
+_testSlash_IntN2_Rat1P4 = Dict @((N 8 % 1) ~ ((N 2) / (P 1 % 4)))
+_testSlash_IntN2_Rat1P3 = Dict @((N 6 % 1) ~ ((N 2) / (P 1 % 3)))
+_testSlash_IntN2_Rat1P2 = Dict @((N 4 % 1) ~ ((N 2) / (P 1 % 2)))
+_testSlash_IntN2_Rat2P3 = Dict @((N 3 % 1) ~ ((N 2) / (P 2 % 3)))
+_testSlash_IntN2_Rat3P4 = Dict @((N 8 % 3) ~ ((N 2) / (P 3 % 4)))
+_testSlash_IntN2_Rat1P1 = Dict @((N 2 % 1) ~ ((N 2) / (P 1 % 1)))
+_testSlash_IntN2_Rat4P3 = Dict @((N 3 % 2) ~ ((N 2) / (P 4 % 3)))
+_testSlash_IntN2_Rat3P2 = Dict @((N 4 % 3) ~ ((N 2) / (P 3 % 2)))
+_testSlash_IntN2_Rat2P1 = Dict @((N 1 % 1) ~ ((N 2) / (P 2 % 1)))
+_testSlash_IntN2_Rat3P1 = Dict @((N 2 % 3) ~ ((N 2) / (P 3 % 1)))
+_testSlash_IntN2_Rat4P1 = Dict @((N 1 % 2) ~ ((N 2) / (P 4 % 1)))
+_testSlash_IntN1_Nat1 = Dict @((N 1 % 1) ~ ((N 1) / 1))
+_testSlash_IntN1_Nat2 = Dict @((N 1 % 2) ~ ((N 1) / 2))
+_testSlash_IntN1_Nat3 = Dict @((N 1 % 3) ~ ((N 1) / 3))
+_testSlash_IntN1_Nat4 = Dict @((N 1 % 4) ~ ((N 1) / 4))
+_testSlash_IntN1_IntN4 = Dict @((P 1 % 4) ~ ((N 1) / (N 4)))
+_testSlash_IntN1_IntN3 = Dict @((P 1 % 3) ~ ((N 1) / (N 3)))
+_testSlash_IntN1_IntN2 = Dict @((P 1 % 2) ~ ((N 1) / (N 2)))
+_testSlash_IntN1_IntN1 = Dict @((P 1 % 1) ~ ((N 1) / (N 1)))
+_testSlash_IntN1_IntP1 = Dict @((N 1 % 1) ~ ((N 1) / (P 1)))
+_testSlash_IntN1_IntP2 = Dict @((N 1 % 2) ~ ((N 1) / (P 2)))
+_testSlash_IntN1_IntP3 = Dict @((N 1 % 3) ~ ((N 1) / (P 3)))
+_testSlash_IntN1_IntP4 = Dict @((N 1 % 4) ~ ((N 1) / (P 4)))
+_testSlash_IntN1_Rat4N1 = Dict @((P 1 % 4) ~ ((N 1) / (N 4 % 1)))
+_testSlash_IntN1_Rat3N1 = Dict @((P 1 % 3) ~ ((N 1) / (N 3 % 1)))
+_testSlash_IntN1_Rat2N1 = Dict @((P 1 % 2) ~ ((N 1) / (N 2 % 1)))
+_testSlash_IntN1_Rat3N2 = Dict @((P 2 % 3) ~ ((N 1) / (N 3 % 2)))
+_testSlash_IntN1_Rat4N3 = Dict @((P 3 % 4) ~ ((N 1) / (N 4 % 3)))
+_testSlash_IntN1_Rat1N1 = Dict @((P 1 % 1) ~ ((N 1) / (N 1 % 1)))
+_testSlash_IntN1_Rat3N4 = Dict @((P 4 % 3) ~ ((N 1) / (N 3 % 4)))
+_testSlash_IntN1_Rat2N3 = Dict @((P 3 % 2) ~ ((N 1) / (N 2 % 3)))
+_testSlash_IntN1_Rat1N2 = Dict @((P 2 % 1) ~ ((N 1) / (N 1 % 2)))
+_testSlash_IntN1_Rat1N3 = Dict @((P 3 % 1) ~ ((N 1) / (N 1 % 3)))
+_testSlash_IntN1_Rat1N4 = Dict @((P 4 % 1) ~ ((N 1) / (N 1 % 4)))
+_testSlash_IntN1_Rat1P4 = Dict @((N 4 % 1) ~ ((N 1) / (P 1 % 4)))
+_testSlash_IntN1_Rat1P3 = Dict @((N 3 % 1) ~ ((N 1) / (P 1 % 3)))
+_testSlash_IntN1_Rat1P2 = Dict @((N 2 % 1) ~ ((N 1) / (P 1 % 2)))
+_testSlash_IntN1_Rat2P3 = Dict @((N 3 % 2) ~ ((N 1) / (P 2 % 3)))
+_testSlash_IntN1_Rat3P4 = Dict @((N 4 % 3) ~ ((N 1) / (P 3 % 4)))
+_testSlash_IntN1_Rat1P1 = Dict @((N 1 % 1) ~ ((N 1) / (P 1 % 1)))
+_testSlash_IntN1_Rat4P3 = Dict @((N 3 % 4) ~ ((N 1) / (P 4 % 3)))
+_testSlash_IntN1_Rat3P2 = Dict @((N 2 % 3) ~ ((N 1) / (P 3 % 2)))
+_testSlash_IntN1_Rat2P1 = Dict @((N 1 % 2) ~ ((N 1) / (P 2 % 1)))
+_testSlash_IntN1_Rat3P1 = Dict @((N 1 % 3) ~ ((N 1) / (P 3 % 1)))
+_testSlash_IntN1_Rat4P1 = Dict @((N 1 % 4) ~ ((N 1) / (P 4 % 1)))
+_testSlash_IntP0_Nat1 = Dict @((P 0 % 1) ~ ((P 0) / 1))
+_testSlash_IntP0_Nat2 = Dict @((P 0 % 1) ~ ((P 0) / 2))
+_testSlash_IntP0_Nat3 = Dict @((P 0 % 1) ~ ((P 0) / 3))
+_testSlash_IntP0_Nat4 = Dict @((P 0 % 1) ~ ((P 0) / 4))
+_testSlash_IntP0_IntN4 = Dict @((P 0 % 1) ~ ((P 0) / (N 4)))
+_testSlash_IntP0_IntN3 = Dict @((P 0 % 1) ~ ((P 0) / (N 3)))
+_testSlash_IntP0_IntN2 = Dict @((P 0 % 1) ~ ((P 0) / (N 2)))
+_testSlash_IntP0_IntN1 = Dict @((P 0 % 1) ~ ((P 0) / (N 1)))
+_testSlash_IntP0_IntP1 = Dict @((P 0 % 1) ~ ((P 0) / (P 1)))
+_testSlash_IntP0_IntP2 = Dict @((P 0 % 1) ~ ((P 0) / (P 2)))
+_testSlash_IntP0_IntP3 = Dict @((P 0 % 1) ~ ((P 0) / (P 3)))
+_testSlash_IntP0_IntP4 = Dict @((P 0 % 1) ~ ((P 0) / (P 4)))
+_testSlash_IntP0_Rat4N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 4 % 1)))
+_testSlash_IntP0_Rat3N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 1)))
+_testSlash_IntP0_Rat2N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 2 % 1)))
+_testSlash_IntP0_Rat3N2 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 2)))
+_testSlash_IntP0_Rat4N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 4 % 3)))
+_testSlash_IntP0_Rat1N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 1)))
+_testSlash_IntP0_Rat3N4 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 4)))
+_testSlash_IntP0_Rat2N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 2 % 3)))
+_testSlash_IntP0_Rat1N2 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 2)))
+_testSlash_IntP0_Rat1N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 3)))
+_testSlash_IntP0_Rat1N4 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 4)))
+_testSlash_IntP0_Rat1P4 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 4)))
+_testSlash_IntP0_Rat1P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 3)))
+_testSlash_IntP0_Rat1P2 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 2)))
+_testSlash_IntP0_Rat2P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 2 % 3)))
+_testSlash_IntP0_Rat3P4 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 4)))
+_testSlash_IntP0_Rat1P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 1)))
+_testSlash_IntP0_Rat4P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 4 % 3)))
+_testSlash_IntP0_Rat3P2 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 2)))
+_testSlash_IntP0_Rat2P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 2 % 1)))
+_testSlash_IntP0_Rat3P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 1)))
+_testSlash_IntP0_Rat4P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 4 % 1)))
+_testSlash_IntP1_Nat1 = Dict @((P 1 % 1) ~ ((P 1) / 1))
+_testSlash_IntP1_Nat2 = Dict @((P 1 % 2) ~ ((P 1) / 2))
+_testSlash_IntP1_Nat3 = Dict @((P 1 % 3) ~ ((P 1) / 3))
+_testSlash_IntP1_Nat4 = Dict @((P 1 % 4) ~ ((P 1) / 4))
+_testSlash_IntP1_IntN4 = Dict @((N 1 % 4) ~ ((P 1) / (N 4)))
+_testSlash_IntP1_IntN3 = Dict @((N 1 % 3) ~ ((P 1) / (N 3)))
+_testSlash_IntP1_IntN2 = Dict @((N 1 % 2) ~ ((P 1) / (N 2)))
+_testSlash_IntP1_IntN1 = Dict @((N 1 % 1) ~ ((P 1) / (N 1)))
+_testSlash_IntP1_IntP1 = Dict @((P 1 % 1) ~ ((P 1) / (P 1)))
+_testSlash_IntP1_IntP2 = Dict @((P 1 % 2) ~ ((P 1) / (P 2)))
+_testSlash_IntP1_IntP3 = Dict @((P 1 % 3) ~ ((P 1) / (P 3)))
+_testSlash_IntP1_IntP4 = Dict @((P 1 % 4) ~ ((P 1) / (P 4)))
+_testSlash_IntP1_Rat4N1 = Dict @((N 1 % 4) ~ ((P 1) / (N 4 % 1)))
+_testSlash_IntP1_Rat3N1 = Dict @((N 1 % 3) ~ ((P 1) / (N 3 % 1)))
+_testSlash_IntP1_Rat2N1 = Dict @((N 1 % 2) ~ ((P 1) / (N 2 % 1)))
+_testSlash_IntP1_Rat3N2 = Dict @((N 2 % 3) ~ ((P 1) / (N 3 % 2)))
+_testSlash_IntP1_Rat4N3 = Dict @((N 3 % 4) ~ ((P 1) / (N 4 % 3)))
+_testSlash_IntP1_Rat1N1 = Dict @((N 1 % 1) ~ ((P 1) / (N 1 % 1)))
+_testSlash_IntP1_Rat3N4 = Dict @((N 4 % 3) ~ ((P 1) / (N 3 % 4)))
+_testSlash_IntP1_Rat2N3 = Dict @((N 3 % 2) ~ ((P 1) / (N 2 % 3)))
+_testSlash_IntP1_Rat1N2 = Dict @((N 2 % 1) ~ ((P 1) / (N 1 % 2)))
+_testSlash_IntP1_Rat1N3 = Dict @((N 3 % 1) ~ ((P 1) / (N 1 % 3)))
+_testSlash_IntP1_Rat1N4 = Dict @((N 4 % 1) ~ ((P 1) / (N 1 % 4)))
+_testSlash_IntP1_Rat1P4 = Dict @((P 4 % 1) ~ ((P 1) / (P 1 % 4)))
+_testSlash_IntP1_Rat1P3 = Dict @((P 3 % 1) ~ ((P 1) / (P 1 % 3)))
+_testSlash_IntP1_Rat1P2 = Dict @((P 2 % 1) ~ ((P 1) / (P 1 % 2)))
+_testSlash_IntP1_Rat2P3 = Dict @((P 3 % 2) ~ ((P 1) / (P 2 % 3)))
+_testSlash_IntP1_Rat3P4 = Dict @((P 4 % 3) ~ ((P 1) / (P 3 % 4)))
+_testSlash_IntP1_Rat1P1 = Dict @((P 1 % 1) ~ ((P 1) / (P 1 % 1)))
+_testSlash_IntP1_Rat4P3 = Dict @((P 3 % 4) ~ ((P 1) / (P 4 % 3)))
+_testSlash_IntP1_Rat3P2 = Dict @((P 2 % 3) ~ ((P 1) / (P 3 % 2)))
+_testSlash_IntP1_Rat2P1 = Dict @((P 1 % 2) ~ ((P 1) / (P 2 % 1)))
+_testSlash_IntP1_Rat3P1 = Dict @((P 1 % 3) ~ ((P 1) / (P 3 % 1)))
+_testSlash_IntP1_Rat4P1 = Dict @((P 1 % 4) ~ ((P 1) / (P 4 % 1)))
+_testSlash_IntP2_Nat1 = Dict @((P 2 % 1) ~ ((P 2) / 1))
+_testSlash_IntP2_Nat2 = Dict @((P 1 % 1) ~ ((P 2) / 2))
+_testSlash_IntP2_Nat3 = Dict @((P 2 % 3) ~ ((P 2) / 3))
+_testSlash_IntP2_Nat4 = Dict @((P 1 % 2) ~ ((P 2) / 4))
+_testSlash_IntP2_IntN4 = Dict @((N 1 % 2) ~ ((P 2) / (N 4)))
+_testSlash_IntP2_IntN3 = Dict @((N 2 % 3) ~ ((P 2) / (N 3)))
+_testSlash_IntP2_IntN2 = Dict @((N 1 % 1) ~ ((P 2) / (N 2)))
+_testSlash_IntP2_IntN1 = Dict @((N 2 % 1) ~ ((P 2) / (N 1)))
+_testSlash_IntP2_IntP1 = Dict @((P 2 % 1) ~ ((P 2) / (P 1)))
+_testSlash_IntP2_IntP2 = Dict @((P 1 % 1) ~ ((P 2) / (P 2)))
+_testSlash_IntP2_IntP3 = Dict @((P 2 % 3) ~ ((P 2) / (P 3)))
+_testSlash_IntP2_IntP4 = Dict @((P 1 % 2) ~ ((P 2) / (P 4)))
+_testSlash_IntP2_Rat4N1 = Dict @((N 1 % 2) ~ ((P 2) / (N 4 % 1)))
+_testSlash_IntP2_Rat3N1 = Dict @((N 2 % 3) ~ ((P 2) / (N 3 % 1)))
+_testSlash_IntP2_Rat2N1 = Dict @((N 1 % 1) ~ ((P 2) / (N 2 % 1)))
+_testSlash_IntP2_Rat3N2 = Dict @((N 4 % 3) ~ ((P 2) / (N 3 % 2)))
+_testSlash_IntP2_Rat4N3 = Dict @((N 3 % 2) ~ ((P 2) / (N 4 % 3)))
+_testSlash_IntP2_Rat1N1 = Dict @((N 2 % 1) ~ ((P 2) / (N 1 % 1)))
+_testSlash_IntP2_Rat3N4 = Dict @((N 8 % 3) ~ ((P 2) / (N 3 % 4)))
+_testSlash_IntP2_Rat2N3 = Dict @((N 3 % 1) ~ ((P 2) / (N 2 % 3)))
+_testSlash_IntP2_Rat1N2 = Dict @((N 4 % 1) ~ ((P 2) / (N 1 % 2)))
+_testSlash_IntP2_Rat1N3 = Dict @((N 6 % 1) ~ ((P 2) / (N 1 % 3)))
+_testSlash_IntP2_Rat1N4 = Dict @((N 8 % 1) ~ ((P 2) / (N 1 % 4)))
+_testSlash_IntP2_Rat1P4 = Dict @((P 8 % 1) ~ ((P 2) / (P 1 % 4)))
+_testSlash_IntP2_Rat1P3 = Dict @((P 6 % 1) ~ ((P 2) / (P 1 % 3)))
+_testSlash_IntP2_Rat1P2 = Dict @((P 4 % 1) ~ ((P 2) / (P 1 % 2)))
+_testSlash_IntP2_Rat2P3 = Dict @((P 3 % 1) ~ ((P 2) / (P 2 % 3)))
+_testSlash_IntP2_Rat3P4 = Dict @((P 8 % 3) ~ ((P 2) / (P 3 % 4)))
+_testSlash_IntP2_Rat1P1 = Dict @((P 2 % 1) ~ ((P 2) / (P 1 % 1)))
+_testSlash_IntP2_Rat4P3 = Dict @((P 3 % 2) ~ ((P 2) / (P 4 % 3)))
+_testSlash_IntP2_Rat3P2 = Dict @((P 4 % 3) ~ ((P 2) / (P 3 % 2)))
+_testSlash_IntP2_Rat2P1 = Dict @((P 1 % 1) ~ ((P 2) / (P 2 % 1)))
+_testSlash_IntP2_Rat3P1 = Dict @((P 2 % 3) ~ ((P 2) / (P 3 % 1)))
+_testSlash_IntP2_Rat4P1 = Dict @((P 1 % 2) ~ ((P 2) / (P 4 % 1)))
+_testSlash_IntP3_Nat1 = Dict @((P 3 % 1) ~ ((P 3) / 1))
+_testSlash_IntP3_Nat2 = Dict @((P 3 % 2) ~ ((P 3) / 2))
+_testSlash_IntP3_Nat3 = Dict @((P 1 % 1) ~ ((P 3) / 3))
+_testSlash_IntP3_Nat4 = Dict @((P 3 % 4) ~ ((P 3) / 4))
+_testSlash_IntP3_IntN4 = Dict @((N 3 % 4) ~ ((P 3) / (N 4)))
+_testSlash_IntP3_IntN3 = Dict @((N 1 % 1) ~ ((P 3) / (N 3)))
+_testSlash_IntP3_IntN2 = Dict @((N 3 % 2) ~ ((P 3) / (N 2)))
+_testSlash_IntP3_IntN1 = Dict @((N 3 % 1) ~ ((P 3) / (N 1)))
+_testSlash_IntP3_IntP1 = Dict @((P 3 % 1) ~ ((P 3) / (P 1)))
+_testSlash_IntP3_IntP2 = Dict @((P 3 % 2) ~ ((P 3) / (P 2)))
+_testSlash_IntP3_IntP3 = Dict @((P 1 % 1) ~ ((P 3) / (P 3)))
+_testSlash_IntP3_IntP4 = Dict @((P 3 % 4) ~ ((P 3) / (P 4)))
+_testSlash_IntP3_Rat4N1 = Dict @((N 3 % 4) ~ ((P 3) / (N 4 % 1)))
+_testSlash_IntP3_Rat3N1 = Dict @((N 1 % 1) ~ ((P 3) / (N 3 % 1)))
+_testSlash_IntP3_Rat2N1 = Dict @((N 3 % 2) ~ ((P 3) / (N 2 % 1)))
+_testSlash_IntP3_Rat3N2 = Dict @((N 2 % 1) ~ ((P 3) / (N 3 % 2)))
+_testSlash_IntP3_Rat4N3 = Dict @((N 9 % 4) ~ ((P 3) / (N 4 % 3)))
+_testSlash_IntP3_Rat1N1 = Dict @((N 3 % 1) ~ ((P 3) / (N 1 % 1)))
+_testSlash_IntP3_Rat3N4 = Dict @((N 4 % 1) ~ ((P 3) / (N 3 % 4)))
+_testSlash_IntP3_Rat2N3 = Dict @((N 9 % 2) ~ ((P 3) / (N 2 % 3)))
+_testSlash_IntP3_Rat1N2 = Dict @((N 6 % 1) ~ ((P 3) / (N 1 % 2)))
+_testSlash_IntP3_Rat1N3 = Dict @((N 9 % 1) ~ ((P 3) / (N 1 % 3)))
+_testSlash_IntP3_Rat1N4 = Dict @((N 12 % 1) ~ ((P 3) / (N 1 % 4)))
+_testSlash_IntP3_Rat1P4 = Dict @((P 12 % 1) ~ ((P 3) / (P 1 % 4)))
+_testSlash_IntP3_Rat1P3 = Dict @((P 9 % 1) ~ ((P 3) / (P 1 % 3)))
+_testSlash_IntP3_Rat1P2 = Dict @((P 6 % 1) ~ ((P 3) / (P 1 % 2)))
+_testSlash_IntP3_Rat2P3 = Dict @((P 9 % 2) ~ ((P 3) / (P 2 % 3)))
+_testSlash_IntP3_Rat3P4 = Dict @((P 4 % 1) ~ ((P 3) / (P 3 % 4)))
+_testSlash_IntP3_Rat1P1 = Dict @((P 3 % 1) ~ ((P 3) / (P 1 % 1)))
+_testSlash_IntP3_Rat4P3 = Dict @((P 9 % 4) ~ ((P 3) / (P 4 % 3)))
+_testSlash_IntP3_Rat3P2 = Dict @((P 2 % 1) ~ ((P 3) / (P 3 % 2)))
+_testSlash_IntP3_Rat2P1 = Dict @((P 3 % 2) ~ ((P 3) / (P 2 % 1)))
+_testSlash_IntP3_Rat3P1 = Dict @((P 1 % 1) ~ ((P 3) / (P 3 % 1)))
+_testSlash_IntP3_Rat4P1 = Dict @((P 3 % 4) ~ ((P 3) / (P 4 % 1)))
+_testSlash_IntP4_Nat1 = Dict @((P 4 % 1) ~ ((P 4) / 1))
+_testSlash_IntP4_Nat2 = Dict @((P 2 % 1) ~ ((P 4) / 2))
+_testSlash_IntP4_Nat3 = Dict @((P 4 % 3) ~ ((P 4) / 3))
+_testSlash_IntP4_Nat4 = Dict @((P 1 % 1) ~ ((P 4) / 4))
+_testSlash_IntP4_IntN4 = Dict @((N 1 % 1) ~ ((P 4) / (N 4)))
+_testSlash_IntP4_IntN3 = Dict @((N 4 % 3) ~ ((P 4) / (N 3)))
+_testSlash_IntP4_IntN2 = Dict @((N 2 % 1) ~ ((P 4) / (N 2)))
+_testSlash_IntP4_IntN1 = Dict @((N 4 % 1) ~ ((P 4) / (N 1)))
+_testSlash_IntP4_IntP1 = Dict @((P 4 % 1) ~ ((P 4) / (P 1)))
+_testSlash_IntP4_IntP2 = Dict @((P 2 % 1) ~ ((P 4) / (P 2)))
+_testSlash_IntP4_IntP3 = Dict @((P 4 % 3) ~ ((P 4) / (P 3)))
+_testSlash_IntP4_IntP4 = Dict @((P 1 % 1) ~ ((P 4) / (P 4)))
+_testSlash_IntP4_Rat4N1 = Dict @((N 1 % 1) ~ ((P 4) / (N 4 % 1)))
+_testSlash_IntP4_Rat3N1 = Dict @((N 4 % 3) ~ ((P 4) / (N 3 % 1)))
+_testSlash_IntP4_Rat2N1 = Dict @((N 2 % 1) ~ ((P 4) / (N 2 % 1)))
+_testSlash_IntP4_Rat3N2 = Dict @((N 8 % 3) ~ ((P 4) / (N 3 % 2)))
+_testSlash_IntP4_Rat4N3 = Dict @((N 3 % 1) ~ ((P 4) / (N 4 % 3)))
+_testSlash_IntP4_Rat1N1 = Dict @((N 4 % 1) ~ ((P 4) / (N 1 % 1)))
+_testSlash_IntP4_Rat3N4 = Dict @((N 16 % 3) ~ ((P 4) / (N 3 % 4)))
+_testSlash_IntP4_Rat2N3 = Dict @((N 6 % 1) ~ ((P 4) / (N 2 % 3)))
+_testSlash_IntP4_Rat1N2 = Dict @((N 8 % 1) ~ ((P 4) / (N 1 % 2)))
+_testSlash_IntP4_Rat1N3 = Dict @((N 12 % 1) ~ ((P 4) / (N 1 % 3)))
+_testSlash_IntP4_Rat1N4 = Dict @((N 16 % 1) ~ ((P 4) / (N 1 % 4)))
+_testSlash_IntP4_Rat1P4 = Dict @((P 16 % 1) ~ ((P 4) / (P 1 % 4)))
+_testSlash_IntP4_Rat1P3 = Dict @((P 12 % 1) ~ ((P 4) / (P 1 % 3)))
+_testSlash_IntP4_Rat1P2 = Dict @((P 8 % 1) ~ ((P 4) / (P 1 % 2)))
+_testSlash_IntP4_Rat2P3 = Dict @((P 6 % 1) ~ ((P 4) / (P 2 % 3)))
+_testSlash_IntP4_Rat3P4 = Dict @((P 16 % 3) ~ ((P 4) / (P 3 % 4)))
+_testSlash_IntP4_Rat1P1 = Dict @((P 4 % 1) ~ ((P 4) / (P 1 % 1)))
+_testSlash_IntP4_Rat4P3 = Dict @((P 3 % 1) ~ ((P 4) / (P 4 % 3)))
+_testSlash_IntP4_Rat3P2 = Dict @((P 8 % 3) ~ ((P 4) / (P 3 % 2)))
+_testSlash_IntP4_Rat2P1 = Dict @((P 2 % 1) ~ ((P 4) / (P 2 % 1)))
+_testSlash_IntP4_Rat3P1 = Dict @((P 4 % 3) ~ ((P 4) / (P 3 % 1)))
+_testSlash_IntP4_Rat4P1 = Dict @((P 1 % 1) ~ ((P 4) / (P 4 % 1)))
+_testSlash_Rat4N1_Nat1 = Dict @((N 4 % 1) ~ ((N 4 % 1) / 1))
+_testSlash_Rat4N1_Nat2 = Dict @((N 2 % 1) ~ ((N 4 % 1) / 2))
+_testSlash_Rat4N1_Nat3 = Dict @((N 4 % 3) ~ ((N 4 % 1) / 3))
+_testSlash_Rat4N1_Nat4 = Dict @((N 1 % 1) ~ ((N 4 % 1) / 4))
+_testSlash_Rat4N1_IntN4 = Dict @((P 1 % 1) ~ ((N 4 % 1) / (N 4)))
+_testSlash_Rat4N1_IntN3 = Dict @((P 4 % 3) ~ ((N 4 % 1) / (N 3)))
+_testSlash_Rat4N1_IntN2 = Dict @((P 2 % 1) ~ ((N 4 % 1) / (N 2)))
+_testSlash_Rat4N1_IntN1 = Dict @((P 4 % 1) ~ ((N 4 % 1) / (N 1)))
+_testSlash_Rat4N1_IntP1 = Dict @((N 4 % 1) ~ ((N 4 % 1) / (P 1)))
+_testSlash_Rat4N1_IntP2 = Dict @((N 2 % 1) ~ ((N 4 % 1) / (P 2)))
+_testSlash_Rat4N1_IntP3 = Dict @((N 4 % 3) ~ ((N 4 % 1) / (P 3)))
+_testSlash_Rat4N1_IntP4 = Dict @((N 1 % 1) ~ ((N 4 % 1) / (P 4)))
+_testSlash_Rat4N1_Rat4N1 = Dict @((P 1 % 1) ~ ((N 4 % 1) / (N 4 % 1)))
+_testSlash_Rat4N1_Rat3N1 = Dict @((P 4 % 3) ~ ((N 4 % 1) / (N 3 % 1)))
+_testSlash_Rat4N1_Rat2N1 = Dict @((P 2 % 1) ~ ((N 4 % 1) / (N 2 % 1)))
+_testSlash_Rat4N1_Rat3N2 = Dict @((P 8 % 3) ~ ((N 4 % 1) / (N 3 % 2)))
+_testSlash_Rat4N1_Rat4N3 = Dict @((P 3 % 1) ~ ((N 4 % 1) / (N 4 % 3)))
+_testSlash_Rat4N1_Rat1N1 = Dict @((P 4 % 1) ~ ((N 4 % 1) / (N 1 % 1)))
+_testSlash_Rat4N1_Rat3N4 = Dict @((P 16 % 3) ~ ((N 4 % 1) / (N 3 % 4)))
+_testSlash_Rat4N1_Rat2N3 = Dict @((P 6 % 1) ~ ((N 4 % 1) / (N 2 % 3)))
+_testSlash_Rat4N1_Rat1N2 = Dict @((P 8 % 1) ~ ((N 4 % 1) / (N 1 % 2)))
+_testSlash_Rat4N1_Rat1N3 = Dict @((P 12 % 1) ~ ((N 4 % 1) / (N 1 % 3)))
+_testSlash_Rat4N1_Rat1N4 = Dict @((P 16 % 1) ~ ((N 4 % 1) / (N 1 % 4)))
+_testSlash_Rat4N1_Rat1P4 = Dict @((N 16 % 1) ~ ((N 4 % 1) / (P 1 % 4)))
+_testSlash_Rat4N1_Rat1P3 = Dict @((N 12 % 1) ~ ((N 4 % 1) / (P 1 % 3)))
+_testSlash_Rat4N1_Rat1P2 = Dict @((N 8 % 1) ~ ((N 4 % 1) / (P 1 % 2)))
+_testSlash_Rat4N1_Rat2P3 = Dict @((N 6 % 1) ~ ((N 4 % 1) / (P 2 % 3)))
+_testSlash_Rat4N1_Rat3P4 = Dict @((N 16 % 3) ~ ((N 4 % 1) / (P 3 % 4)))
+_testSlash_Rat4N1_Rat1P1 = Dict @((N 4 % 1) ~ ((N 4 % 1) / (P 1 % 1)))
+_testSlash_Rat4N1_Rat4P3 = Dict @((N 3 % 1) ~ ((N 4 % 1) / (P 4 % 3)))
+_testSlash_Rat4N1_Rat3P2 = Dict @((N 8 % 3) ~ ((N 4 % 1) / (P 3 % 2)))
+_testSlash_Rat4N1_Rat2P1 = Dict @((N 2 % 1) ~ ((N 4 % 1) / (P 2 % 1)))
+_testSlash_Rat4N1_Rat3P1 = Dict @((N 4 % 3) ~ ((N 4 % 1) / (P 3 % 1)))
+_testSlash_Rat4N1_Rat4P1 = Dict @((N 1 % 1) ~ ((N 4 % 1) / (P 4 % 1)))
+_testSlash_Rat3N1_Nat1 = Dict @((N 3 % 1) ~ ((N 3 % 1) / 1))
+_testSlash_Rat3N1_Nat2 = Dict @((N 3 % 2) ~ ((N 3 % 1) / 2))
+_testSlash_Rat3N1_Nat3 = Dict @((N 1 % 1) ~ ((N 3 % 1) / 3))
+_testSlash_Rat3N1_Nat4 = Dict @((N 3 % 4) ~ ((N 3 % 1) / 4))
+_testSlash_Rat3N1_IntN4 = Dict @((P 3 % 4) ~ ((N 3 % 1) / (N 4)))
+_testSlash_Rat3N1_IntN3 = Dict @((P 1 % 1) ~ ((N 3 % 1) / (N 3)))
+_testSlash_Rat3N1_IntN2 = Dict @((P 3 % 2) ~ ((N 3 % 1) / (N 2)))
+_testSlash_Rat3N1_IntN1 = Dict @((P 3 % 1) ~ ((N 3 % 1) / (N 1)))
+_testSlash_Rat3N1_IntP1 = Dict @((N 3 % 1) ~ ((N 3 % 1) / (P 1)))
+_testSlash_Rat3N1_IntP2 = Dict @((N 3 % 2) ~ ((N 3 % 1) / (P 2)))
+_testSlash_Rat3N1_IntP3 = Dict @((N 1 % 1) ~ ((N 3 % 1) / (P 3)))
+_testSlash_Rat3N1_IntP4 = Dict @((N 3 % 4) ~ ((N 3 % 1) / (P 4)))
+_testSlash_Rat3N1_Rat4N1 = Dict @((P 3 % 4) ~ ((N 3 % 1) / (N 4 % 1)))
+_testSlash_Rat3N1_Rat3N1 = Dict @((P 1 % 1) ~ ((N 3 % 1) / (N 3 % 1)))
+_testSlash_Rat3N1_Rat2N1 = Dict @((P 3 % 2) ~ ((N 3 % 1) / (N 2 % 1)))
+_testSlash_Rat3N1_Rat3N2 = Dict @((P 2 % 1) ~ ((N 3 % 1) / (N 3 % 2)))
+_testSlash_Rat3N1_Rat4N3 = Dict @((P 9 % 4) ~ ((N 3 % 1) / (N 4 % 3)))
+_testSlash_Rat3N1_Rat1N1 = Dict @((P 3 % 1) ~ ((N 3 % 1) / (N 1 % 1)))
+_testSlash_Rat3N1_Rat3N4 = Dict @((P 4 % 1) ~ ((N 3 % 1) / (N 3 % 4)))
+_testSlash_Rat3N1_Rat2N3 = Dict @((P 9 % 2) ~ ((N 3 % 1) / (N 2 % 3)))
+_testSlash_Rat3N1_Rat1N2 = Dict @((P 6 % 1) ~ ((N 3 % 1) / (N 1 % 2)))
+_testSlash_Rat3N1_Rat1N3 = Dict @((P 9 % 1) ~ ((N 3 % 1) / (N 1 % 3)))
+_testSlash_Rat3N1_Rat1N4 = Dict @((P 12 % 1) ~ ((N 3 % 1) / (N 1 % 4)))
+_testSlash_Rat3N1_Rat1P4 = Dict @((N 12 % 1) ~ ((N 3 % 1) / (P 1 % 4)))
+_testSlash_Rat3N1_Rat1P3 = Dict @((N 9 % 1) ~ ((N 3 % 1) / (P 1 % 3)))
+_testSlash_Rat3N1_Rat1P2 = Dict @((N 6 % 1) ~ ((N 3 % 1) / (P 1 % 2)))
+_testSlash_Rat3N1_Rat2P3 = Dict @((N 9 % 2) ~ ((N 3 % 1) / (P 2 % 3)))
+_testSlash_Rat3N1_Rat3P4 = Dict @((N 4 % 1) ~ ((N 3 % 1) / (P 3 % 4)))
+_testSlash_Rat3N1_Rat1P1 = Dict @((N 3 % 1) ~ ((N 3 % 1) / (P 1 % 1)))
+_testSlash_Rat3N1_Rat4P3 = Dict @((N 9 % 4) ~ ((N 3 % 1) / (P 4 % 3)))
+_testSlash_Rat3N1_Rat3P2 = Dict @((N 2 % 1) ~ ((N 3 % 1) / (P 3 % 2)))
+_testSlash_Rat3N1_Rat2P1 = Dict @((N 3 % 2) ~ ((N 3 % 1) / (P 2 % 1)))
+_testSlash_Rat3N1_Rat3P1 = Dict @((N 1 % 1) ~ ((N 3 % 1) / (P 3 % 1)))
+_testSlash_Rat3N1_Rat4P1 = Dict @((N 3 % 4) ~ ((N 3 % 1) / (P 4 % 1)))
+_testSlash_Rat2N1_Nat1 = Dict @((N 2 % 1) ~ ((N 2 % 1) / 1))
+_testSlash_Rat2N1_Nat2 = Dict @((N 1 % 1) ~ ((N 2 % 1) / 2))
+_testSlash_Rat2N1_Nat3 = Dict @((N 2 % 3) ~ ((N 2 % 1) / 3))
+_testSlash_Rat2N1_Nat4 = Dict @((N 1 % 2) ~ ((N 2 % 1) / 4))
+_testSlash_Rat2N1_IntN4 = Dict @((P 1 % 2) ~ ((N 2 % 1) / (N 4)))
+_testSlash_Rat2N1_IntN3 = Dict @((P 2 % 3) ~ ((N 2 % 1) / (N 3)))
+_testSlash_Rat2N1_IntN2 = Dict @((P 1 % 1) ~ ((N 2 % 1) / (N 2)))
+_testSlash_Rat2N1_IntN1 = Dict @((P 2 % 1) ~ ((N 2 % 1) / (N 1)))
+_testSlash_Rat2N1_IntP1 = Dict @((N 2 % 1) ~ ((N 2 % 1) / (P 1)))
+_testSlash_Rat2N1_IntP2 = Dict @((N 1 % 1) ~ ((N 2 % 1) / (P 2)))
+_testSlash_Rat2N1_IntP3 = Dict @((N 2 % 3) ~ ((N 2 % 1) / (P 3)))
+_testSlash_Rat2N1_IntP4 = Dict @((N 1 % 2) ~ ((N 2 % 1) / (P 4)))
+_testSlash_Rat2N1_Rat4N1 = Dict @((P 1 % 2) ~ ((N 2 % 1) / (N 4 % 1)))
+_testSlash_Rat2N1_Rat3N1 = Dict @((P 2 % 3) ~ ((N 2 % 1) / (N 3 % 1)))
+_testSlash_Rat2N1_Rat2N1 = Dict @((P 1 % 1) ~ ((N 2 % 1) / (N 2 % 1)))
+_testSlash_Rat2N1_Rat3N2 = Dict @((P 4 % 3) ~ ((N 2 % 1) / (N 3 % 2)))
+_testSlash_Rat2N1_Rat4N3 = Dict @((P 3 % 2) ~ ((N 2 % 1) / (N 4 % 3)))
+_testSlash_Rat2N1_Rat1N1 = Dict @((P 2 % 1) ~ ((N 2 % 1) / (N 1 % 1)))
+_testSlash_Rat2N1_Rat3N4 = Dict @((P 8 % 3) ~ ((N 2 % 1) / (N 3 % 4)))
+_testSlash_Rat2N1_Rat2N3 = Dict @((P 3 % 1) ~ ((N 2 % 1) / (N 2 % 3)))
+_testSlash_Rat2N1_Rat1N2 = Dict @((P 4 % 1) ~ ((N 2 % 1) / (N 1 % 2)))
+_testSlash_Rat2N1_Rat1N3 = Dict @((P 6 % 1) ~ ((N 2 % 1) / (N 1 % 3)))
+_testSlash_Rat2N1_Rat1N4 = Dict @((P 8 % 1) ~ ((N 2 % 1) / (N 1 % 4)))
+_testSlash_Rat2N1_Rat1P4 = Dict @((N 8 % 1) ~ ((N 2 % 1) / (P 1 % 4)))
+_testSlash_Rat2N1_Rat1P3 = Dict @((N 6 % 1) ~ ((N 2 % 1) / (P 1 % 3)))
+_testSlash_Rat2N1_Rat1P2 = Dict @((N 4 % 1) ~ ((N 2 % 1) / (P 1 % 2)))
+_testSlash_Rat2N1_Rat2P3 = Dict @((N 3 % 1) ~ ((N 2 % 1) / (P 2 % 3)))
+_testSlash_Rat2N1_Rat3P4 = Dict @((N 8 % 3) ~ ((N 2 % 1) / (P 3 % 4)))
+_testSlash_Rat2N1_Rat1P1 = Dict @((N 2 % 1) ~ ((N 2 % 1) / (P 1 % 1)))
+_testSlash_Rat2N1_Rat4P3 = Dict @((N 3 % 2) ~ ((N 2 % 1) / (P 4 % 3)))
+_testSlash_Rat2N1_Rat3P2 = Dict @((N 4 % 3) ~ ((N 2 % 1) / (P 3 % 2)))
+_testSlash_Rat2N1_Rat2P1 = Dict @((N 1 % 1) ~ ((N 2 % 1) / (P 2 % 1)))
+_testSlash_Rat2N1_Rat3P1 = Dict @((N 2 % 3) ~ ((N 2 % 1) / (P 3 % 1)))
+_testSlash_Rat2N1_Rat4P1 = Dict @((N 1 % 2) ~ ((N 2 % 1) / (P 4 % 1)))
+_testSlash_Rat3N2_Nat1 = Dict @((N 3 % 2) ~ ((N 3 % 2) / 1))
+_testSlash_Rat3N2_Nat2 = Dict @((N 3 % 4) ~ ((N 3 % 2) / 2))
+_testSlash_Rat3N2_Nat3 = Dict @((N 1 % 2) ~ ((N 3 % 2) / 3))
+_testSlash_Rat3N2_Nat4 = Dict @((N 3 % 8) ~ ((N 3 % 2) / 4))
+_testSlash_Rat3N2_IntN4 = Dict @((P 3 % 8) ~ ((N 3 % 2) / (N 4)))
+_testSlash_Rat3N2_IntN3 = Dict @((P 1 % 2) ~ ((N 3 % 2) / (N 3)))
+_testSlash_Rat3N2_IntN2 = Dict @((P 3 % 4) ~ ((N 3 % 2) / (N 2)))
+_testSlash_Rat3N2_IntN1 = Dict @((P 3 % 2) ~ ((N 3 % 2) / (N 1)))
+_testSlash_Rat3N2_IntP1 = Dict @((N 3 % 2) ~ ((N 3 % 2) / (P 1)))
+_testSlash_Rat3N2_IntP2 = Dict @((N 3 % 4) ~ ((N 3 % 2) / (P 2)))
+_testSlash_Rat3N2_IntP3 = Dict @((N 1 % 2) ~ ((N 3 % 2) / (P 3)))
+_testSlash_Rat3N2_IntP4 = Dict @((N 3 % 8) ~ ((N 3 % 2) / (P 4)))
+_testSlash_Rat3N2_Rat4N1 = Dict @((P 3 % 8) ~ ((N 3 % 2) / (N 4 % 1)))
+_testSlash_Rat3N2_Rat3N1 = Dict @((P 1 % 2) ~ ((N 3 % 2) / (N 3 % 1)))
+_testSlash_Rat3N2_Rat2N1 = Dict @((P 3 % 4) ~ ((N 3 % 2) / (N 2 % 1)))
+_testSlash_Rat3N2_Rat3N2 = Dict @((P 1 % 1) ~ ((N 3 % 2) / (N 3 % 2)))
+_testSlash_Rat3N2_Rat4N3 = Dict @((P 9 % 8) ~ ((N 3 % 2) / (N 4 % 3)))
+_testSlash_Rat3N2_Rat1N1 = Dict @((P 3 % 2) ~ ((N 3 % 2) / (N 1 % 1)))
+_testSlash_Rat3N2_Rat3N4 = Dict @((P 2 % 1) ~ ((N 3 % 2) / (N 3 % 4)))
+_testSlash_Rat3N2_Rat2N3 = Dict @((P 9 % 4) ~ ((N 3 % 2) / (N 2 % 3)))
+_testSlash_Rat3N2_Rat1N2 = Dict @((P 3 % 1) ~ ((N 3 % 2) / (N 1 % 2)))
+_testSlash_Rat3N2_Rat1N3 = Dict @((P 9 % 2) ~ ((N 3 % 2) / (N 1 % 3)))
+_testSlash_Rat3N2_Rat1N4 = Dict @((P 6 % 1) ~ ((N 3 % 2) / (N 1 % 4)))
+_testSlash_Rat3N2_Rat1P4 = Dict @((N 6 % 1) ~ ((N 3 % 2) / (P 1 % 4)))
+_testSlash_Rat3N2_Rat1P3 = Dict @((N 9 % 2) ~ ((N 3 % 2) / (P 1 % 3)))
+_testSlash_Rat3N2_Rat1P2 = Dict @((N 3 % 1) ~ ((N 3 % 2) / (P 1 % 2)))
+_testSlash_Rat3N2_Rat2P3 = Dict @((N 9 % 4) ~ ((N 3 % 2) / (P 2 % 3)))
+_testSlash_Rat3N2_Rat3P4 = Dict @((N 2 % 1) ~ ((N 3 % 2) / (P 3 % 4)))
+_testSlash_Rat3N2_Rat1P1 = Dict @((N 3 % 2) ~ ((N 3 % 2) / (P 1 % 1)))
+_testSlash_Rat3N2_Rat4P3 = Dict @((N 9 % 8) ~ ((N 3 % 2) / (P 4 % 3)))
+_testSlash_Rat3N2_Rat3P2 = Dict @((N 1 % 1) ~ ((N 3 % 2) / (P 3 % 2)))
+_testSlash_Rat3N2_Rat2P1 = Dict @((N 3 % 4) ~ ((N 3 % 2) / (P 2 % 1)))
+_testSlash_Rat3N2_Rat3P1 = Dict @((N 1 % 2) ~ ((N 3 % 2) / (P 3 % 1)))
+_testSlash_Rat3N2_Rat4P1 = Dict @((N 3 % 8) ~ ((N 3 % 2) / (P 4 % 1)))
+_testSlash_Rat4N3_Nat1 = Dict @((N 4 % 3) ~ ((N 4 % 3) / 1))
+_testSlash_Rat4N3_Nat2 = Dict @((N 2 % 3) ~ ((N 4 % 3) / 2))
+_testSlash_Rat4N3_Nat3 = Dict @((N 4 % 9) ~ ((N 4 % 3) / 3))
+_testSlash_Rat4N3_Nat4 = Dict @((N 1 % 3) ~ ((N 4 % 3) / 4))
+_testSlash_Rat4N3_IntN4 = Dict @((P 1 % 3) ~ ((N 4 % 3) / (N 4)))
+_testSlash_Rat4N3_IntN3 = Dict @((P 4 % 9) ~ ((N 4 % 3) / (N 3)))
+_testSlash_Rat4N3_IntN2 = Dict @((P 2 % 3) ~ ((N 4 % 3) / (N 2)))
+_testSlash_Rat4N3_IntN1 = Dict @((P 4 % 3) ~ ((N 4 % 3) / (N 1)))
+_testSlash_Rat4N3_IntP1 = Dict @((N 4 % 3) ~ ((N 4 % 3) / (P 1)))
+_testSlash_Rat4N3_IntP2 = Dict @((N 2 % 3) ~ ((N 4 % 3) / (P 2)))
+_testSlash_Rat4N3_IntP3 = Dict @((N 4 % 9) ~ ((N 4 % 3) / (P 3)))
+_testSlash_Rat4N3_IntP4 = Dict @((N 1 % 3) ~ ((N 4 % 3) / (P 4)))
+_testSlash_Rat4N3_Rat4N1 = Dict @((P 1 % 3) ~ ((N 4 % 3) / (N 4 % 1)))
+_testSlash_Rat4N3_Rat3N1 = Dict @((P 4 % 9) ~ ((N 4 % 3) / (N 3 % 1)))
+_testSlash_Rat4N3_Rat2N1 = Dict @((P 2 % 3) ~ ((N 4 % 3) / (N 2 % 1)))
+_testSlash_Rat4N3_Rat3N2 = Dict @((P 8 % 9) ~ ((N 4 % 3) / (N 3 % 2)))
+_testSlash_Rat4N3_Rat4N3 = Dict @((P 1 % 1) ~ ((N 4 % 3) / (N 4 % 3)))
+_testSlash_Rat4N3_Rat1N1 = Dict @((P 4 % 3) ~ ((N 4 % 3) / (N 1 % 1)))
+_testSlash_Rat4N3_Rat3N4 = Dict @((P 16 % 9) ~ ((N 4 % 3) / (N 3 % 4)))
+_testSlash_Rat4N3_Rat2N3 = Dict @((P 2 % 1) ~ ((N 4 % 3) / (N 2 % 3)))
+_testSlash_Rat4N3_Rat1N2 = Dict @((P 8 % 3) ~ ((N 4 % 3) / (N 1 % 2)))
+_testSlash_Rat4N3_Rat1N3 = Dict @((P 4 % 1) ~ ((N 4 % 3) / (N 1 % 3)))
+_testSlash_Rat4N3_Rat1N4 = Dict @((P 16 % 3) ~ ((N 4 % 3) / (N 1 % 4)))
+_testSlash_Rat4N3_Rat1P4 = Dict @((N 16 % 3) ~ ((N 4 % 3) / (P 1 % 4)))
+_testSlash_Rat4N3_Rat1P3 = Dict @((N 4 % 1) ~ ((N 4 % 3) / (P 1 % 3)))
+_testSlash_Rat4N3_Rat1P2 = Dict @((N 8 % 3) ~ ((N 4 % 3) / (P 1 % 2)))
+_testSlash_Rat4N3_Rat2P3 = Dict @((N 2 % 1) ~ ((N 4 % 3) / (P 2 % 3)))
+_testSlash_Rat4N3_Rat3P4 = Dict @((N 16 % 9) ~ ((N 4 % 3) / (P 3 % 4)))
+_testSlash_Rat4N3_Rat1P1 = Dict @((N 4 % 3) ~ ((N 4 % 3) / (P 1 % 1)))
+_testSlash_Rat4N3_Rat4P3 = Dict @((N 1 % 1) ~ ((N 4 % 3) / (P 4 % 3)))
+_testSlash_Rat4N3_Rat3P2 = Dict @((N 8 % 9) ~ ((N 4 % 3) / (P 3 % 2)))
+_testSlash_Rat4N3_Rat2P1 = Dict @((N 2 % 3) ~ ((N 4 % 3) / (P 2 % 1)))
+_testSlash_Rat4N3_Rat3P1 = Dict @((N 4 % 9) ~ ((N 4 % 3) / (P 3 % 1)))
+_testSlash_Rat4N3_Rat4P1 = Dict @((N 1 % 3) ~ ((N 4 % 3) / (P 4 % 1)))
+_testSlash_Rat1N1_Nat1 = Dict @((N 1 % 1) ~ ((N 1 % 1) / 1))
+_testSlash_Rat1N1_Nat2 = Dict @((N 1 % 2) ~ ((N 1 % 1) / 2))
+_testSlash_Rat1N1_Nat3 = Dict @((N 1 % 3) ~ ((N 1 % 1) / 3))
+_testSlash_Rat1N1_Nat4 = Dict @((N 1 % 4) ~ ((N 1 % 1) / 4))
+_testSlash_Rat1N1_IntN4 = Dict @((P 1 % 4) ~ ((N 1 % 1) / (N 4)))
+_testSlash_Rat1N1_IntN3 = Dict @((P 1 % 3) ~ ((N 1 % 1) / (N 3)))
+_testSlash_Rat1N1_IntN2 = Dict @((P 1 % 2) ~ ((N 1 % 1) / (N 2)))
+_testSlash_Rat1N1_IntN1 = Dict @((P 1 % 1) ~ ((N 1 % 1) / (N 1)))
+_testSlash_Rat1N1_IntP1 = Dict @((N 1 % 1) ~ ((N 1 % 1) / (P 1)))
+_testSlash_Rat1N1_IntP2 = Dict @((N 1 % 2) ~ ((N 1 % 1) / (P 2)))
+_testSlash_Rat1N1_IntP3 = Dict @((N 1 % 3) ~ ((N 1 % 1) / (P 3)))
+_testSlash_Rat1N1_IntP4 = Dict @((N 1 % 4) ~ ((N 1 % 1) / (P 4)))
+_testSlash_Rat1N1_Rat4N1 = Dict @((P 1 % 4) ~ ((N 1 % 1) / (N 4 % 1)))
+_testSlash_Rat1N1_Rat3N1 = Dict @((P 1 % 3) ~ ((N 1 % 1) / (N 3 % 1)))
+_testSlash_Rat1N1_Rat2N1 = Dict @((P 1 % 2) ~ ((N 1 % 1) / (N 2 % 1)))
+_testSlash_Rat1N1_Rat3N2 = Dict @((P 2 % 3) ~ ((N 1 % 1) / (N 3 % 2)))
+_testSlash_Rat1N1_Rat4N3 = Dict @((P 3 % 4) ~ ((N 1 % 1) / (N 4 % 3)))
+_testSlash_Rat1N1_Rat1N1 = Dict @((P 1 % 1) ~ ((N 1 % 1) / (N 1 % 1)))
+_testSlash_Rat1N1_Rat3N4 = Dict @((P 4 % 3) ~ ((N 1 % 1) / (N 3 % 4)))
+_testSlash_Rat1N1_Rat2N3 = Dict @((P 3 % 2) ~ ((N 1 % 1) / (N 2 % 3)))
+_testSlash_Rat1N1_Rat1N2 = Dict @((P 2 % 1) ~ ((N 1 % 1) / (N 1 % 2)))
+_testSlash_Rat1N1_Rat1N3 = Dict @((P 3 % 1) ~ ((N 1 % 1) / (N 1 % 3)))
+_testSlash_Rat1N1_Rat1N4 = Dict @((P 4 % 1) ~ ((N 1 % 1) / (N 1 % 4)))
+_testSlash_Rat1N1_Rat1P4 = Dict @((N 4 % 1) ~ ((N 1 % 1) / (P 1 % 4)))
+_testSlash_Rat1N1_Rat1P3 = Dict @((N 3 % 1) ~ ((N 1 % 1) / (P 1 % 3)))
+_testSlash_Rat1N1_Rat1P2 = Dict @((N 2 % 1) ~ ((N 1 % 1) / (P 1 % 2)))
+_testSlash_Rat1N1_Rat2P3 = Dict @((N 3 % 2) ~ ((N 1 % 1) / (P 2 % 3)))
+_testSlash_Rat1N1_Rat3P4 = Dict @((N 4 % 3) ~ ((N 1 % 1) / (P 3 % 4)))
+_testSlash_Rat1N1_Rat1P1 = Dict @((N 1 % 1) ~ ((N 1 % 1) / (P 1 % 1)))
+_testSlash_Rat1N1_Rat4P3 = Dict @((N 3 % 4) ~ ((N 1 % 1) / (P 4 % 3)))
+_testSlash_Rat1N1_Rat3P2 = Dict @((N 2 % 3) ~ ((N 1 % 1) / (P 3 % 2)))
+_testSlash_Rat1N1_Rat2P1 = Dict @((N 1 % 2) ~ ((N 1 % 1) / (P 2 % 1)))
+_testSlash_Rat1N1_Rat3P1 = Dict @((N 1 % 3) ~ ((N 1 % 1) / (P 3 % 1)))
+_testSlash_Rat1N1_Rat4P1 = Dict @((N 1 % 4) ~ ((N 1 % 1) / (P 4 % 1)))
+_testSlash_Rat3N4_Nat1 = Dict @((N 3 % 4) ~ ((N 3 % 4) / 1))
+_testSlash_Rat3N4_Nat2 = Dict @((N 3 % 8) ~ ((N 3 % 4) / 2))
+_testSlash_Rat3N4_Nat3 = Dict @((N 1 % 4) ~ ((N 3 % 4) / 3))
+_testSlash_Rat3N4_Nat4 = Dict @((N 3 % 16) ~ ((N 3 % 4) / 4))
+_testSlash_Rat3N4_IntN4 = Dict @((P 3 % 16) ~ ((N 3 % 4) / (N 4)))
+_testSlash_Rat3N4_IntN3 = Dict @((P 1 % 4) ~ ((N 3 % 4) / (N 3)))
+_testSlash_Rat3N4_IntN2 = Dict @((P 3 % 8) ~ ((N 3 % 4) / (N 2)))
+_testSlash_Rat3N4_IntN1 = Dict @((P 3 % 4) ~ ((N 3 % 4) / (N 1)))
+_testSlash_Rat3N4_IntP1 = Dict @((N 3 % 4) ~ ((N 3 % 4) / (P 1)))
+_testSlash_Rat3N4_IntP2 = Dict @((N 3 % 8) ~ ((N 3 % 4) / (P 2)))
+_testSlash_Rat3N4_IntP3 = Dict @((N 1 % 4) ~ ((N 3 % 4) / (P 3)))
+_testSlash_Rat3N4_IntP4 = Dict @((N 3 % 16) ~ ((N 3 % 4) / (P 4)))
+_testSlash_Rat3N4_Rat4N1 = Dict @((P 3 % 16) ~ ((N 3 % 4) / (N 4 % 1)))
+_testSlash_Rat3N4_Rat3N1 = Dict @((P 1 % 4) ~ ((N 3 % 4) / (N 3 % 1)))
+_testSlash_Rat3N4_Rat2N1 = Dict @((P 3 % 8) ~ ((N 3 % 4) / (N 2 % 1)))
+_testSlash_Rat3N4_Rat3N2 = Dict @((P 1 % 2) ~ ((N 3 % 4) / (N 3 % 2)))
+_testSlash_Rat3N4_Rat4N3 = Dict @((P 9 % 16) ~ ((N 3 % 4) / (N 4 % 3)))
+_testSlash_Rat3N4_Rat1N1 = Dict @((P 3 % 4) ~ ((N 3 % 4) / (N 1 % 1)))
+_testSlash_Rat3N4_Rat3N4 = Dict @((P 1 % 1) ~ ((N 3 % 4) / (N 3 % 4)))
+_testSlash_Rat3N4_Rat2N3 = Dict @((P 9 % 8) ~ ((N 3 % 4) / (N 2 % 3)))
+_testSlash_Rat3N4_Rat1N2 = Dict @((P 3 % 2) ~ ((N 3 % 4) / (N 1 % 2)))
+_testSlash_Rat3N4_Rat1N3 = Dict @((P 9 % 4) ~ ((N 3 % 4) / (N 1 % 3)))
+_testSlash_Rat3N4_Rat1N4 = Dict @((P 3 % 1) ~ ((N 3 % 4) / (N 1 % 4)))
+_testSlash_Rat3N4_Rat1P4 = Dict @((N 3 % 1) ~ ((N 3 % 4) / (P 1 % 4)))
+_testSlash_Rat3N4_Rat1P3 = Dict @((N 9 % 4) ~ ((N 3 % 4) / (P 1 % 3)))
+_testSlash_Rat3N4_Rat1P2 = Dict @((N 3 % 2) ~ ((N 3 % 4) / (P 1 % 2)))
+_testSlash_Rat3N4_Rat2P3 = Dict @((N 9 % 8) ~ ((N 3 % 4) / (P 2 % 3)))
+_testSlash_Rat3N4_Rat3P4 = Dict @((N 1 % 1) ~ ((N 3 % 4) / (P 3 % 4)))
+_testSlash_Rat3N4_Rat1P1 = Dict @((N 3 % 4) ~ ((N 3 % 4) / (P 1 % 1)))
+_testSlash_Rat3N4_Rat4P3 = Dict @((N 9 % 16) ~ ((N 3 % 4) / (P 4 % 3)))
+_testSlash_Rat3N4_Rat3P2 = Dict @((N 1 % 2) ~ ((N 3 % 4) / (P 3 % 2)))
+_testSlash_Rat3N4_Rat2P1 = Dict @((N 3 % 8) ~ ((N 3 % 4) / (P 2 % 1)))
+_testSlash_Rat3N4_Rat3P1 = Dict @((N 1 % 4) ~ ((N 3 % 4) / (P 3 % 1)))
+_testSlash_Rat3N4_Rat4P1 = Dict @((N 3 % 16) ~ ((N 3 % 4) / (P 4 % 1)))
+_testSlash_Rat2N3_Nat1 = Dict @((N 2 % 3) ~ ((N 2 % 3) / 1))
+_testSlash_Rat2N3_Nat2 = Dict @((N 1 % 3) ~ ((N 2 % 3) / 2))
+_testSlash_Rat2N3_Nat3 = Dict @((N 2 % 9) ~ ((N 2 % 3) / 3))
+_testSlash_Rat2N3_Nat4 = Dict @((N 1 % 6) ~ ((N 2 % 3) / 4))
+_testSlash_Rat2N3_IntN4 = Dict @((P 1 % 6) ~ ((N 2 % 3) / (N 4)))
+_testSlash_Rat2N3_IntN3 = Dict @((P 2 % 9) ~ ((N 2 % 3) / (N 3)))
+_testSlash_Rat2N3_IntN2 = Dict @((P 1 % 3) ~ ((N 2 % 3) / (N 2)))
+_testSlash_Rat2N3_IntN1 = Dict @((P 2 % 3) ~ ((N 2 % 3) / (N 1)))
+_testSlash_Rat2N3_IntP1 = Dict @((N 2 % 3) ~ ((N 2 % 3) / (P 1)))
+_testSlash_Rat2N3_IntP2 = Dict @((N 1 % 3) ~ ((N 2 % 3) / (P 2)))
+_testSlash_Rat2N3_IntP3 = Dict @((N 2 % 9) ~ ((N 2 % 3) / (P 3)))
+_testSlash_Rat2N3_IntP4 = Dict @((N 1 % 6) ~ ((N 2 % 3) / (P 4)))
+_testSlash_Rat2N3_Rat4N1 = Dict @((P 1 % 6) ~ ((N 2 % 3) / (N 4 % 1)))
+_testSlash_Rat2N3_Rat3N1 = Dict @((P 2 % 9) ~ ((N 2 % 3) / (N 3 % 1)))
+_testSlash_Rat2N3_Rat2N1 = Dict @((P 1 % 3) ~ ((N 2 % 3) / (N 2 % 1)))
+_testSlash_Rat2N3_Rat3N2 = Dict @((P 4 % 9) ~ ((N 2 % 3) / (N 3 % 2)))
+_testSlash_Rat2N3_Rat4N3 = Dict @((P 1 % 2) ~ ((N 2 % 3) / (N 4 % 3)))
+_testSlash_Rat2N3_Rat1N1 = Dict @((P 2 % 3) ~ ((N 2 % 3) / (N 1 % 1)))
+_testSlash_Rat2N3_Rat3N4 = Dict @((P 8 % 9) ~ ((N 2 % 3) / (N 3 % 4)))
+_testSlash_Rat2N3_Rat2N3 = Dict @((P 1 % 1) ~ ((N 2 % 3) / (N 2 % 3)))
+_testSlash_Rat2N3_Rat1N2 = Dict @((P 4 % 3) ~ ((N 2 % 3) / (N 1 % 2)))
+_testSlash_Rat2N3_Rat1N3 = Dict @((P 2 % 1) ~ ((N 2 % 3) / (N 1 % 3)))
+_testSlash_Rat2N3_Rat1N4 = Dict @((P 8 % 3) ~ ((N 2 % 3) / (N 1 % 4)))
+_testSlash_Rat2N3_Rat1P4 = Dict @((N 8 % 3) ~ ((N 2 % 3) / (P 1 % 4)))
+_testSlash_Rat2N3_Rat1P3 = Dict @((N 2 % 1) ~ ((N 2 % 3) / (P 1 % 3)))
+_testSlash_Rat2N3_Rat1P2 = Dict @((N 4 % 3) ~ ((N 2 % 3) / (P 1 % 2)))
+_testSlash_Rat2N3_Rat2P3 = Dict @((N 1 % 1) ~ ((N 2 % 3) / (P 2 % 3)))
+_testSlash_Rat2N3_Rat3P4 = Dict @((N 8 % 9) ~ ((N 2 % 3) / (P 3 % 4)))
+_testSlash_Rat2N3_Rat1P1 = Dict @((N 2 % 3) ~ ((N 2 % 3) / (P 1 % 1)))
+_testSlash_Rat2N3_Rat4P3 = Dict @((N 1 % 2) ~ ((N 2 % 3) / (P 4 % 3)))
+_testSlash_Rat2N3_Rat3P2 = Dict @((N 4 % 9) ~ ((N 2 % 3) / (P 3 % 2)))
+_testSlash_Rat2N3_Rat2P1 = Dict @((N 1 % 3) ~ ((N 2 % 3) / (P 2 % 1)))
+_testSlash_Rat2N3_Rat3P1 = Dict @((N 2 % 9) ~ ((N 2 % 3) / (P 3 % 1)))
+_testSlash_Rat2N3_Rat4P1 = Dict @((N 1 % 6) ~ ((N 2 % 3) / (P 4 % 1)))
+_testSlash_Rat1N2_Nat1 = Dict @((N 1 % 2) ~ ((N 1 % 2) / 1))
+_testSlash_Rat1N2_Nat2 = Dict @((N 1 % 4) ~ ((N 1 % 2) / 2))
+_testSlash_Rat1N2_Nat3 = Dict @((N 1 % 6) ~ ((N 1 % 2) / 3))
+_testSlash_Rat1N2_Nat4 = Dict @((N 1 % 8) ~ ((N 1 % 2) / 4))
+_testSlash_Rat1N2_IntN4 = Dict @((P 1 % 8) ~ ((N 1 % 2) / (N 4)))
+_testSlash_Rat1N2_IntN3 = Dict @((P 1 % 6) ~ ((N 1 % 2) / (N 3)))
+_testSlash_Rat1N2_IntN2 = Dict @((P 1 % 4) ~ ((N 1 % 2) / (N 2)))
+_testSlash_Rat1N2_IntN1 = Dict @((P 1 % 2) ~ ((N 1 % 2) / (N 1)))
+_testSlash_Rat1N2_IntP1 = Dict @((N 1 % 2) ~ ((N 1 % 2) / (P 1)))
+_testSlash_Rat1N2_IntP2 = Dict @((N 1 % 4) ~ ((N 1 % 2) / (P 2)))
+_testSlash_Rat1N2_IntP3 = Dict @((N 1 % 6) ~ ((N 1 % 2) / (P 3)))
+_testSlash_Rat1N2_IntP4 = Dict @((N 1 % 8) ~ ((N 1 % 2) / (P 4)))
+_testSlash_Rat1N2_Rat4N1 = Dict @((P 1 % 8) ~ ((N 1 % 2) / (N 4 % 1)))
+_testSlash_Rat1N2_Rat3N1 = Dict @((P 1 % 6) ~ ((N 1 % 2) / (N 3 % 1)))
+_testSlash_Rat1N2_Rat2N1 = Dict @((P 1 % 4) ~ ((N 1 % 2) / (N 2 % 1)))
+_testSlash_Rat1N2_Rat3N2 = Dict @((P 1 % 3) ~ ((N 1 % 2) / (N 3 % 2)))
+_testSlash_Rat1N2_Rat4N3 = Dict @((P 3 % 8) ~ ((N 1 % 2) / (N 4 % 3)))
+_testSlash_Rat1N2_Rat1N1 = Dict @((P 1 % 2) ~ ((N 1 % 2) / (N 1 % 1)))
+_testSlash_Rat1N2_Rat3N4 = Dict @((P 2 % 3) ~ ((N 1 % 2) / (N 3 % 4)))
+_testSlash_Rat1N2_Rat2N3 = Dict @((P 3 % 4) ~ ((N 1 % 2) / (N 2 % 3)))
+_testSlash_Rat1N2_Rat1N2 = Dict @((P 1 % 1) ~ ((N 1 % 2) / (N 1 % 2)))
+_testSlash_Rat1N2_Rat1N3 = Dict @((P 3 % 2) ~ ((N 1 % 2) / (N 1 % 3)))
+_testSlash_Rat1N2_Rat1N4 = Dict @((P 2 % 1) ~ ((N 1 % 2) / (N 1 % 4)))
+_testSlash_Rat1N2_Rat1P4 = Dict @((N 2 % 1) ~ ((N 1 % 2) / (P 1 % 4)))
+_testSlash_Rat1N2_Rat1P3 = Dict @((N 3 % 2) ~ ((N 1 % 2) / (P 1 % 3)))
+_testSlash_Rat1N2_Rat1P2 = Dict @((N 1 % 1) ~ ((N 1 % 2) / (P 1 % 2)))
+_testSlash_Rat1N2_Rat2P3 = Dict @((N 3 % 4) ~ ((N 1 % 2) / (P 2 % 3)))
+_testSlash_Rat1N2_Rat3P4 = Dict @((N 2 % 3) ~ ((N 1 % 2) / (P 3 % 4)))
+_testSlash_Rat1N2_Rat1P1 = Dict @((N 1 % 2) ~ ((N 1 % 2) / (P 1 % 1)))
+_testSlash_Rat1N2_Rat4P3 = Dict @((N 3 % 8) ~ ((N 1 % 2) / (P 4 % 3)))
+_testSlash_Rat1N2_Rat3P2 = Dict @((N 1 % 3) ~ ((N 1 % 2) / (P 3 % 2)))
+_testSlash_Rat1N2_Rat2P1 = Dict @((N 1 % 4) ~ ((N 1 % 2) / (P 2 % 1)))
+_testSlash_Rat1N2_Rat3P1 = Dict @((N 1 % 6) ~ ((N 1 % 2) / (P 3 % 1)))
+_testSlash_Rat1N2_Rat4P1 = Dict @((N 1 % 8) ~ ((N 1 % 2) / (P 4 % 1)))
+_testSlash_Rat1N3_Nat1 = Dict @((N 1 % 3) ~ ((N 1 % 3) / 1))
+_testSlash_Rat1N3_Nat2 = Dict @((N 1 % 6) ~ ((N 1 % 3) / 2))
+_testSlash_Rat1N3_Nat3 = Dict @((N 1 % 9) ~ ((N 1 % 3) / 3))
+_testSlash_Rat1N3_Nat4 = Dict @((N 1 % 12) ~ ((N 1 % 3) / 4))
+_testSlash_Rat1N3_IntN4 = Dict @((P 1 % 12) ~ ((N 1 % 3) / (N 4)))
+_testSlash_Rat1N3_IntN3 = Dict @((P 1 % 9) ~ ((N 1 % 3) / (N 3)))
+_testSlash_Rat1N3_IntN2 = Dict @((P 1 % 6) ~ ((N 1 % 3) / (N 2)))
+_testSlash_Rat1N3_IntN1 = Dict @((P 1 % 3) ~ ((N 1 % 3) / (N 1)))
+_testSlash_Rat1N3_IntP1 = Dict @((N 1 % 3) ~ ((N 1 % 3) / (P 1)))
+_testSlash_Rat1N3_IntP2 = Dict @((N 1 % 6) ~ ((N 1 % 3) / (P 2)))
+_testSlash_Rat1N3_IntP3 = Dict @((N 1 % 9) ~ ((N 1 % 3) / (P 3)))
+_testSlash_Rat1N3_IntP4 = Dict @((N 1 % 12) ~ ((N 1 % 3) / (P 4)))
+_testSlash_Rat1N3_Rat4N1 = Dict @((P 1 % 12) ~ ((N 1 % 3) / (N 4 % 1)))
+_testSlash_Rat1N3_Rat3N1 = Dict @((P 1 % 9) ~ ((N 1 % 3) / (N 3 % 1)))
+_testSlash_Rat1N3_Rat2N1 = Dict @((P 1 % 6) ~ ((N 1 % 3) / (N 2 % 1)))
+_testSlash_Rat1N3_Rat3N2 = Dict @((P 2 % 9) ~ ((N 1 % 3) / (N 3 % 2)))
+_testSlash_Rat1N3_Rat4N3 = Dict @((P 1 % 4) ~ ((N 1 % 3) / (N 4 % 3)))
+_testSlash_Rat1N3_Rat1N1 = Dict @((P 1 % 3) ~ ((N 1 % 3) / (N 1 % 1)))
+_testSlash_Rat1N3_Rat3N4 = Dict @((P 4 % 9) ~ ((N 1 % 3) / (N 3 % 4)))
+_testSlash_Rat1N3_Rat2N3 = Dict @((P 1 % 2) ~ ((N 1 % 3) / (N 2 % 3)))
+_testSlash_Rat1N3_Rat1N2 = Dict @((P 2 % 3) ~ ((N 1 % 3) / (N 1 % 2)))
+_testSlash_Rat1N3_Rat1N3 = Dict @((P 1 % 1) ~ ((N 1 % 3) / (N 1 % 3)))
+_testSlash_Rat1N3_Rat1N4 = Dict @((P 4 % 3) ~ ((N 1 % 3) / (N 1 % 4)))
+_testSlash_Rat1N3_Rat1P4 = Dict @((N 4 % 3) ~ ((N 1 % 3) / (P 1 % 4)))
+_testSlash_Rat1N3_Rat1P3 = Dict @((N 1 % 1) ~ ((N 1 % 3) / (P 1 % 3)))
+_testSlash_Rat1N3_Rat1P2 = Dict @((N 2 % 3) ~ ((N 1 % 3) / (P 1 % 2)))
+_testSlash_Rat1N3_Rat2P3 = Dict @((N 1 % 2) ~ ((N 1 % 3) / (P 2 % 3)))
+_testSlash_Rat1N3_Rat3P4 = Dict @((N 4 % 9) ~ ((N 1 % 3) / (P 3 % 4)))
+_testSlash_Rat1N3_Rat1P1 = Dict @((N 1 % 3) ~ ((N 1 % 3) / (P 1 % 1)))
+_testSlash_Rat1N3_Rat4P3 = Dict @((N 1 % 4) ~ ((N 1 % 3) / (P 4 % 3)))
+_testSlash_Rat1N3_Rat3P2 = Dict @((N 2 % 9) ~ ((N 1 % 3) / (P 3 % 2)))
+_testSlash_Rat1N3_Rat2P1 = Dict @((N 1 % 6) ~ ((N 1 % 3) / (P 2 % 1)))
+_testSlash_Rat1N3_Rat3P1 = Dict @((N 1 % 9) ~ ((N 1 % 3) / (P 3 % 1)))
+_testSlash_Rat1N3_Rat4P1 = Dict @((N 1 % 12) ~ ((N 1 % 3) / (P 4 % 1)))
+_testSlash_Rat1N4_Nat1 = Dict @((N 1 % 4) ~ ((N 1 % 4) / 1))
+_testSlash_Rat1N4_Nat2 = Dict @((N 1 % 8) ~ ((N 1 % 4) / 2))
+_testSlash_Rat1N4_Nat3 = Dict @((N 1 % 12) ~ ((N 1 % 4) / 3))
+_testSlash_Rat1N4_Nat4 = Dict @((N 1 % 16) ~ ((N 1 % 4) / 4))
+_testSlash_Rat1N4_IntN4 = Dict @((P 1 % 16) ~ ((N 1 % 4) / (N 4)))
+_testSlash_Rat1N4_IntN3 = Dict @((P 1 % 12) ~ ((N 1 % 4) / (N 3)))
+_testSlash_Rat1N4_IntN2 = Dict @((P 1 % 8) ~ ((N 1 % 4) / (N 2)))
+_testSlash_Rat1N4_IntN1 = Dict @((P 1 % 4) ~ ((N 1 % 4) / (N 1)))
+_testSlash_Rat1N4_IntP1 = Dict @((N 1 % 4) ~ ((N 1 % 4) / (P 1)))
+_testSlash_Rat1N4_IntP2 = Dict @((N 1 % 8) ~ ((N 1 % 4) / (P 2)))
+_testSlash_Rat1N4_IntP3 = Dict @((N 1 % 12) ~ ((N 1 % 4) / (P 3)))
+_testSlash_Rat1N4_IntP4 = Dict @((N 1 % 16) ~ ((N 1 % 4) / (P 4)))
+_testSlash_Rat1N4_Rat4N1 = Dict @((P 1 % 16) ~ ((N 1 % 4) / (N 4 % 1)))
+_testSlash_Rat1N4_Rat3N1 = Dict @((P 1 % 12) ~ ((N 1 % 4) / (N 3 % 1)))
+_testSlash_Rat1N4_Rat2N1 = Dict @((P 1 % 8) ~ ((N 1 % 4) / (N 2 % 1)))
+_testSlash_Rat1N4_Rat3N2 = Dict @((P 1 % 6) ~ ((N 1 % 4) / (N 3 % 2)))
+_testSlash_Rat1N4_Rat4N3 = Dict @((P 3 % 16) ~ ((N 1 % 4) / (N 4 % 3)))
+_testSlash_Rat1N4_Rat1N1 = Dict @((P 1 % 4) ~ ((N 1 % 4) / (N 1 % 1)))
+_testSlash_Rat1N4_Rat3N4 = Dict @((P 1 % 3) ~ ((N 1 % 4) / (N 3 % 4)))
+_testSlash_Rat1N4_Rat2N3 = Dict @((P 3 % 8) ~ ((N 1 % 4) / (N 2 % 3)))
+_testSlash_Rat1N4_Rat1N2 = Dict @((P 1 % 2) ~ ((N 1 % 4) / (N 1 % 2)))
+_testSlash_Rat1N4_Rat1N3 = Dict @((P 3 % 4) ~ ((N 1 % 4) / (N 1 % 3)))
+_testSlash_Rat1N4_Rat1N4 = Dict @((P 1 % 1) ~ ((N 1 % 4) / (N 1 % 4)))
+_testSlash_Rat1N4_Rat1P4 = Dict @((N 1 % 1) ~ ((N 1 % 4) / (P 1 % 4)))
+_testSlash_Rat1N4_Rat1P3 = Dict @((N 3 % 4) ~ ((N 1 % 4) / (P 1 % 3)))
+_testSlash_Rat1N4_Rat1P2 = Dict @((N 1 % 2) ~ ((N 1 % 4) / (P 1 % 2)))
+_testSlash_Rat1N4_Rat2P3 = Dict @((N 3 % 8) ~ ((N 1 % 4) / (P 2 % 3)))
+_testSlash_Rat1N4_Rat3P4 = Dict @((N 1 % 3) ~ ((N 1 % 4) / (P 3 % 4)))
+_testSlash_Rat1N4_Rat1P1 = Dict @((N 1 % 4) ~ ((N 1 % 4) / (P 1 % 1)))
+_testSlash_Rat1N4_Rat4P3 = Dict @((N 3 % 16) ~ ((N 1 % 4) / (P 4 % 3)))
+_testSlash_Rat1N4_Rat3P2 = Dict @((N 1 % 6) ~ ((N 1 % 4) / (P 3 % 2)))
+_testSlash_Rat1N4_Rat2P1 = Dict @((N 1 % 8) ~ ((N 1 % 4) / (P 2 % 1)))
+_testSlash_Rat1N4_Rat3P1 = Dict @((N 1 % 12) ~ ((N 1 % 4) / (P 3 % 1)))
+_testSlash_Rat1N4_Rat4P1 = Dict @((N 1 % 16) ~ ((N 1 % 4) / (P 4 % 1)))
+_testSlash_Rat0P1_Nat1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 1))
+_testSlash_Rat0P1_Nat2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 2))
+_testSlash_Rat0P1_Nat3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 3))
+_testSlash_Rat0P1_Nat4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 4))
+_testSlash_Rat0P1_IntN4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4)))
+_testSlash_Rat0P1_IntN3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3)))
+_testSlash_Rat0P1_IntN2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2)))
+_testSlash_Rat0P1_IntN1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1)))
+_testSlash_Rat0P1_IntP1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1)))
+_testSlash_Rat0P1_IntP2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2)))
+_testSlash_Rat0P1_IntP3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3)))
+_testSlash_Rat0P1_IntP4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4)))
+_testSlash_Rat0P1_Rat4N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4 % 1)))
+_testSlash_Rat0P1_Rat3N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 1)))
+_testSlash_Rat0P1_Rat2N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2 % 1)))
+_testSlash_Rat0P1_Rat3N2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 2)))
+_testSlash_Rat0P1_Rat4N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4 % 3)))
+_testSlash_Rat0P1_Rat1N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 1)))
+_testSlash_Rat0P1_Rat3N4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 4)))
+_testSlash_Rat0P1_Rat2N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2 % 3)))
+_testSlash_Rat0P1_Rat1N2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 2)))
+_testSlash_Rat0P1_Rat1N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 3)))
+_testSlash_Rat0P1_Rat1N4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 4)))
+_testSlash_Rat0P1_Rat1P4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 4)))
+_testSlash_Rat0P1_Rat1P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 3)))
+_testSlash_Rat0P1_Rat1P2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 2)))
+_testSlash_Rat0P1_Rat2P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2 % 3)))
+_testSlash_Rat0P1_Rat3P4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 4)))
+_testSlash_Rat0P1_Rat1P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 1)))
+_testSlash_Rat0P1_Rat4P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4 % 3)))
+_testSlash_Rat0P1_Rat3P2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 2)))
+_testSlash_Rat0P1_Rat2P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2 % 1)))
+_testSlash_Rat0P1_Rat3P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 1)))
+_testSlash_Rat0P1_Rat4P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4 % 1)))
+_testSlash_Rat1P4_Nat1 = Dict @((P 1 % 4) ~ ((P 1 % 4) / 1))
+_testSlash_Rat1P4_Nat2 = Dict @((P 1 % 8) ~ ((P 1 % 4) / 2))
+_testSlash_Rat1P4_Nat3 = Dict @((P 1 % 12) ~ ((P 1 % 4) / 3))
+_testSlash_Rat1P4_Nat4 = Dict @((P 1 % 16) ~ ((P 1 % 4) / 4))
+_testSlash_Rat1P4_IntN4 = Dict @((N 1 % 16) ~ ((P 1 % 4) / (N 4)))
+_testSlash_Rat1P4_IntN3 = Dict @((N 1 % 12) ~ ((P 1 % 4) / (N 3)))
+_testSlash_Rat1P4_IntN2 = Dict @((N 1 % 8) ~ ((P 1 % 4) / (N 2)))
+_testSlash_Rat1P4_IntN1 = Dict @((N 1 % 4) ~ ((P 1 % 4) / (N 1)))
+_testSlash_Rat1P4_IntP1 = Dict @((P 1 % 4) ~ ((P 1 % 4) / (P 1)))
+_testSlash_Rat1P4_IntP2 = Dict @((P 1 % 8) ~ ((P 1 % 4) / (P 2)))
+_testSlash_Rat1P4_IntP3 = Dict @((P 1 % 12) ~ ((P 1 % 4) / (P 3)))
+_testSlash_Rat1P4_IntP4 = Dict @((P 1 % 16) ~ ((P 1 % 4) / (P 4)))
+_testSlash_Rat1P4_Rat4N1 = Dict @((N 1 % 16) ~ ((P 1 % 4) / (N 4 % 1)))
+_testSlash_Rat1P4_Rat3N1 = Dict @((N 1 % 12) ~ ((P 1 % 4) / (N 3 % 1)))
+_testSlash_Rat1P4_Rat2N1 = Dict @((N 1 % 8) ~ ((P 1 % 4) / (N 2 % 1)))
+_testSlash_Rat1P4_Rat3N2 = Dict @((N 1 % 6) ~ ((P 1 % 4) / (N 3 % 2)))
+_testSlash_Rat1P4_Rat4N3 = Dict @((N 3 % 16) ~ ((P 1 % 4) / (N 4 % 3)))
+_testSlash_Rat1P4_Rat1N1 = Dict @((N 1 % 4) ~ ((P 1 % 4) / (N 1 % 1)))
+_testSlash_Rat1P4_Rat3N4 = Dict @((N 1 % 3) ~ ((P 1 % 4) / (N 3 % 4)))
+_testSlash_Rat1P4_Rat2N3 = Dict @((N 3 % 8) ~ ((P 1 % 4) / (N 2 % 3)))
+_testSlash_Rat1P4_Rat1N2 = Dict @((N 1 % 2) ~ ((P 1 % 4) / (N 1 % 2)))
+_testSlash_Rat1P4_Rat1N3 = Dict @((N 3 % 4) ~ ((P 1 % 4) / (N 1 % 3)))
+_testSlash_Rat1P4_Rat1N4 = Dict @((N 1 % 1) ~ ((P 1 % 4) / (N 1 % 4)))
+_testSlash_Rat1P4_Rat1P4 = Dict @((P 1 % 1) ~ ((P 1 % 4) / (P 1 % 4)))
+_testSlash_Rat1P4_Rat1P3 = Dict @((P 3 % 4) ~ ((P 1 % 4) / (P 1 % 3)))
+_testSlash_Rat1P4_Rat1P2 = Dict @((P 1 % 2) ~ ((P 1 % 4) / (P 1 % 2)))
+_testSlash_Rat1P4_Rat2P3 = Dict @((P 3 % 8) ~ ((P 1 % 4) / (P 2 % 3)))
+_testSlash_Rat1P4_Rat3P4 = Dict @((P 1 % 3) ~ ((P 1 % 4) / (P 3 % 4)))
+_testSlash_Rat1P4_Rat1P1 = Dict @((P 1 % 4) ~ ((P 1 % 4) / (P 1 % 1)))
+_testSlash_Rat1P4_Rat4P3 = Dict @((P 3 % 16) ~ ((P 1 % 4) / (P 4 % 3)))
+_testSlash_Rat1P4_Rat3P2 = Dict @((P 1 % 6) ~ ((P 1 % 4) / (P 3 % 2)))
+_testSlash_Rat1P4_Rat2P1 = Dict @((P 1 % 8) ~ ((P 1 % 4) / (P 2 % 1)))
+_testSlash_Rat1P4_Rat3P1 = Dict @((P 1 % 12) ~ ((P 1 % 4) / (P 3 % 1)))
+_testSlash_Rat1P4_Rat4P1 = Dict @((P 1 % 16) ~ ((P 1 % 4) / (P 4 % 1)))
+_testSlash_Rat1P3_Nat1 = Dict @((P 1 % 3) ~ ((P 1 % 3) / 1))
+_testSlash_Rat1P3_Nat2 = Dict @((P 1 % 6) ~ ((P 1 % 3) / 2))
+_testSlash_Rat1P3_Nat3 = Dict @((P 1 % 9) ~ ((P 1 % 3) / 3))
+_testSlash_Rat1P3_Nat4 = Dict @((P 1 % 12) ~ ((P 1 % 3) / 4))
+_testSlash_Rat1P3_IntN4 = Dict @((N 1 % 12) ~ ((P 1 % 3) / (N 4)))
+_testSlash_Rat1P3_IntN3 = Dict @((N 1 % 9) ~ ((P 1 % 3) / (N 3)))
+_testSlash_Rat1P3_IntN2 = Dict @((N 1 % 6) ~ ((P 1 % 3) / (N 2)))
+_testSlash_Rat1P3_IntN1 = Dict @((N 1 % 3) ~ ((P 1 % 3) / (N 1)))
+_testSlash_Rat1P3_IntP1 = Dict @((P 1 % 3) ~ ((P 1 % 3) / (P 1)))
+_testSlash_Rat1P3_IntP2 = Dict @((P 1 % 6) ~ ((P 1 % 3) / (P 2)))
+_testSlash_Rat1P3_IntP3 = Dict @((P 1 % 9) ~ ((P 1 % 3) / (P 3)))
+_testSlash_Rat1P3_IntP4 = Dict @((P 1 % 12) ~ ((P 1 % 3) / (P 4)))
+_testSlash_Rat1P3_Rat4N1 = Dict @((N 1 % 12) ~ ((P 1 % 3) / (N 4 % 1)))
+_testSlash_Rat1P3_Rat3N1 = Dict @((N 1 % 9) ~ ((P 1 % 3) / (N 3 % 1)))
+_testSlash_Rat1P3_Rat2N1 = Dict @((N 1 % 6) ~ ((P 1 % 3) / (N 2 % 1)))
+_testSlash_Rat1P3_Rat3N2 = Dict @((N 2 % 9) ~ ((P 1 % 3) / (N 3 % 2)))
+_testSlash_Rat1P3_Rat4N3 = Dict @((N 1 % 4) ~ ((P 1 % 3) / (N 4 % 3)))
+_testSlash_Rat1P3_Rat1N1 = Dict @((N 1 % 3) ~ ((P 1 % 3) / (N 1 % 1)))
+_testSlash_Rat1P3_Rat3N4 = Dict @((N 4 % 9) ~ ((P 1 % 3) / (N 3 % 4)))
+_testSlash_Rat1P3_Rat2N3 = Dict @((N 1 % 2) ~ ((P 1 % 3) / (N 2 % 3)))
+_testSlash_Rat1P3_Rat1N2 = Dict @((N 2 % 3) ~ ((P 1 % 3) / (N 1 % 2)))
+_testSlash_Rat1P3_Rat1N3 = Dict @((N 1 % 1) ~ ((P 1 % 3) / (N 1 % 3)))
+_testSlash_Rat1P3_Rat1N4 = Dict @((N 4 % 3) ~ ((P 1 % 3) / (N 1 % 4)))
+_testSlash_Rat1P3_Rat1P4 = Dict @((P 4 % 3) ~ ((P 1 % 3) / (P 1 % 4)))
+_testSlash_Rat1P3_Rat1P3 = Dict @((P 1 % 1) ~ ((P 1 % 3) / (P 1 % 3)))
+_testSlash_Rat1P3_Rat1P2 = Dict @((P 2 % 3) ~ ((P 1 % 3) / (P 1 % 2)))
+_testSlash_Rat1P3_Rat2P3 = Dict @((P 1 % 2) ~ ((P 1 % 3) / (P 2 % 3)))
+_testSlash_Rat1P3_Rat3P4 = Dict @((P 4 % 9) ~ ((P 1 % 3) / (P 3 % 4)))
+_testSlash_Rat1P3_Rat1P1 = Dict @((P 1 % 3) ~ ((P 1 % 3) / (P 1 % 1)))
+_testSlash_Rat1P3_Rat4P3 = Dict @((P 1 % 4) ~ ((P 1 % 3) / (P 4 % 3)))
+_testSlash_Rat1P3_Rat3P2 = Dict @((P 2 % 9) ~ ((P 1 % 3) / (P 3 % 2)))
+_testSlash_Rat1P3_Rat2P1 = Dict @((P 1 % 6) ~ ((P 1 % 3) / (P 2 % 1)))
+_testSlash_Rat1P3_Rat3P1 = Dict @((P 1 % 9) ~ ((P 1 % 3) / (P 3 % 1)))
+_testSlash_Rat1P3_Rat4P1 = Dict @((P 1 % 12) ~ ((P 1 % 3) / (P 4 % 1)))
+_testSlash_Rat1P2_Nat1 = Dict @((P 1 % 2) ~ ((P 1 % 2) / 1))
+_testSlash_Rat1P2_Nat2 = Dict @((P 1 % 4) ~ ((P 1 % 2) / 2))
+_testSlash_Rat1P2_Nat3 = Dict @((P 1 % 6) ~ ((P 1 % 2) / 3))
+_testSlash_Rat1P2_Nat4 = Dict @((P 1 % 8) ~ ((P 1 % 2) / 4))
+_testSlash_Rat1P2_IntN4 = Dict @((N 1 % 8) ~ ((P 1 % 2) / (N 4)))
+_testSlash_Rat1P2_IntN3 = Dict @((N 1 % 6) ~ ((P 1 % 2) / (N 3)))
+_testSlash_Rat1P2_IntN2 = Dict @((N 1 % 4) ~ ((P 1 % 2) / (N 2)))
+_testSlash_Rat1P2_IntN1 = Dict @((N 1 % 2) ~ ((P 1 % 2) / (N 1)))
+_testSlash_Rat1P2_IntP1 = Dict @((P 1 % 2) ~ ((P 1 % 2) / (P 1)))
+_testSlash_Rat1P2_IntP2 = Dict @((P 1 % 4) ~ ((P 1 % 2) / (P 2)))
+_testSlash_Rat1P2_IntP3 = Dict @((P 1 % 6) ~ ((P 1 % 2) / (P 3)))
+_testSlash_Rat1P2_IntP4 = Dict @((P 1 % 8) ~ ((P 1 % 2) / (P 4)))
+_testSlash_Rat1P2_Rat4N1 = Dict @((N 1 % 8) ~ ((P 1 % 2) / (N 4 % 1)))
+_testSlash_Rat1P2_Rat3N1 = Dict @((N 1 % 6) ~ ((P 1 % 2) / (N 3 % 1)))
+_testSlash_Rat1P2_Rat2N1 = Dict @((N 1 % 4) ~ ((P 1 % 2) / (N 2 % 1)))
+_testSlash_Rat1P2_Rat3N2 = Dict @((N 1 % 3) ~ ((P 1 % 2) / (N 3 % 2)))
+_testSlash_Rat1P2_Rat4N3 = Dict @((N 3 % 8) ~ ((P 1 % 2) / (N 4 % 3)))
+_testSlash_Rat1P2_Rat1N1 = Dict @((N 1 % 2) ~ ((P 1 % 2) / (N 1 % 1)))
+_testSlash_Rat1P2_Rat3N4 = Dict @((N 2 % 3) ~ ((P 1 % 2) / (N 3 % 4)))
+_testSlash_Rat1P2_Rat2N3 = Dict @((N 3 % 4) ~ ((P 1 % 2) / (N 2 % 3)))
+_testSlash_Rat1P2_Rat1N2 = Dict @((N 1 % 1) ~ ((P 1 % 2) / (N 1 % 2)))
+_testSlash_Rat1P2_Rat1N3 = Dict @((N 3 % 2) ~ ((P 1 % 2) / (N 1 % 3)))
+_testSlash_Rat1P2_Rat1N4 = Dict @((N 2 % 1) ~ ((P 1 % 2) / (N 1 % 4)))
+_testSlash_Rat1P2_Rat1P4 = Dict @((P 2 % 1) ~ ((P 1 % 2) / (P 1 % 4)))
+_testSlash_Rat1P2_Rat1P3 = Dict @((P 3 % 2) ~ ((P 1 % 2) / (P 1 % 3)))
+_testSlash_Rat1P2_Rat1P2 = Dict @((P 1 % 1) ~ ((P 1 % 2) / (P 1 % 2)))
+_testSlash_Rat1P2_Rat2P3 = Dict @((P 3 % 4) ~ ((P 1 % 2) / (P 2 % 3)))
+_testSlash_Rat1P2_Rat3P4 = Dict @((P 2 % 3) ~ ((P 1 % 2) / (P 3 % 4)))
+_testSlash_Rat1P2_Rat1P1 = Dict @((P 1 % 2) ~ ((P 1 % 2) / (P 1 % 1)))
+_testSlash_Rat1P2_Rat4P3 = Dict @((P 3 % 8) ~ ((P 1 % 2) / (P 4 % 3)))
+_testSlash_Rat1P2_Rat3P2 = Dict @((P 1 % 3) ~ ((P 1 % 2) / (P 3 % 2)))
+_testSlash_Rat1P2_Rat2P1 = Dict @((P 1 % 4) ~ ((P 1 % 2) / (P 2 % 1)))
+_testSlash_Rat1P2_Rat3P1 = Dict @((P 1 % 6) ~ ((P 1 % 2) / (P 3 % 1)))
+_testSlash_Rat1P2_Rat4P1 = Dict @((P 1 % 8) ~ ((P 1 % 2) / (P 4 % 1)))
+_testSlash_Rat2P3_Nat1 = Dict @((P 2 % 3) ~ ((P 2 % 3) / 1))
+_testSlash_Rat2P3_Nat2 = Dict @((P 1 % 3) ~ ((P 2 % 3) / 2))
+_testSlash_Rat2P3_Nat3 = Dict @((P 2 % 9) ~ ((P 2 % 3) / 3))
+_testSlash_Rat2P3_Nat4 = Dict @((P 1 % 6) ~ ((P 2 % 3) / 4))
+_testSlash_Rat2P3_IntN4 = Dict @((N 1 % 6) ~ ((P 2 % 3) / (N 4)))
+_testSlash_Rat2P3_IntN3 = Dict @((N 2 % 9) ~ ((P 2 % 3) / (N 3)))
+_testSlash_Rat2P3_IntN2 = Dict @((N 1 % 3) ~ ((P 2 % 3) / (N 2)))
+_testSlash_Rat2P3_IntN1 = Dict @((N 2 % 3) ~ ((P 2 % 3) / (N 1)))
+_testSlash_Rat2P3_IntP1 = Dict @((P 2 % 3) ~ ((P 2 % 3) / (P 1)))
+_testSlash_Rat2P3_IntP2 = Dict @((P 1 % 3) ~ ((P 2 % 3) / (P 2)))
+_testSlash_Rat2P3_IntP3 = Dict @((P 2 % 9) ~ ((P 2 % 3) / (P 3)))
+_testSlash_Rat2P3_IntP4 = Dict @((P 1 % 6) ~ ((P 2 % 3) / (P 4)))
+_testSlash_Rat2P3_Rat4N1 = Dict @((N 1 % 6) ~ ((P 2 % 3) / (N 4 % 1)))
+_testSlash_Rat2P3_Rat3N1 = Dict @((N 2 % 9) ~ ((P 2 % 3) / (N 3 % 1)))
+_testSlash_Rat2P3_Rat2N1 = Dict @((N 1 % 3) ~ ((P 2 % 3) / (N 2 % 1)))
+_testSlash_Rat2P3_Rat3N2 = Dict @((N 4 % 9) ~ ((P 2 % 3) / (N 3 % 2)))
+_testSlash_Rat2P3_Rat4N3 = Dict @((N 1 % 2) ~ ((P 2 % 3) / (N 4 % 3)))
+_testSlash_Rat2P3_Rat1N1 = Dict @((N 2 % 3) ~ ((P 2 % 3) / (N 1 % 1)))
+_testSlash_Rat2P3_Rat3N4 = Dict @((N 8 % 9) ~ ((P 2 % 3) / (N 3 % 4)))
+_testSlash_Rat2P3_Rat2N3 = Dict @((N 1 % 1) ~ ((P 2 % 3) / (N 2 % 3)))
+_testSlash_Rat2P3_Rat1N2 = Dict @((N 4 % 3) ~ ((P 2 % 3) / (N 1 % 2)))
+_testSlash_Rat2P3_Rat1N3 = Dict @((N 2 % 1) ~ ((P 2 % 3) / (N 1 % 3)))
+_testSlash_Rat2P3_Rat1N4 = Dict @((N 8 % 3) ~ ((P 2 % 3) / (N 1 % 4)))
+_testSlash_Rat2P3_Rat1P4 = Dict @((P 8 % 3) ~ ((P 2 % 3) / (P 1 % 4)))
+_testSlash_Rat2P3_Rat1P3 = Dict @((P 2 % 1) ~ ((P 2 % 3) / (P 1 % 3)))
+_testSlash_Rat2P3_Rat1P2 = Dict @((P 4 % 3) ~ ((P 2 % 3) / (P 1 % 2)))
+_testSlash_Rat2P3_Rat2P3 = Dict @((P 1 % 1) ~ ((P 2 % 3) / (P 2 % 3)))
+_testSlash_Rat2P3_Rat3P4 = Dict @((P 8 % 9) ~ ((P 2 % 3) / (P 3 % 4)))
+_testSlash_Rat2P3_Rat1P1 = Dict @((P 2 % 3) ~ ((P 2 % 3) / (P 1 % 1)))
+_testSlash_Rat2P3_Rat4P3 = Dict @((P 1 % 2) ~ ((P 2 % 3) / (P 4 % 3)))
+_testSlash_Rat2P3_Rat3P2 = Dict @((P 4 % 9) ~ ((P 2 % 3) / (P 3 % 2)))
+_testSlash_Rat2P3_Rat2P1 = Dict @((P 1 % 3) ~ ((P 2 % 3) / (P 2 % 1)))
+_testSlash_Rat2P3_Rat3P1 = Dict @((P 2 % 9) ~ ((P 2 % 3) / (P 3 % 1)))
+_testSlash_Rat2P3_Rat4P1 = Dict @((P 1 % 6) ~ ((P 2 % 3) / (P 4 % 1)))
+_testSlash_Rat3P4_Nat1 = Dict @((P 3 % 4) ~ ((P 3 % 4) / 1))
+_testSlash_Rat3P4_Nat2 = Dict @((P 3 % 8) ~ ((P 3 % 4) / 2))
+_testSlash_Rat3P4_Nat3 = Dict @((P 1 % 4) ~ ((P 3 % 4) / 3))
+_testSlash_Rat3P4_Nat4 = Dict @((P 3 % 16) ~ ((P 3 % 4) / 4))
+_testSlash_Rat3P4_IntN4 = Dict @((N 3 % 16) ~ ((P 3 % 4) / (N 4)))
+_testSlash_Rat3P4_IntN3 = Dict @((N 1 % 4) ~ ((P 3 % 4) / (N 3)))
+_testSlash_Rat3P4_IntN2 = Dict @((N 3 % 8) ~ ((P 3 % 4) / (N 2)))
+_testSlash_Rat3P4_IntN1 = Dict @((N 3 % 4) ~ ((P 3 % 4) / (N 1)))
+_testSlash_Rat3P4_IntP1 = Dict @((P 3 % 4) ~ ((P 3 % 4) / (P 1)))
+_testSlash_Rat3P4_IntP2 = Dict @((P 3 % 8) ~ ((P 3 % 4) / (P 2)))
+_testSlash_Rat3P4_IntP3 = Dict @((P 1 % 4) ~ ((P 3 % 4) / (P 3)))
+_testSlash_Rat3P4_IntP4 = Dict @((P 3 % 16) ~ ((P 3 % 4) / (P 4)))
+_testSlash_Rat3P4_Rat4N1 = Dict @((N 3 % 16) ~ ((P 3 % 4) / (N 4 % 1)))
+_testSlash_Rat3P4_Rat3N1 = Dict @((N 1 % 4) ~ ((P 3 % 4) / (N 3 % 1)))
+_testSlash_Rat3P4_Rat2N1 = Dict @((N 3 % 8) ~ ((P 3 % 4) / (N 2 % 1)))
+_testSlash_Rat3P4_Rat3N2 = Dict @((N 1 % 2) ~ ((P 3 % 4) / (N 3 % 2)))
+_testSlash_Rat3P4_Rat4N3 = Dict @((N 9 % 16) ~ ((P 3 % 4) / (N 4 % 3)))
+_testSlash_Rat3P4_Rat1N1 = Dict @((N 3 % 4) ~ ((P 3 % 4) / (N 1 % 1)))
+_testSlash_Rat3P4_Rat3N4 = Dict @((N 1 % 1) ~ ((P 3 % 4) / (N 3 % 4)))
+_testSlash_Rat3P4_Rat2N3 = Dict @((N 9 % 8) ~ ((P 3 % 4) / (N 2 % 3)))
+_testSlash_Rat3P4_Rat1N2 = Dict @((N 3 % 2) ~ ((P 3 % 4) / (N 1 % 2)))
+_testSlash_Rat3P4_Rat1N3 = Dict @((N 9 % 4) ~ ((P 3 % 4) / (N 1 % 3)))
+_testSlash_Rat3P4_Rat1N4 = Dict @((N 3 % 1) ~ ((P 3 % 4) / (N 1 % 4)))
+_testSlash_Rat3P4_Rat1P4 = Dict @((P 3 % 1) ~ ((P 3 % 4) / (P 1 % 4)))
+_testSlash_Rat3P4_Rat1P3 = Dict @((P 9 % 4) ~ ((P 3 % 4) / (P 1 % 3)))
+_testSlash_Rat3P4_Rat1P2 = Dict @((P 3 % 2) ~ ((P 3 % 4) / (P 1 % 2)))
+_testSlash_Rat3P4_Rat2P3 = Dict @((P 9 % 8) ~ ((P 3 % 4) / (P 2 % 3)))
+_testSlash_Rat3P4_Rat3P4 = Dict @((P 1 % 1) ~ ((P 3 % 4) / (P 3 % 4)))
+_testSlash_Rat3P4_Rat1P1 = Dict @((P 3 % 4) ~ ((P 3 % 4) / (P 1 % 1)))
+_testSlash_Rat3P4_Rat4P3 = Dict @((P 9 % 16) ~ ((P 3 % 4) / (P 4 % 3)))
+_testSlash_Rat3P4_Rat3P2 = Dict @((P 1 % 2) ~ ((P 3 % 4) / (P 3 % 2)))
+_testSlash_Rat3P4_Rat2P1 = Dict @((P 3 % 8) ~ ((P 3 % 4) / (P 2 % 1)))
+_testSlash_Rat3P4_Rat3P1 = Dict @((P 1 % 4) ~ ((P 3 % 4) / (P 3 % 1)))
+_testSlash_Rat3P4_Rat4P1 = Dict @((P 3 % 16) ~ ((P 3 % 4) / (P 4 % 1)))
+_testSlash_Rat1P1_Nat1 = Dict @((P 1 % 1) ~ ((P 1 % 1) / 1))
+_testSlash_Rat1P1_Nat2 = Dict @((P 1 % 2) ~ ((P 1 % 1) / 2))
+_testSlash_Rat1P1_Nat3 = Dict @((P 1 % 3) ~ ((P 1 % 1) / 3))
+_testSlash_Rat1P1_Nat4 = Dict @((P 1 % 4) ~ ((P 1 % 1) / 4))
+_testSlash_Rat1P1_IntN4 = Dict @((N 1 % 4) ~ ((P 1 % 1) / (N 4)))
+_testSlash_Rat1P1_IntN3 = Dict @((N 1 % 3) ~ ((P 1 % 1) / (N 3)))
+_testSlash_Rat1P1_IntN2 = Dict @((N 1 % 2) ~ ((P 1 % 1) / (N 2)))
+_testSlash_Rat1P1_IntN1 = Dict @((N 1 % 1) ~ ((P 1 % 1) / (N 1)))
+_testSlash_Rat1P1_IntP1 = Dict @((P 1 % 1) ~ ((P 1 % 1) / (P 1)))
+_testSlash_Rat1P1_IntP2 = Dict @((P 1 % 2) ~ ((P 1 % 1) / (P 2)))
+_testSlash_Rat1P1_IntP3 = Dict @((P 1 % 3) ~ ((P 1 % 1) / (P 3)))
+_testSlash_Rat1P1_IntP4 = Dict @((P 1 % 4) ~ ((P 1 % 1) / (P 4)))
+_testSlash_Rat1P1_Rat4N1 = Dict @((N 1 % 4) ~ ((P 1 % 1) / (N 4 % 1)))
+_testSlash_Rat1P1_Rat3N1 = Dict @((N 1 % 3) ~ ((P 1 % 1) / (N 3 % 1)))
+_testSlash_Rat1P1_Rat2N1 = Dict @((N 1 % 2) ~ ((P 1 % 1) / (N 2 % 1)))
+_testSlash_Rat1P1_Rat3N2 = Dict @((N 2 % 3) ~ ((P 1 % 1) / (N 3 % 2)))
+_testSlash_Rat1P1_Rat4N3 = Dict @((N 3 % 4) ~ ((P 1 % 1) / (N 4 % 3)))
+_testSlash_Rat1P1_Rat1N1 = Dict @((N 1 % 1) ~ ((P 1 % 1) / (N 1 % 1)))
+_testSlash_Rat1P1_Rat3N4 = Dict @((N 4 % 3) ~ ((P 1 % 1) / (N 3 % 4)))
+_testSlash_Rat1P1_Rat2N3 = Dict @((N 3 % 2) ~ ((P 1 % 1) / (N 2 % 3)))
+_testSlash_Rat1P1_Rat1N2 = Dict @((N 2 % 1) ~ ((P 1 % 1) / (N 1 % 2)))
+_testSlash_Rat1P1_Rat1N3 = Dict @((N 3 % 1) ~ ((P 1 % 1) / (N 1 % 3)))
+_testSlash_Rat1P1_Rat1N4 = Dict @((N 4 % 1) ~ ((P 1 % 1) / (N 1 % 4)))
+_testSlash_Rat1P1_Rat1P4 = Dict @((P 4 % 1) ~ ((P 1 % 1) / (P 1 % 4)))
+_testSlash_Rat1P1_Rat1P3 = Dict @((P 3 % 1) ~ ((P 1 % 1) / (P 1 % 3)))
+_testSlash_Rat1P1_Rat1P2 = Dict @((P 2 % 1) ~ ((P 1 % 1) / (P 1 % 2)))
+_testSlash_Rat1P1_Rat2P3 = Dict @((P 3 % 2) ~ ((P 1 % 1) / (P 2 % 3)))
+_testSlash_Rat1P1_Rat3P4 = Dict @((P 4 % 3) ~ ((P 1 % 1) / (P 3 % 4)))
+_testSlash_Rat1P1_Rat1P1 = Dict @((P 1 % 1) ~ ((P 1 % 1) / (P 1 % 1)))
+_testSlash_Rat1P1_Rat4P3 = Dict @((P 3 % 4) ~ ((P 1 % 1) / (P 4 % 3)))
+_testSlash_Rat1P1_Rat3P2 = Dict @((P 2 % 3) ~ ((P 1 % 1) / (P 3 % 2)))
+_testSlash_Rat1P1_Rat2P1 = Dict @((P 1 % 2) ~ ((P 1 % 1) / (P 2 % 1)))
+_testSlash_Rat1P1_Rat3P1 = Dict @((P 1 % 3) ~ ((P 1 % 1) / (P 3 % 1)))
+_testSlash_Rat1P1_Rat4P1 = Dict @((P 1 % 4) ~ ((P 1 % 1) / (P 4 % 1)))
+_testSlash_Rat4P3_Nat1 = Dict @((P 4 % 3) ~ ((P 4 % 3) / 1))
+_testSlash_Rat4P3_Nat2 = Dict @((P 2 % 3) ~ ((P 4 % 3) / 2))
+_testSlash_Rat4P3_Nat3 = Dict @((P 4 % 9) ~ ((P 4 % 3) / 3))
+_testSlash_Rat4P3_Nat4 = Dict @((P 1 % 3) ~ ((P 4 % 3) / 4))
+_testSlash_Rat4P3_IntN4 = Dict @((N 1 % 3) ~ ((P 4 % 3) / (N 4)))
+_testSlash_Rat4P3_IntN3 = Dict @((N 4 % 9) ~ ((P 4 % 3) / (N 3)))
+_testSlash_Rat4P3_IntN2 = Dict @((N 2 % 3) ~ ((P 4 % 3) / (N 2)))
+_testSlash_Rat4P3_IntN1 = Dict @((N 4 % 3) ~ ((P 4 % 3) / (N 1)))
+_testSlash_Rat4P3_IntP1 = Dict @((P 4 % 3) ~ ((P 4 % 3) / (P 1)))
+_testSlash_Rat4P3_IntP2 = Dict @((P 2 % 3) ~ ((P 4 % 3) / (P 2)))
+_testSlash_Rat4P3_IntP3 = Dict @((P 4 % 9) ~ ((P 4 % 3) / (P 3)))
+_testSlash_Rat4P3_IntP4 = Dict @((P 1 % 3) ~ ((P 4 % 3) / (P 4)))
+_testSlash_Rat4P3_Rat4N1 = Dict @((N 1 % 3) ~ ((P 4 % 3) / (N 4 % 1)))
+_testSlash_Rat4P3_Rat3N1 = Dict @((N 4 % 9) ~ ((P 4 % 3) / (N 3 % 1)))
+_testSlash_Rat4P3_Rat2N1 = Dict @((N 2 % 3) ~ ((P 4 % 3) / (N 2 % 1)))
+_testSlash_Rat4P3_Rat3N2 = Dict @((N 8 % 9) ~ ((P 4 % 3) / (N 3 % 2)))
+_testSlash_Rat4P3_Rat4N3 = Dict @((N 1 % 1) ~ ((P 4 % 3) / (N 4 % 3)))
+_testSlash_Rat4P3_Rat1N1 = Dict @((N 4 % 3) ~ ((P 4 % 3) / (N 1 % 1)))
+_testSlash_Rat4P3_Rat3N4 = Dict @((N 16 % 9) ~ ((P 4 % 3) / (N 3 % 4)))
+_testSlash_Rat4P3_Rat2N3 = Dict @((N 2 % 1) ~ ((P 4 % 3) / (N 2 % 3)))
+_testSlash_Rat4P3_Rat1N2 = Dict @((N 8 % 3) ~ ((P 4 % 3) / (N 1 % 2)))
+_testSlash_Rat4P3_Rat1N3 = Dict @((N 4 % 1) ~ ((P 4 % 3) / (N 1 % 3)))
+_testSlash_Rat4P3_Rat1N4 = Dict @((N 16 % 3) ~ ((P 4 % 3) / (N 1 % 4)))
+_testSlash_Rat4P3_Rat1P4 = Dict @((P 16 % 3) ~ ((P 4 % 3) / (P 1 % 4)))
+_testSlash_Rat4P3_Rat1P3 = Dict @((P 4 % 1) ~ ((P 4 % 3) / (P 1 % 3)))
+_testSlash_Rat4P3_Rat1P2 = Dict @((P 8 % 3) ~ ((P 4 % 3) / (P 1 % 2)))
+_testSlash_Rat4P3_Rat2P3 = Dict @((P 2 % 1) ~ ((P 4 % 3) / (P 2 % 3)))
+_testSlash_Rat4P3_Rat3P4 = Dict @((P 16 % 9) ~ ((P 4 % 3) / (P 3 % 4)))
+_testSlash_Rat4P3_Rat1P1 = Dict @((P 4 % 3) ~ ((P 4 % 3) / (P 1 % 1)))
+_testSlash_Rat4P3_Rat4P3 = Dict @((P 1 % 1) ~ ((P 4 % 3) / (P 4 % 3)))
+_testSlash_Rat4P3_Rat3P2 = Dict @((P 8 % 9) ~ ((P 4 % 3) / (P 3 % 2)))
+_testSlash_Rat4P3_Rat2P1 = Dict @((P 2 % 3) ~ ((P 4 % 3) / (P 2 % 1)))
+_testSlash_Rat4P3_Rat3P1 = Dict @((P 4 % 9) ~ ((P 4 % 3) / (P 3 % 1)))
+_testSlash_Rat4P3_Rat4P1 = Dict @((P 1 % 3) ~ ((P 4 % 3) / (P 4 % 1)))
+_testSlash_Rat3P2_Nat1 = Dict @((P 3 % 2) ~ ((P 3 % 2) / 1))
+_testSlash_Rat3P2_Nat2 = Dict @((P 3 % 4) ~ ((P 3 % 2) / 2))
+_testSlash_Rat3P2_Nat3 = Dict @((P 1 % 2) ~ ((P 3 % 2) / 3))
+_testSlash_Rat3P2_Nat4 = Dict @((P 3 % 8) ~ ((P 3 % 2) / 4))
+_testSlash_Rat3P2_IntN4 = Dict @((N 3 % 8) ~ ((P 3 % 2) / (N 4)))
+_testSlash_Rat3P2_IntN3 = Dict @((N 1 % 2) ~ ((P 3 % 2) / (N 3)))
+_testSlash_Rat3P2_IntN2 = Dict @((N 3 % 4) ~ ((P 3 % 2) / (N 2)))
+_testSlash_Rat3P2_IntN1 = Dict @((N 3 % 2) ~ ((P 3 % 2) / (N 1)))
+_testSlash_Rat3P2_IntP1 = Dict @((P 3 % 2) ~ ((P 3 % 2) / (P 1)))
+_testSlash_Rat3P2_IntP2 = Dict @((P 3 % 4) ~ ((P 3 % 2) / (P 2)))
+_testSlash_Rat3P2_IntP3 = Dict @((P 1 % 2) ~ ((P 3 % 2) / (P 3)))
+_testSlash_Rat3P2_IntP4 = Dict @((P 3 % 8) ~ ((P 3 % 2) / (P 4)))
+_testSlash_Rat3P2_Rat4N1 = Dict @((N 3 % 8) ~ ((P 3 % 2) / (N 4 % 1)))
+_testSlash_Rat3P2_Rat3N1 = Dict @((N 1 % 2) ~ ((P 3 % 2) / (N 3 % 1)))
+_testSlash_Rat3P2_Rat2N1 = Dict @((N 3 % 4) ~ ((P 3 % 2) / (N 2 % 1)))
+_testSlash_Rat3P2_Rat3N2 = Dict @((N 1 % 1) ~ ((P 3 % 2) / (N 3 % 2)))
+_testSlash_Rat3P2_Rat4N3 = Dict @((N 9 % 8) ~ ((P 3 % 2) / (N 4 % 3)))
+_testSlash_Rat3P2_Rat1N1 = Dict @((N 3 % 2) ~ ((P 3 % 2) / (N 1 % 1)))
+_testSlash_Rat3P2_Rat3N4 = Dict @((N 2 % 1) ~ ((P 3 % 2) / (N 3 % 4)))
+_testSlash_Rat3P2_Rat2N3 = Dict @((N 9 % 4) ~ ((P 3 % 2) / (N 2 % 3)))
+_testSlash_Rat3P2_Rat1N2 = Dict @((N 3 % 1) ~ ((P 3 % 2) / (N 1 % 2)))
+_testSlash_Rat3P2_Rat1N3 = Dict @((N 9 % 2) ~ ((P 3 % 2) / (N 1 % 3)))
+_testSlash_Rat3P2_Rat1N4 = Dict @((N 6 % 1) ~ ((P 3 % 2) / (N 1 % 4)))
+_testSlash_Rat3P2_Rat1P4 = Dict @((P 6 % 1) ~ ((P 3 % 2) / (P 1 % 4)))
+_testSlash_Rat3P2_Rat1P3 = Dict @((P 9 % 2) ~ ((P 3 % 2) / (P 1 % 3)))
+_testSlash_Rat3P2_Rat1P2 = Dict @((P 3 % 1) ~ ((P 3 % 2) / (P 1 % 2)))
+_testSlash_Rat3P2_Rat2P3 = Dict @((P 9 % 4) ~ ((P 3 % 2) / (P 2 % 3)))
+_testSlash_Rat3P2_Rat3P4 = Dict @((P 2 % 1) ~ ((P 3 % 2) / (P 3 % 4)))
+_testSlash_Rat3P2_Rat1P1 = Dict @((P 3 % 2) ~ ((P 3 % 2) / (P 1 % 1)))
+_testSlash_Rat3P2_Rat4P3 = Dict @((P 9 % 8) ~ ((P 3 % 2) / (P 4 % 3)))
+_testSlash_Rat3P2_Rat3P2 = Dict @((P 1 % 1) ~ ((P 3 % 2) / (P 3 % 2)))
+_testSlash_Rat3P2_Rat2P1 = Dict @((P 3 % 4) ~ ((P 3 % 2) / (P 2 % 1)))
+_testSlash_Rat3P2_Rat3P1 = Dict @((P 1 % 2) ~ ((P 3 % 2) / (P 3 % 1)))
+_testSlash_Rat3P2_Rat4P1 = Dict @((P 3 % 8) ~ ((P 3 % 2) / (P 4 % 1)))
+_testSlash_Rat2P1_Nat1 = Dict @((P 2 % 1) ~ ((P 2 % 1) / 1))
+_testSlash_Rat2P1_Nat2 = Dict @((P 1 % 1) ~ ((P 2 % 1) / 2))
+_testSlash_Rat2P1_Nat3 = Dict @((P 2 % 3) ~ ((P 2 % 1) / 3))
+_testSlash_Rat2P1_Nat4 = Dict @((P 1 % 2) ~ ((P 2 % 1) / 4))
+_testSlash_Rat2P1_IntN4 = Dict @((N 1 % 2) ~ ((P 2 % 1) / (N 4)))
+_testSlash_Rat2P1_IntN3 = Dict @((N 2 % 3) ~ ((P 2 % 1) / (N 3)))
+_testSlash_Rat2P1_IntN2 = Dict @((N 1 % 1) ~ ((P 2 % 1) / (N 2)))
+_testSlash_Rat2P1_IntN1 = Dict @((N 2 % 1) ~ ((P 2 % 1) / (N 1)))
+_testSlash_Rat2P1_IntP1 = Dict @((P 2 % 1) ~ ((P 2 % 1) / (P 1)))
+_testSlash_Rat2P1_IntP2 = Dict @((P 1 % 1) ~ ((P 2 % 1) / (P 2)))
+_testSlash_Rat2P1_IntP3 = Dict @((P 2 % 3) ~ ((P 2 % 1) / (P 3)))
+_testSlash_Rat2P1_IntP4 = Dict @((P 1 % 2) ~ ((P 2 % 1) / (P 4)))
+_testSlash_Rat2P1_Rat4N1 = Dict @((N 1 % 2) ~ ((P 2 % 1) / (N 4 % 1)))
+_testSlash_Rat2P1_Rat3N1 = Dict @((N 2 % 3) ~ ((P 2 % 1) / (N 3 % 1)))
+_testSlash_Rat2P1_Rat2N1 = Dict @((N 1 % 1) ~ ((P 2 % 1) / (N 2 % 1)))
+_testSlash_Rat2P1_Rat3N2 = Dict @((N 4 % 3) ~ ((P 2 % 1) / (N 3 % 2)))
+_testSlash_Rat2P1_Rat4N3 = Dict @((N 3 % 2) ~ ((P 2 % 1) / (N 4 % 3)))
+_testSlash_Rat2P1_Rat1N1 = Dict @((N 2 % 1) ~ ((P 2 % 1) / (N 1 % 1)))
+_testSlash_Rat2P1_Rat3N4 = Dict @((N 8 % 3) ~ ((P 2 % 1) / (N 3 % 4)))
+_testSlash_Rat2P1_Rat2N3 = Dict @((N 3 % 1) ~ ((P 2 % 1) / (N 2 % 3)))
+_testSlash_Rat2P1_Rat1N2 = Dict @((N 4 % 1) ~ ((P 2 % 1) / (N 1 % 2)))
+_testSlash_Rat2P1_Rat1N3 = Dict @((N 6 % 1) ~ ((P 2 % 1) / (N 1 % 3)))
+_testSlash_Rat2P1_Rat1N4 = Dict @((N 8 % 1) ~ ((P 2 % 1) / (N 1 % 4)))
+_testSlash_Rat2P1_Rat1P4 = Dict @((P 8 % 1) ~ ((P 2 % 1) / (P 1 % 4)))
+_testSlash_Rat2P1_Rat1P3 = Dict @((P 6 % 1) ~ ((P 2 % 1) / (P 1 % 3)))
+_testSlash_Rat2P1_Rat1P2 = Dict @((P 4 % 1) ~ ((P 2 % 1) / (P 1 % 2)))
+_testSlash_Rat2P1_Rat2P3 = Dict @((P 3 % 1) ~ ((P 2 % 1) / (P 2 % 3)))
+_testSlash_Rat2P1_Rat3P4 = Dict @((P 8 % 3) ~ ((P 2 % 1) / (P 3 % 4)))
+_testSlash_Rat2P1_Rat1P1 = Dict @((P 2 % 1) ~ ((P 2 % 1) / (P 1 % 1)))
+_testSlash_Rat2P1_Rat4P3 = Dict @((P 3 % 2) ~ ((P 2 % 1) / (P 4 % 3)))
+_testSlash_Rat2P1_Rat3P2 = Dict @((P 4 % 3) ~ ((P 2 % 1) / (P 3 % 2)))
+_testSlash_Rat2P1_Rat2P1 = Dict @((P 1 % 1) ~ ((P 2 % 1) / (P 2 % 1)))
+_testSlash_Rat2P1_Rat3P1 = Dict @((P 2 % 3) ~ ((P 2 % 1) / (P 3 % 1)))
+_testSlash_Rat2P1_Rat4P1 = Dict @((P 1 % 2) ~ ((P 2 % 1) / (P 4 % 1)))
+_testSlash_Rat3P1_Nat1 = Dict @((P 3 % 1) ~ ((P 3 % 1) / 1))
+_testSlash_Rat3P1_Nat2 = Dict @((P 3 % 2) ~ ((P 3 % 1) / 2))
+_testSlash_Rat3P1_Nat3 = Dict @((P 1 % 1) ~ ((P 3 % 1) / 3))
+_testSlash_Rat3P1_Nat4 = Dict @((P 3 % 4) ~ ((P 3 % 1) / 4))
+_testSlash_Rat3P1_IntN4 = Dict @((N 3 % 4) ~ ((P 3 % 1) / (N 4)))
+_testSlash_Rat3P1_IntN3 = Dict @((N 1 % 1) ~ ((P 3 % 1) / (N 3)))
+_testSlash_Rat3P1_IntN2 = Dict @((N 3 % 2) ~ ((P 3 % 1) / (N 2)))
+_testSlash_Rat3P1_IntN1 = Dict @((N 3 % 1) ~ ((P 3 % 1) / (N 1)))
+_testSlash_Rat3P1_IntP1 = Dict @((P 3 % 1) ~ ((P 3 % 1) / (P 1)))
+_testSlash_Rat3P1_IntP2 = Dict @((P 3 % 2) ~ ((P 3 % 1) / (P 2)))
+_testSlash_Rat3P1_IntP3 = Dict @((P 1 % 1) ~ ((P 3 % 1) / (P 3)))
+_testSlash_Rat3P1_IntP4 = Dict @((P 3 % 4) ~ ((P 3 % 1) / (P 4)))
+_testSlash_Rat3P1_Rat4N1 = Dict @((N 3 % 4) ~ ((P 3 % 1) / (N 4 % 1)))
+_testSlash_Rat3P1_Rat3N1 = Dict @((N 1 % 1) ~ ((P 3 % 1) / (N 3 % 1)))
+_testSlash_Rat3P1_Rat2N1 = Dict @((N 3 % 2) ~ ((P 3 % 1) / (N 2 % 1)))
+_testSlash_Rat3P1_Rat3N2 = Dict @((N 2 % 1) ~ ((P 3 % 1) / (N 3 % 2)))
+_testSlash_Rat3P1_Rat4N3 = Dict @((N 9 % 4) ~ ((P 3 % 1) / (N 4 % 3)))
+_testSlash_Rat3P1_Rat1N1 = Dict @((N 3 % 1) ~ ((P 3 % 1) / (N 1 % 1)))
+_testSlash_Rat3P1_Rat3N4 = Dict @((N 4 % 1) ~ ((P 3 % 1) / (N 3 % 4)))
+_testSlash_Rat3P1_Rat2N3 = Dict @((N 9 % 2) ~ ((P 3 % 1) / (N 2 % 3)))
+_testSlash_Rat3P1_Rat1N2 = Dict @((N 6 % 1) ~ ((P 3 % 1) / (N 1 % 2)))
+_testSlash_Rat3P1_Rat1N3 = Dict @((N 9 % 1) ~ ((P 3 % 1) / (N 1 % 3)))
+_testSlash_Rat3P1_Rat1N4 = Dict @((N 12 % 1) ~ ((P 3 % 1) / (N 1 % 4)))
+_testSlash_Rat3P1_Rat1P4 = Dict @((P 12 % 1) ~ ((P 3 % 1) / (P 1 % 4)))
+_testSlash_Rat3P1_Rat1P3 = Dict @((P 9 % 1) ~ ((P 3 % 1) / (P 1 % 3)))
+_testSlash_Rat3P1_Rat1P2 = Dict @((P 6 % 1) ~ ((P 3 % 1) / (P 1 % 2)))
+_testSlash_Rat3P1_Rat2P3 = Dict @((P 9 % 2) ~ ((P 3 % 1) / (P 2 % 3)))
+_testSlash_Rat3P1_Rat3P4 = Dict @((P 4 % 1) ~ ((P 3 % 1) / (P 3 % 4)))
+_testSlash_Rat3P1_Rat1P1 = Dict @((P 3 % 1) ~ ((P 3 % 1) / (P 1 % 1)))
+_testSlash_Rat3P1_Rat4P3 = Dict @((P 9 % 4) ~ ((P 3 % 1) / (P 4 % 3)))
+_testSlash_Rat3P1_Rat3P2 = Dict @((P 2 % 1) ~ ((P 3 % 1) / (P 3 % 2)))
+_testSlash_Rat3P1_Rat2P1 = Dict @((P 3 % 2) ~ ((P 3 % 1) / (P 2 % 1)))
+_testSlash_Rat3P1_Rat3P1 = Dict @((P 1 % 1) ~ ((P 3 % 1) / (P 3 % 1)))
+_testSlash_Rat3P1_Rat4P1 = Dict @((P 3 % 4) ~ ((P 3 % 1) / (P 4 % 1)))
+_testSlash_Rat4P1_Nat1 = Dict @((P 4 % 1) ~ ((P 4 % 1) / 1))
+_testSlash_Rat4P1_Nat2 = Dict @((P 2 % 1) ~ ((P 4 % 1) / 2))
+_testSlash_Rat4P1_Nat3 = Dict @((P 4 % 3) ~ ((P 4 % 1) / 3))
+_testSlash_Rat4P1_Nat4 = Dict @((P 1 % 1) ~ ((P 4 % 1) / 4))
+_testSlash_Rat4P1_IntN4 = Dict @((N 1 % 1) ~ ((P 4 % 1) / (N 4)))
+_testSlash_Rat4P1_IntN3 = Dict @((N 4 % 3) ~ ((P 4 % 1) / (N 3)))
+_testSlash_Rat4P1_IntN2 = Dict @((N 2 % 1) ~ ((P 4 % 1) / (N 2)))
+_testSlash_Rat4P1_IntN1 = Dict @((N 4 % 1) ~ ((P 4 % 1) / (N 1)))
+_testSlash_Rat4P1_IntP1 = Dict @((P 4 % 1) ~ ((P 4 % 1) / (P 1)))
+_testSlash_Rat4P1_IntP2 = Dict @((P 2 % 1) ~ ((P 4 % 1) / (P 2)))
+_testSlash_Rat4P1_IntP3 = Dict @((P 4 % 3) ~ ((P 4 % 1) / (P 3)))
+_testSlash_Rat4P1_IntP4 = Dict @((P 1 % 1) ~ ((P 4 % 1) / (P 4)))
+_testSlash_Rat4P1_Rat4N1 = Dict @((N 1 % 1) ~ ((P 4 % 1) / (N 4 % 1)))
+_testSlash_Rat4P1_Rat3N1 = Dict @((N 4 % 3) ~ ((P 4 % 1) / (N 3 % 1)))
+_testSlash_Rat4P1_Rat2N1 = Dict @((N 2 % 1) ~ ((P 4 % 1) / (N 2 % 1)))
+_testSlash_Rat4P1_Rat3N2 = Dict @((N 8 % 3) ~ ((P 4 % 1) / (N 3 % 2)))
+_testSlash_Rat4P1_Rat4N3 = Dict @((N 3 % 1) ~ ((P 4 % 1) / (N 4 % 3)))
+_testSlash_Rat4P1_Rat1N1 = Dict @((N 4 % 1) ~ ((P 4 % 1) / (N 1 % 1)))
+_testSlash_Rat4P1_Rat3N4 = Dict @((N 16 % 3) ~ ((P 4 % 1) / (N 3 % 4)))
+_testSlash_Rat4P1_Rat2N3 = Dict @((N 6 % 1) ~ ((P 4 % 1) / (N 2 % 3)))
+_testSlash_Rat4P1_Rat1N2 = Dict @((N 8 % 1) ~ ((P 4 % 1) / (N 1 % 2)))
+_testSlash_Rat4P1_Rat1N3 = Dict @((N 12 % 1) ~ ((P 4 % 1) / (N 1 % 3)))
+_testSlash_Rat4P1_Rat1N4 = Dict @((N 16 % 1) ~ ((P 4 % 1) / (N 1 % 4)))
+_testSlash_Rat4P1_Rat1P4 = Dict @((P 16 % 1) ~ ((P 4 % 1) / (P 1 % 4)))
+_testSlash_Rat4P1_Rat1P3 = Dict @((P 12 % 1) ~ ((P 4 % 1) / (P 1 % 3)))
+_testSlash_Rat4P1_Rat1P2 = Dict @((P 8 % 1) ~ ((P 4 % 1) / (P 1 % 2)))
+_testSlash_Rat4P1_Rat2P3 = Dict @((P 6 % 1) ~ ((P 4 % 1) / (P 2 % 3)))
+_testSlash_Rat4P1_Rat3P4 = Dict @((P 16 % 3) ~ ((P 4 % 1) / (P 3 % 4)))
+_testSlash_Rat4P1_Rat1P1 = Dict @((P 4 % 1) ~ ((P 4 % 1) / (P 1 % 1)))
+_testSlash_Rat4P1_Rat4P3 = Dict @((P 3 % 1) ~ ((P 4 % 1) / (P 4 % 3)))
+_testSlash_Rat4P1_Rat3P2 = Dict @((P 8 % 3) ~ ((P 4 % 1) / (P 3 % 2)))
+_testSlash_Rat4P1_Rat2P1 = Dict @((P 2 % 1) ~ ((P 4 % 1) / (P 2 % 1)))
+_testSlash_Rat4P1_Rat3P1 = Dict @((P 4 % 3) ~ ((P 4 % 1) / (P 3 % 1)))
+_testSlash_Rat4P1_Rat4P1 = Dict @((P 1 % 1) ~ ((P 4 % 1) / (P 4 % 1)))
