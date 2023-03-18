@@ -83,12 +83,12 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
+import GHC.Exts (TYPE, Constraint)
 import GHC.Read qualified as Read
 import GHC.Real qualified as P (Ratio(..), (%))
 import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
 import GHC.TypeNats qualified as N
-import GHC.Types (TYPE, Constraint)
 import KindInteger (Integer, N, P)
 import KindInteger (type (==?), type (==), type (/=?), type (/=))
 import KindInteger qualified as I

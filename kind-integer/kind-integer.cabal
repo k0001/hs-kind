@@ -36,7 +36,6 @@ common basic
 library
   import: basic
   hs-source-dirs: lib
-  build-depends: ghc-prim
   exposed-modules: KindInteger
 
 test-suite test

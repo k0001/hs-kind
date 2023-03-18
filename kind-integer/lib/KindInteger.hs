@@ -68,10 +68,10 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
+import GHC.Exts (TYPE, Constraint)
 import GHC.Real qualified as P
 import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
-import GHC.Types (TYPE, Constraint)
 import Numeric.Natural (Natural)
 import Prelude hiding (Integer, (==), (/=), div, rem)
 import Prelude qualified as P

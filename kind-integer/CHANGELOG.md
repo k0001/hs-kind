@@ -1,3 +1,8 @@
+# Version 0.3.1
+
+* Minor cabal improvements.
+
+
 # Version 0.3
 
 * COMPILER ASSISTED BREAKING CHANGE: Renamed `Mod` to `Rem`, `DivMod` to
