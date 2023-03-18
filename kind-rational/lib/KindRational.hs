@@ -211,6 +211,10 @@ unsafeFromPrelude = \case
     max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
     max_ = 10 ^ (1000 :: Int)
 
+-- | Like 'unsafeFromPrelude', but returns a "Prelude" 'P.Rational'.
+unsafeCheckPrelude :: P.Rational -> P.Rational
+unsafeCheckPrelude = toPrelude . unsafeFromPrelude
+
 -- | Convert a term-level "KindRational" 'Rational' into a term-level
 -- "Prelude" 'P.Rational'.
 --
@@ -423,23 +427,25 @@ type Dif (r :: I.Round) (a :: Rational) = Snd (DivDif r a) :: Rational
 type DivDif (r :: I.Round) (a :: Rational) =
   DivDif_ r (Normalize a) :: (Integer, Rational)
 type DivDif_ (r :: I.Round) (a :: Rational) =
-  DivDif__ a (Div_ r a) :: (Integer, Rational)
-type DivDif__ (a :: Rational) (q :: Integer) =
-  '(q, a - q :% 1) :: (Integer, Rational)
+  DivDif__ (Den_ a) (DivMod_ r a) :: (Integer, Rational)
+type family DivDif__ (d :: Natural) (qm :: (Integer, Integer)) :: (Integer, Rational) where
+  DivDif__ d '(q, m) = '(q, Normalize (m % d))
 
 -- | Term-level version of 'Div'.
 --
 -- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
 div :: I.Round -> P.Rational -> P.Integer
-div r = \(n P.:% d) -> f n d
-  where f = I.div r
+div r = let f = I.div r
+        in \a -> let (n P.:% d) = unsafeCheckPrelude a
+                 in  f n d
 
 -- | Term-level version of 'Div'.
 --
 -- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
 mod :: I.Round -> P.Rational -> P.Integer
-mod r = \(n P.:% d) -> f n d
-  where f = I.mod r
+mod r = let f = I.mod r
+        in \a -> let (n P.:% d) = unsafeCheckPrelude a
+                 in  f n d
 
 -- | Term-level version of 'DivMod'.
 -- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
@@ -451,15 +457,15 @@ mod r = \(n P.:% d) -> f n d
 --     'divMod' r a  'P.=='  ('div' r a, 'mod' r a)
 -- @
 divMod :: I.Round -> P.Rational -> (P.Integer, P.Integer)
-divMod r = \(n P.:% d) -> f n d
-  where f = I.divMod r
+divMod r = let f = I.divMod r
+           in \a -> let (n P.:% d) = unsafeCheckPrelude a
+                    in  f n d
 
 -- | Term-level version of 'Dif'.
 --
 -- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Rational'.
 dif :: I.Round -> P.Rational -> P.Rational
-dif r = \a -> a - toRational (f a)
-  where f = div r
+dif r = snd . divDif r
 
 -- | Term-level version of 'DivDif'.
 --
@@ -472,8 +478,10 @@ dif r = \a -> a - toRational (f a)
 --     'divDif' r a  'P.=='  ('div' r a, 'dif' r a)
 -- @
 divDif :: I.Round -> P.Rational -> (P.Integer, P.Rational)
-divDif r = \a -> let q = f a in (q, a - toRational q)
-  where f = div r
+divDif r = let f = I.divMod r
+           in \a -> let (n P.:% d) = unsafeCheckPrelude a
+                        (q, m) = f n d
+                    in  (q, m P.% d)
 
 --------------------------------------------------------------------------------
 
