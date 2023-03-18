@@ -43,13 +43,13 @@ module KindInteger {--}
 
     -- ** Division
   , Div
-  , Mod
-  , DivMod
+  , Rem
+  , DivRem
   , Round(..)
     -- *** Term-level
   , div
-  , mod
-  , divMod
+  , rem
+  , divRem
 
     -- * Comparisons
   , CmpInteger
@@ -73,7 +73,7 @@ import GHC.Show (appPrec, appPrec1)
 import GHC.TypeLits qualified as L
 import GHC.Types (TYPE, Constraint)
 import Numeric.Natural (Natural)
-import Prelude hiding (Integer, (==), (/=), divMod, div, mod)
+import Prelude hiding (Integer, (==), (/=), div, rem)
 import Prelude qualified as P
 import Unsafe.Coerce(unsafeCoerce)
 
@@ -236,7 +236,7 @@ type NN (a :: Natural) = Normalize (N a) :: Integer
 --------------------------------------------------------------------------------
 
 infixl 6 +, -
-infixl 7 *, `Div`, `Mod`
+infixl 7 *, `Div`, `Rem`
 infixr 8 ^
 
 -- | Whether a type-level 'Natural' is odd. /Zero/ is not considered odd.
@@ -297,28 +297,28 @@ type family Pow_ (a :: Integer) (b :: Integer) :: Integer where
 -- | Subtraction of type-level 'Integer's.
 type (a :: Integer) - (b :: Integer) = a + Negate b :: Integer
 
--- | Get both the quotient and the 'Mod'ulus of the 'Div'ision of
+-- | Get both the quotient and the 'Rem'ainder of the 'Div'ision of
 -- type-level 'Integer's @a@ and @b@ using the specified 'Round'ing @r@.
 --
 -- @
 -- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer').
 --   (b '/=' 0) =>
---     'DivMod' r a b '=='  '('Div' r a b, 'Mod' r a b)
+--     'DivRem' r a b '=='  '('Div' r a b, 'Rem' r a b)
 -- @
-type DivMod (r :: Round) (a :: Integer) (b :: Integer) =
-  '( Div r a b, Mod r a b ) :: (Integer, Integer)
+type DivRem (r :: Round) (a :: Integer) (b :: Integer) =
+  '( Div r a b, Rem r a b ) :: (Integer, Integer)
 
--- | Modulus of the division of type-level 'Integer' @a@ by @b@,
+-- | 'Rem'ainder of the division of type-level 'Integer' @a@ by @b@,
 -- using the specified 'Round'ing @r@.
 --
 -- @
 -- forall (r :: 'Round') (a :: 'Integer') (b :: 'Integer').
 --   (b '/=' 0) =>
---     'Mod' r a b  '=='  a '-' b '*' 'Div' r a b
+--     'Rem' r a b  '=='  a '-' b '*' 'Div' r a b
 -- @
 --
 -- * Division by /zero/ doesn't type-check.
-type Mod (r :: Round) (a :: Integer) (b :: Integer) =
+type Rem (r :: Round) (a :: Integer) (b :: Integer) =
   a - b * Div r a b :: Integer
 
 -- | Divide of type-level 'Integer' @a@ by @b@,
@@ -345,8 +345,6 @@ type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
                                     (L.Div a b L.+ 1))
 
   Div__ 'RoundUp a b = Negate (Div__ 'RoundDown (Negate a) b)
---  Div__ 'RoundUp (P a) b = Negate (Div__ 'RoundDown (N a) b)
---  Div__ 'RoundUp (N a) b = Negate (Div__ 'RoundDown (P a) b)
 
   Div__ 'RoundZero (P a) b = Div__ 'RoundDown (P a) b
   Div__ 'RoundZero (N a) b = Negate (Div__ 'RoundDown (P a) b)
@@ -538,11 +536,11 @@ data Round
   -- ^ Round __up__ towards positive infinity.
   | RoundDown
   -- ^ Round __down__ towards negative infinity.  Also known as "Prelude"'s
-  -- 'P.floor'. This is the type of rounding used by "Prelude"'s 'P.div' and
-  -- 'P.mod'.
+  -- 'P.floor'. This is the type of rounding used by "Prelude"'s 'P.div',
+  -- 'P.mod', 'P.divMod', 'L.Div', 'L.Mod'.
   | RoundZero
   -- ^ Round towards __zero__.  Also known as "Prelude"'s 'P.truncate'. This is
-  -- the type of rounding used by "Prelude"'s 'P.quot' and 'P.rem'.
+  -- the type of rounding used by "Prelude"'s 'P.quot', 'P.rem', 'P.quotRem'.
   | RoundAway
   -- ^ Round __away__ from zero.
   | RoundHalfUp
@@ -568,78 +566,78 @@ data Round
 
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the quotient @q@. See 'divMod'.
+-- Return the quotient @q@. See 'divRem'.
 div :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
     -> P.Integer  -- ^ Quotient @q@.
-div r a b = fst (divMod r a b)
+div r a b = fst (divRem r a b)
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the modulus @m@. See 'divMod'.
-mod :: Round
+-- Return the remainder @m@. See 'divRem'.
+rem :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
-    -> P.Integer  -- ^ Modulus @m@.
-mod r a b = snd (divMod r a b)
+    -> P.Integer  -- ^ Remainder @m@.
+rem r a b = snd (divRem r a b)
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the quotient @q@ and the modulus @m@.
+-- Return the quotient @q@ and the remainder @m@.
 --
 -- @
 -- forall (r :: 'Round') (a :: 'P.Integer') (b :: 'P.Integer').
 --   (b 'P./=' 0) =>
---     case 'divMod' r a b of
+--     case 'divRem' r a b of
 --       (q, m) -> m 'P.==' a 'P.-' b 'P.*' q
 -- @
-divMod
+divRem
   :: Round
   -> P.Integer  -- ^ Dividend @a@.
   -> P.Integer  -- ^ Divisor @b@.
-  -> (P.Integer, P.Integer)  -- ^ Quotient @q@ and modulus @m@.
-{-# NOINLINE divMod #-}
-divMod RoundZero = \a (errDiv0 -> b) -> P.quotRem a b
-divMod RoundDown = \a (errDiv0 -> b) -> P.divMod a b
-divMod RoundUp = \a (errDiv0 -> b) -> _divModRoundUpNoCheck a b
-divMod RoundAway = \a (errDiv0 -> b) ->
+  -> (P.Integer, P.Integer)  -- ^ Quotient @q@ and remainder @m@.
+{-# NOINLINE divRem #-}
+divRem RoundZero = \a (errDiv0 -> b) -> P.quotRem a b
+divRem RoundDown = \a (errDiv0 -> b) -> P.divMod a b
+divRem RoundUp = \a (errDiv0 -> b) -> _divRemRoundUpNoCheck a b
+divRem RoundAway = \a (errDiv0 -> b) ->
   if xor (a < 0) (b < 0)
      then P.divMod a b
-     else _divModRoundUpNoCheck a b
-divMod RoundHalfUp = _divModHalf $ \_ _ up -> up
-divMod RoundHalfDown = _divModHalf $ \_ down _ -> down
-divMod RoundHalfZero = _divModHalf $ \neg down up ->
+     else _divRemRoundUpNoCheck a b
+divRem RoundHalfUp = _divRemHalf $ \_ _ up -> up
+divRem RoundHalfDown = _divRemHalf $ \_ down _ -> down
+divRem RoundHalfZero = _divRemHalf $ \neg down up ->
   if neg then up else down
-divMod RoundHalfAway = _divModHalf $ \neg down up ->
+divRem RoundHalfAway = _divRemHalf $ \neg down up ->
   if neg then down else up
-divMod RoundHalfEven = _divModHalf $ \_ down up ->
+divRem RoundHalfEven = _divRemHalf $ \_ down up ->
   if even (fst down) then down else up
-divMod RoundHalfOdd = _divModHalf $ \_ down up ->
+divRem RoundHalfOdd = _divRemHalf $ \_ down up ->
   if odd (fst down) then down else up
 
-_divModRoundUpNoCheck :: P.Integer -> P.Integer -> (P.Integer, P.Integer)
-_divModRoundUpNoCheck a b =
+_divRemRoundUpNoCheck :: P.Integer -> P.Integer -> (P.Integer, P.Integer)
+_divRemRoundUpNoCheck a b =
   let q = negate (P.div (negate a) b)
   in (q, a - b * q)
-{-# INLINE _divModRoundUpNoCheck #-}
+{-# INLINE _divRemRoundUpNoCheck #-}
 
-_divModHalf
+_divRemHalf
   :: (Bool ->
       (P.Integer, P.Integer) ->
       (P.Integer, P.Integer) ->
       (P.Integer, P.Integer))
-  -- ^ Negative -> divMod RoundDown -> divMod RoundDown -> Result
+  -- ^ Negative -> divRem RoundDown -> divRem RoundDown -> Result
   -> P.Integer  -- ^ Dividend
   -> P.Integer  -- ^ Divisor
   -> (P.Integer, P.Integer)
-_divModHalf f = \a (errDiv0 -> b) ->
+_divRemHalf f = \a (errDiv0 -> b) ->
   let neg  = xor (a < 0) (b < 0)
       down = P.divMod a b
-      up   = _divModRoundUpNoCheck a b
+      up   = _divRemRoundUpNoCheck a b
   in  case compare (a P.% b - toRational (fst down)) (1 P.:% 2) of
         LT -> down
         GT -> up
         EQ -> f neg down up
-{-# INLINE _divModHalf #-}
+{-# INLINE _divRemHalf #-}
 
 --------------------------------------------------------------------------------
 -- Extras

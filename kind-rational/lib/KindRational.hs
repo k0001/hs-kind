@@ -52,14 +52,10 @@ module KindRational {--}
   , Recip
   , Div
   , div
-  , Mod
-  , mod
-  , Dif
-  , dif
-  , DivMod
-  , divMod
-  , DivDif
-  , divDif
+  , Rem
+  , rem
+  , DivRem
+  , divRem
   , I.Round(..)
 
     -- * Decimals
@@ -97,7 +93,7 @@ import KindInteger (Integer, N, P)
 import KindInteger (type (==?), type (==), type (/=?), type (/=))
 import KindInteger qualified as I
 import Numeric.Natural (Natural)
-import Prelude hiding (Rational, Integer, Num, div, mod, divMod)
+import Prelude hiding (Rational, Integer, Num, div, rem)
 import Prelude qualified as P
 import Text.ParserCombinators.ReadPrec as Read
 import Text.Read.Lex qualified as Read
@@ -162,7 +158,7 @@ instance Read Rational where
 
 -- | Shows the 'Rational' as it appears literally at the type-level.
 --
--- This is different from normal 'show' for 'Rational', which shows
+-- This is remerent from normal 'show' for 'Rational', which shows
 -- the term-level value.
 --
 -- @
@@ -368,68 +364,40 @@ type (a :: Rational) - (b :: Rational) = a + Negate b :: Rational
 -- @
 -- forall (r :: 'I.Round') (a :: 'Rational').
 --   ('Den' a '/=' 0) =>
---     'Mod' r a  '=='  'Num' a 'I.-' 'P' ('Den' a) 'I.*' 'Div' r a
+--     'Rem' r a  '=='  a '-' 'Div' r a '%' 1
 -- @
+--
+-- Use this to approximate a type-level 'Rational' to an 'Integer'.
 type Div (r :: I.Round) (a :: Rational) =
   Div_ r (Normalize a) :: Integer
 type Div_ (r :: I.Round) (a :: Rational) =
   I.Div r (Num_ a) (P (Den_ a)) :: Integer
 
--- | 'Mod'ulus of the division of the 'Num'erator of type-level 'Rational'
+-- | 'Rem'ainder from 'Div'iding the 'Num'erator of the type-level 'Rational'
 -- @a@ by its 'Den'ominator, using the specified 'I.Round'ing @r@.
 --
 -- @
 -- forall (r :: 'I.Round') (a :: 'Rational').
 --   ('Den' a '/=' 0) =>
---     'Mod' r a  '=='  'Num' a 'I.-' 'P' ('Den' a) 'I.*' 'Div' r a
+--     'Rem' r a  '=='  a '-' 'Div' r a '%' 1
 -- @
-type Mod (r :: I.Round) (a :: Rational) = Snd (DivMod r a) :: Integer
+type Rem (r :: I.Round) (a :: Rational) = Snd (DivRem r a) :: Rational
 
--- | Get both the quotient and the 'Mod'ulus of the 'Div'ision of the
+-- | Get both the quotient and the 'Rem'ainder of the 'Div'ision of the
 -- 'Num'erator of type-level 'Rational' @a@ by its 'Den'ominator,
 -- using the specified 'I.Round'ing @r@.
 --
 -- @
 -- forall (r :: 'I.Round') (a :: 'Rational').
 --   ('Den' a '/=' 0) =>
---     'DivMod' r a  '=='  '('Div' r a, 'Mod' r a)
+--     'DivRem' r a  '=='  '('Div' r a, 'Rem' r a)
 -- @
-type DivMod (r :: I.Round) (a :: Rational) =
-  DivMod_ r (Normalize a) :: (Integer, Integer)
-type DivMod_ (r :: I.Round) (a :: Rational) =
-  I.DivMod r (Num_ a) (P (Den_ a)) :: (Integer, Integer)
-
--- | 'Dif'ference of the type-level 'Rational' @a@ and the 'Div'ision of
--- its 'Num'erator by its 'Den'ominator, using the specified 'I.Round'ing @r@.
---
--- @
--- forall (r :: 'I.Round') (a :: 'Rational').
---   ('Den' a '/=' 0) =>
---     'Dif' r a  '=='  a '-' 'Div' r a '%' 1
--- @
---
--- Note: We use the word /difference/ because talking about /remainder/ in this
--- context can be confusing, considering "Prelude"'s `rem`ainder function.
--- However, strictly speaking, @`Dif` r a@ is the 'Rational' that /remiains/
--- after performing the 'I.Round'ed 'Div'ision. So, yes, 'Dif' could potentially
--- have been called @Rem@ instead.
-type Dif (r :: I.Round) (a :: Rational) = Snd (DivDif r a) :: Rational
-
--- | Get both the quotient and the 'Dif'ference of the 'Div'ision of the
--- 'Num'erator of type-level 'Rational' @a@ by its 'Den'ominator,
--- using the specified 'I.Round'ing @r@.
---
--- @
--- forall (r :: 'I.Round') (a :: 'Rational').
---   ('Den' a '/=' 0) =>
---     'DivDif' r a  '=='  '('Div' r a, 'Dif' r a)
--- @
-type DivDif (r :: I.Round) (a :: Rational) =
-  DivDif_ r (Normalize a) :: (Integer, Rational)
-type DivDif_ (r :: I.Round) (a :: Rational) =
-  DivDif__ (Den_ a) (DivMod_ r a) :: (Integer, Rational)
-type family DivDif__ (d :: Natural) (qm :: (Integer, Integer)) :: (Integer, Rational) where
-  DivDif__ d '(q, m) = '(q, Normalize (m % d))
+type DivRem (r :: I.Round) (a :: Rational) =
+  DivRem_ r (Normalize a) :: (Integer, Rational)
+type DivRem_ (r :: I.Round) (a :: Rational) =
+  DivRem__ (Den_ a) (I.DivRem r (Num_ a) (P (Den_ a))) :: (Integer, Rational)
+type DivRem__ (d :: Natural) (qm :: (Integer, Integer)) =
+  '(Fst qm, Normalize (Snd qm % d)) :: (Integer, Rational)
 
 -- | Term-level version of 'Div'.
 --
@@ -439,49 +407,27 @@ div r = let f = I.div r
         in \a -> let (n P.:% d) = unsafeCheckPrelude a
                  in  f n d
 
--- | Term-level version of 'Div'.
---
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-mod :: I.Round -> P.Rational -> P.Integer
-mod r = let f = I.mod r
-        in \a -> let (n P.:% d) = unsafeCheckPrelude a
-                 in  f n d
-
--- | Term-level version of 'DivMod'.
--- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
--- 'P.Integer's /(quotient, modulus)/.
---
--- @
--- forall ('r' :: 'I.Round') (a :: 'P.Rational').
---   ('P.denominator' a 'P./=' 0) =>
---     'divMod' r a  'P.=='  ('div' r a, 'mod' r a)
--- @
-divMod :: I.Round -> P.Rational -> (P.Integer, P.Integer)
-divMod r = let f = I.divMod r
-           in \a -> let (n P.:% d) = unsafeCheckPrelude a
-                    in  f n d
-
--- | Term-level version of 'Dif'.
+-- | Term-level version of 'Rem'.
 --
 -- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Rational'.
-dif :: I.Round -> P.Rational -> P.Rational
-dif r = snd . divDif r
+rem :: I.Round -> P.Rational -> P.Rational
+rem r = snd . divRem r
 
--- | Term-level version of 'DivDif'.
+-- | Term-level version of 'DivRem'.
 --
 -- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
--- 'P.Rational's /(quotient, difference)/.
+-- 'P.Rational's /(quotient, remerence)/.
 --
 -- @
 -- forall ('r' :: 'I.Round') (a :: 'P.Rational').
 --   ('P.denominator' a 'P./=' 0) =>
---     'divDif' r a  'P.=='  ('div' r a, 'dif' r a)
+--     'divRem' r a  'P.=='  ('div' r a, 'rem' r a)
 -- @
-divDif :: I.Round -> P.Rational -> (P.Integer, P.Rational)
-divDif r = let f = I.divMod r
+divRem :: I.Round -> P.Rational -> (P.Integer, P.Rational)
+divRem r = let f = I.divRem r
            in \a -> let (n P.:% d) = unsafeCheckPrelude a
                         (q, m) = f n d
-                    in  (q, m P.% d)
+                    in  (q, m P.% d) -- (m % d) == (a - q)
 
 --------------------------------------------------------------------------------
 
@@ -721,5 +667,6 @@ type GCD (a :: Natural) (b :: Natural) = I.GCD (P a) (P b) :: Natural
 
 data Dict c where Dict :: c => Dict c
 
+type family Fst (ab :: (a, b)) :: a where Fst '(a, b) = a
 type family Snd (ab :: (a, b)) :: b where Snd '(a, b) = b
 

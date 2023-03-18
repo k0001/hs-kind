@@ -1,4 +1,10 @@
-# Version 0.1.1
+# Version 0.3
+
+* COMPILER ASSISTED BREAKING CHANGE: Renamed `Mod` to `Rem`, `DivMod` to
+  `DivRem`, `mod` to `rem`, `divMod` to `divRem`.
+
+
+# Version 0.2
 
 * COMPILER ASSISTED BREAKING CHANGE: Removed `Div`, `Mod`, `Quote`
   and `Rem` in favour of more polymorphic `Div`, `Mod`.

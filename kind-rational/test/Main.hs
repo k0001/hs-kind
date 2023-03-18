@@ -213,32 +213,6 @@ _testRecip :: Dict
   , (N 4 / 3) ~ K.Recip (N 3 / 4)
   )
 
--- Most tests for these are in kind-integer.
-_testDivMod =  Dict
-_testDivMod :: Dict
-  ( '(P 1, P 1) ~ K.DivMod 'K.RoundDown (3 / 2)
-  , '(P 2, N 1) ~ K.DivMod 'K.RoundUp (3 / 2)
-  , '(P 1, P 1) ~ K.DivMod 'K.RoundZero (3 / 2)
-  , '(P 2, N 1) ~ K.DivMod 'K.RoundAway (3 / 2)
-  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfDown (3 / 2)
-  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfUp (3 / 2)
-  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfZero (3 / 2)
-  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfAway (3 / 2)
-  , '(P 2, N 1) ~ K.DivMod 'K.RoundHalfEven (3 / 2)
-  , '(P 1, P 1) ~ K.DivMod 'K.RoundHalfOdd (3 / 2)
-
-  , '(N 2, P 1) ~ K.DivMod 'K.RoundDown (N 3 / 2)
-  , '(N 1, N 1) ~ K.DivMod 'K.RoundUp (N 3 / 2)
-  , '(N 1, N 1) ~ K.DivMod 'K.RoundZero (N 3 / 2)
-  , '(N 2, P 1) ~ K.DivMod 'K.RoundAway (N 3 / 2)
-  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfDown (N 3 / 2)
-  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfUp (N 3 / 2)
-  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfZero (N 3 / 2)
-  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfAway (N 3 / 2)
-  , '(N 2, P 1) ~ K.DivMod 'K.RoundHalfEven (N 3 / 2)
-  , '(N 1, N 1) ~ K.DivMod 'K.RoundHalfOdd (N 3 / 2)
-  )
-
 _testDiv =  Dict
 _testDiv :: Dict
   ( P 1 ~ K.Div 'K.RoundDown (3 / 2)
@@ -286,123 +260,98 @@ _testDiv :: Dict
   , N 1 ~ K.Div 'K.RoundHalfOdd (N 3 / 4)
   )
 
-_testMod =  Dict
-_testMod :: Dict
-  ( P 1 ~ K.Mod 'K.RoundDown (3 / 2)
-  , N 1 ~ K.Mod 'K.RoundUp (3 / 2)
-  , P 1 ~ K.Mod 'K.RoundZero (3 / 2)
-  , N 1 ~ K.Mod 'K.RoundAway (3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfDown (3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfUp (3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfZero (3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfAway (3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfEven (3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfOdd (3 / 2)
+_testRem =  Dict
+_testRem :: Dict
+  ( P 1 / 2 ~ K.Rem 'K.RoundDown (3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundUp (3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundZero (3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundAway (3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfDown (3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfUp (3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfZero (3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfAway (3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfEven (3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfOdd (3 / 2)
 
-  , P 1 ~ K.Mod 'K.RoundDown (N 3 / 2)
-  , N 1 ~ K.Mod 'K.RoundUp (N 3 / 2)
-  , N 1 ~ K.Mod 'K.RoundZero (N 3 / 2)
-  , P 1 ~ K.Mod 'K.RoundAway (N 3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfDown (N 3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfUp (N 3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfZero (N 3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfAway (N 3 / 2)
-  , P 1 ~ K.Mod 'K.RoundHalfEven (N 3 / 2)
-  , N 1 ~ K.Mod 'K.RoundHalfOdd (N 3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundDown (N 3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundUp (N 3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundZero (N 3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundAway (N 3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfDown (N 3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfUp (N 3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfZero (N 3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfAway (N 3 / 2)
+  , P 1 / 2 ~ K.Rem 'K.RoundHalfEven (N 3 / 2)
+  , N 1 / 2 ~ K.Rem 'K.RoundHalfOdd (N 3 / 2)
+
+  , P 3 / 4 ~ K.Rem 'K.RoundDown (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundUp (3 / 4)
+  , P 3 / 4 ~ K.Rem 'K.RoundZero (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundAway (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfDown (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfUp (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfZero (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfAway (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfEven (3 / 4)
+  , N 1 / 4 ~ K.Rem 'K.RoundHalfOdd (3 / 4)
+
+  , P 1 / 4 ~ K.Rem 'K.RoundDown (N 3 / 4)
+  , N 3 / 4 ~ K.Rem 'K.RoundUp (N 3 / 4)
+  , N 3 / 4 ~ K.Rem 'K.RoundZero (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundAway (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfDown (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfUp (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfZero (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfAway (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfEven (N 3 / 4)
+  , P 1 / 4 ~ K.Rem 'K.RoundHalfOdd (N 3 / 4)
   )
 
-_testDif =  Dict
-_testDif :: Dict
-  ( P 1 / 2 ~ K.Dif 'K.RoundDown (3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundUp (3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundZero (3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundAway (3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfDown (3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfUp (3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfZero (3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfAway (3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfEven (3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfOdd (3 / 2)
+_testDivRem =  Dict
+_testDivRem :: Dict
+  ( '(P 1, P 1 / 2) ~ K.DivRem 'K.RoundDown (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivRem 'K.RoundUp (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivRem 'K.RoundZero (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivRem 'K.RoundAway (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivRem 'K.RoundHalfDown (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivRem 'K.RoundHalfUp (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivRem 'K.RoundHalfZero (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivRem 'K.RoundHalfAway (3 / 2)
+  , '(P 2, N 1 / 2) ~ K.DivRem 'K.RoundHalfEven (3 / 2)
+  , '(P 1, P 1 / 2) ~ K.DivRem 'K.RoundHalfOdd (3 / 2)
 
-  , P 1 / 2 ~ K.Dif 'K.RoundDown (N 3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundUp (N 3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundZero (N 3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundAway (N 3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfDown (N 3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfUp (N 3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfZero (N 3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfAway (N 3 / 2)
-  , P 1 / 2 ~ K.Dif 'K.RoundHalfEven (N 3 / 2)
-  , N 1 / 2 ~ K.Dif 'K.RoundHalfOdd (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundDown (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundUp (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundZero (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundAway (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundHalfDown (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundHalfUp (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundHalfZero (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundHalfAway (N 3 / 2)
+  , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundHalfEven (N 3 / 2)
+  , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundHalfOdd (N 3 / 2)
 
-  , P 3 / 4 ~ K.Dif 'K.RoundDown (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundUp (3 / 4)
-  , P 3 / 4 ~ K.Dif 'K.RoundZero (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundAway (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfDown (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfUp (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfZero (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfAway (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfEven (3 / 4)
-  , N 1 / 4 ~ K.Dif 'K.RoundHalfOdd (3 / 4)
+  , '(P 0, P 3 / 4) ~ K.DivRem 'K.RoundDown (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundUp (3 / 4)
+  , '(P 0, P 3 / 4) ~ K.DivRem 'K.RoundZero (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundAway (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfDown (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfUp (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfZero (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfAway (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfEven (3 / 4)
+  , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfOdd (3 / 4)
 
-  , P 1 / 4 ~ K.Dif 'K.RoundDown (N 3 / 4)
-  , N 3 / 4 ~ K.Dif 'K.RoundUp (N 3 / 4)
-  , N 3 / 4 ~ K.Dif 'K.RoundZero (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundAway (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfDown (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfUp (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfZero (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfAway (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfEven (N 3 / 4)
-  , P 1 / 4 ~ K.Dif 'K.RoundHalfOdd (N 3 / 4)
-  )
-
-_testDivDif =  Dict
-_testDivDif :: Dict
-  ( '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundDown (3 / 2)
-  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundUp (3 / 2)
-  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundZero (3 / 2)
-  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundAway (3 / 2)
-  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfDown (3 / 2)
-  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfUp (3 / 2)
-  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfZero (3 / 2)
-  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfAway (3 / 2)
-  , '(P 2, N 1 / 2) ~ K.DivDif 'K.RoundHalfEven (3 / 2)
-  , '(P 1, P 1 / 2) ~ K.DivDif 'K.RoundHalfOdd (3 / 2)
-
-  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundDown (N 3 / 2)
-  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundUp (N 3 / 2)
-  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundZero (N 3 / 2)
-  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundAway (N 3 / 2)
-  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfDown (N 3 / 2)
-  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfUp (N 3 / 2)
-  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfZero (N 3 / 2)
-  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfAway (N 3 / 2)
-  , '(N 2, P 1 / 2) ~ K.DivDif 'K.RoundHalfEven (N 3 / 2)
-  , '(N 1, N 1 / 2) ~ K.DivDif 'K.RoundHalfOdd (N 3 / 2)
-
-  , '(P 0, P 3 / 4) ~ K.DivDif 'K.RoundDown (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundUp (3 / 4)
-  , '(P 0, P 3 / 4) ~ K.DivDif 'K.RoundZero (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundAway (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfDown (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfUp (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfZero (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfAway (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfEven (3 / 4)
-  , '(P 1, N 1 / 4) ~ K.DivDif 'K.RoundHalfOdd (3 / 4)
-
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundDown (N 3 / 4)
-  , '(P 0, N 3 / 4) ~ K.DivDif 'K.RoundUp (N 3 / 4)
-  , '(P 0, N 3 / 4) ~ K.DivDif 'K.RoundZero (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundAway (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfDown (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfUp (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfZero (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfAway (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfEven (N 3 / 4)
-  , '(N 1, P 1 / 4) ~ K.DivDif 'K.RoundHalfOdd (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundDown (N 3 / 4)
+  , '(P 0, N 3 / 4) ~ K.DivRem 'K.RoundUp (N 3 / 4)
+  , '(P 0, N 3 / 4) ~ K.DivRem 'K.RoundZero (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundAway (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfDown (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfUp (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfZero (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfAway (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfEven (N 3 / 4)
+  , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfOdd (N 3 / 4)
   )
 
 _testTerminates =  Dict
@@ -533,24 +482,19 @@ main = testsMain $
             == fmap (\(K.SomeRational p) -> K.rationalVal p)
                     (readMaybe @K.SomeRational str)
 
-  ] <> testsDivModDif <> testsTerminating
+  ] <> testsDivRem <> testsTerminating
 
-testsDivModDif :: [IO Bool]
-testsDivModDif = do
+testsDivRem :: [IO Bool]
+testsDivRem = do
   a@(n P.:% d) <- rats 4
   r :: K.Round <- [minBound .. maxBound]
   let tname :: String -> ShowS
       tname t = showString t . showChar ' ' . shows r . showChar ' '
               . shows n . showChar ' ' . shows d
-  [ assert (tname "divMod" "") $ case K.divMod r a of
-                                   (q, m) -> m == n - d * q
-    , assert (tname "divMod/div" "") $ fst (K.divMod r a) == K.div r a
-    , assert (tname "divMod/mod" "") $ snd (K.divMod r a) == K.mod r a
-
-    , assert (tname "divDif" "") $ case K.divDif r a of
-                                     (q, x) -> a == toRational q + x
-    , assert (tname "divDif/div" "") $ fst (K.divDif r a) == K.div r a
-    , assert (tname "divDif/dif" "") $ snd (K.divDif r a) == K.dif r a
+  [   assert (tname "divRem" "") $ case K.divRem r a of
+                                        (q, x) -> a == toRational q + x
+    , assert (tname "divRem/div" "") $ fst (K.divRem r a) == K.div r a
+    , assert (tname "divRem/rem" "") $ snd (K.divRem r a) == K.rem r a
     ]
 
 testsTerminating  :: [IO Bool]

@@ -1,7 +1,7 @@
 { mkDerivation, base, lib, kind-integer }:
 mkDerivation {
   pname = "kind-rational";
-  version = "0.1";
+  version = "0.2";
   src = lib.sources.cleanSource ./.;
   libraryHaskellDepends = [ base kind-integer ];
   homepage = "https://github.com/k0001/hs-kind";
