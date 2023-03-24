@@ -4,25 +4,22 @@
   outputs = { self, nixpkgs }:
     let
       inherit (nixpkgs) lib;
-      hs_kind-integer = import ./kind-integer;
-      hs_kind-rational = import ./kind-rational;
-      hspkgsOverrides = pself: psuper: hself: hsuper: {
-        kind-integer = hsuper.callPackage hs_kind-integer { };
-        kind-rational = hsuper.callPackage hs_kind-rational { };
-      };
-      pkgsOverlay = pself: psuper: {
+      overlay = pself: psuper: {
         haskell = psuper.haskell // {
-          packageOverrides = hspkgsOverrides pself psuper;
+          packageOverrides = hself: hsuper: {
+            kind-integer = hsuper.callPackage ./kind-integer { };
+            kind-rational = hsuper.callPackage ./kind-rational { };
+          };
         };
       };
       pkgsFor = system:
         import nixpkgs {
           inherit system;
-          overlays = [ pkgsOverlay ];
+          overlays = [ overlay ];
         };
 
     in {
-      inherit hs_kind-integer hs_kind-rational hspkgsOverrides pkgsOverlay;
+      overlays.default = final: prev: overlay final prev;
       packages = lib.genAttrs [ "x86_64-linux" "i686-linux" "aarch64-linux" ]
         (system:
           let pkgs = pkgsFor system;
