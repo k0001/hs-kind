@@ -1,69 +1,47 @@
 {
   description = "Haskell 'kind-integer' library";
 
-  outputs = { self, nixpkgs }:
-    let
-      inherit (nixpkgs) lib;
-      overlay = pself: psuper: {
-        haskell = psuper.haskell // {
-          packageOverrides = hself: hsuper: {
-            kind-integer = hsuper.callPackage ./kind-integer { };
-            kind-rational = hsuper.callPackage ./kind-rational { };
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs?rev=21eda9bc80bef824a037582b1e5a43ba74e92daa";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+  };
+
+  outputs = inputs@{ ... }:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ inputs.flake-parts.flakeModules.easyOverlay ];
+      systems = [ "x86_64-linux" "i686-linux" "aarch64-linux" ];
+      perSystem = { config, pkgs, final, ... }: {
+        overlayAttrs = {
+          haskell = pkgs.haskell // {
+            packageOverrides = pkgs.lib.composeExtensions
+              (pkgs.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
+                kind-integer = hsuper.callPackage ./kind-integer { };
+                kind-rational = hsuper.callPackage ./kind-rational { };
+              });
+          };
+        };
+        packages = {
+          default = pkgs.releaseTools.aggregate {
+            name = "every output from this flake";
+            constituents = [
+              config.packages.kind-integer__ghc943
+              config.packages.kind-rational__ghc943
+              config.packages.kind-integer__ghc943.doc
+              config.packages.kind-rational__ghc943.doc
+              config.devShells.ghc943
+            ];
+          };
+          kind-integer__ghc943 = final.pkgs.haskell.packages.ghc943.kind-integer;
+          kind-rational__ghc943 = final.pkgs.haskell.packages.ghc943.kind-rational;
+        };
+        devShells = {
+          default = config.devShells.ghc943;
+          ghc943 = final.pkgs.haskell.packages.ghc943.shellFor {
+            packages = p: [ p.kind-integer p.kind-rational ];
+            withHoogle = true;
+            nativeBuildInputs = [ pkgs.cabal-install pkgs.cabal2nix ];
           };
         };
       };
-      pkgsFor = system:
-        import nixpkgs {
-          inherit system;
-          overlays = [ overlay ];
-        };
-
-    in {
-      overlays.default = final: prev: overlay final prev;
-      packages = lib.genAttrs [ "x86_64-linux" "i686-linux" "aarch64-linux" ]
-        (system:
-          let pkgs = pkgsFor system;
-          in {
-            default = pkgs.releaseTools.aggregate {
-              name = "every output from this flake";
-              constituents = let
-                p = self.packages.${system};
-                s = self.devShells.${system};
-              in [
-                # p.hs_kind-integer__ghcDefault
-                p.hs_kind-integer__ghc943
-                # p.hs_kind-rational__ghcDefault
-                p.hs_kind-rational__ghc943
-
-                # p.hs_kind-integer__ghcDefault.doc
-                p.hs_kind-integer__ghc943.doc
-                # p.hs_kind-rational__ghcDefault.doc
-                p.hs_kind-rational__ghc943.doc
-
-                # s.ghcDefault
-                s.ghc943
-              ];
-            };
-            # hs_kind-integer__ghcDefault = pkgs.haskellPackages.kind-integer;
-            hs_kind-integer__ghc943 = pkgs.haskell.packages.ghc943.kind-integer;
-            # hs_kind-rational__ghcDefault = pkgs.haskellPackages.kind-rational;
-            hs_kind-rational__ghc943 =
-              pkgs.haskell.packages.ghc943.kind-rational;
-          });
-      devShells = lib.genAttrs [ "x86_64-linux" "i686-linux" "aarch64-linux" ]
-        (system:
-          let
-            pkgs = pkgsFor system;
-            mkShellFor = hpkgs:
-              hpkgs.shellFor {
-                packages = p: [ p.kind-integer p.kind-rational ];
-                withHoogle = true;
-                nativeBuildInputs = [ pkgs.cabal-install pkgs.cabal2nix ];
-              };
-          in {
-            default = self.devShells.${system}.ghc943;
-            # ghcDefault = mkShellFor pkgs.haskellPackages;
-            ghc943 = mkShellFor pkgs.haskell.packages.ghc943;
-          });
     };
 }
