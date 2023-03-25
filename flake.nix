@@ -15,8 +15,8 @@
           haskell = pkgs.haskell // {
             packageOverrides = pkgs.lib.composeExtensions
               (pkgs.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
-                kind-integer = hsuper.callPackage ./kind-integer { };
-                kind-rational = hsuper.callPackage ./kind-rational { };
+                kind-integer = hself.callPackage ./kind-integer { };
+                kind-rational = hself.callPackage ./kind-rational { };
               });
           };
         };
