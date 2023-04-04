@@ -482,6 +482,26 @@ main = testsMain $
             == fmap (\(K.SomeRational p) -> K.rationalVal p)
                     (readMaybe @K.SomeRational str)
 
+   -- TODO test TestEquality
+
+  , assert "Show Rational +0" $
+     "0 % 1" == show (K.fromSRational (K.SRational @(P 0 % 1)))
+  , assert "Show Rational -0" $
+     "0 % 1" == show (K.fromSRational (K.SRational @(N 0 % 1)))
+  , assert "Show Rational +1" $
+     "1 % 1" == show (K.fromSRational (K.SRational @(P 1 % 1)))
+  , assert "Show Rational -1" $
+     "(-1) % 1" == show (K.fromSRational (K.SRational @(N 1 % 1)))
+
+  , assert "Show SRational +0" $
+     "SRational @(P 0 % 1)" == show (K.SRational @(P 0 % 1))
+  , assert "Show SRational -0" $
+     "SRational @(N 0 % 1)" == show (K.SRational @(N 0 % 1))
+  , assert "Show SRational +1" $
+     "SRational @(P 1 % 1)" == show (K.SRational @(P 1 % 1))
+  , assert "Show SRational -1" $
+     "SRational @(N 1 % 1)" == show (K.SRational @(N 1 % 1))
+
   ] <> testsDivRem <> testsTerminating
 
 testsDivRem :: [IO Bool]

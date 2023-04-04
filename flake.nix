@@ -15,6 +15,7 @@
             (prev.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
               kind-integer = hself.callPackage ./kind-integer { };
               kind-rational = hself.callPackage ./kind-rational { };
+              singletons = hself.callHackage "singletons" "3.0.2" { };
             });
         };
       };
@@ -43,7 +44,8 @@
           ghc943 = pkgs.haskell.packages.ghc943.shellFor {
             packages = p: [ p.kind-integer p.kind-rational ];
             withHoogle = true;
-            nativeBuildInputs = [ pkgs.cabal-install pkgs.cabal2nix ];
+            nativeBuildInputs =
+              [ pkgs.cabal-install pkgs.cabal2nix pkgs.ghcid ];
           };
         };
       };

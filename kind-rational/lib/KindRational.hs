@@ -1,3 +1,4 @@
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
@@ -39,6 +40,7 @@ module KindRational {--}
   , SRational
   , pattern SRational
   , fromSRational
+  , fromSRational'
   , withSomeSRational
   , withKnownRational
 
@@ -74,13 +76,14 @@ module KindRational {--}
   , type (==?), type (==), type (/=?), type (/=)
   ) --}
   where
-
-import qualified Control.Exception as Ex
+import Control.Exception qualified as Ex
 import Control.Monad
 import Data.Proxy
+import Data.Singletons
+import Data.Singletons.Decide
 import Data.Type.Bool (If)
 import Data.Type.Coercion
-import Data.Type.Equality (TestEquality(..), (:~:)(..))
+import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
 import GHC.Exts (TYPE, Constraint)
@@ -128,14 +131,14 @@ data Rational
     -- or 'fromPrelude' instead.
     --
     -- * At the type-level, safely construct a 'Rational' using '/'.
+    --
+    -- * We keep the numerator and denominator unnormalized because we use them
+    -- to implement 'SDecide', 'TestEquality' and 'TestCoercion'. Even if “1/2”
+    -- and “2/4” mean the same, in 'SDecide' and friends we treat them as the
+    -- different types that they are.
     I.Integer :% Natural
 
-num :: Rational -> I.Integer
-num (n :% _) = n
-
-den :: Rational -> Natural
-den (_ :% d) = d
-
+-- | Arithmethic equality. That is, \(\frac{1}{2} == \frac{2}{4}\).
 instance Eq Rational where
   a == b = toPrelude a == toPrelude b
 
@@ -166,8 +169,8 @@ instance Read Rational where
 -- 'showsPrecTypeLit' 0 ('rationalVal' ('Proxy' \@(1'/'2))) \"z\" == \"P 1 % 2z\"
 -- @
 showsPrecTypeLit :: Int -> Rational -> ShowS
-showsPrecTypeLit p r = showParen (p > appPrec) $
-  I.showsPrecTypeLit appPrec (num r) . showString " % " . shows (den r)
+showsPrecTypeLit p (n :% d) = showParen (p > appPrec) $
+  I.showsPrecTypeLit appPrec n . showString " % " . shows d
 
 -- | Make a term-level "KindRational" 'Rational' number, provided that
 -- the numerator is not @0@, and that its numerator and denominator are
@@ -176,7 +179,7 @@ showsPrecTypeLit p r = showParen (p > appPrec) $
 rational :: (Integral num, Integral den) => num -> den -> Maybe Rational
 rational = \(toInteger -> n) (toInteger -> d) -> do
     guard (d /= 0 && abs n <= max_ && abs d <= max_)
-    pure $ let n1 P.:% d1 = n P.% d
+    pure $ let n1 P.:% d1 = n P.% d -- 'P.%' normalizes
            in I.fromPrelude n1 :% fromInteger d1
   where
     max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
@@ -200,9 +203,8 @@ unsafeFromPrelude = \case
     n P.:% d
      | d == 0 -> Ex.throw Ex.RatioZeroDenominator
      | abs n > max_ || abs d > max_ -> Ex.throw Ex.Overflow
-     | otherwise ->
-       let n1 P.:% d1 = n P.% d
-       in I.fromPrelude n1 :% fromInteger d1
+     | otherwise -> let n1 P.:% d1 = n P.% d -- 'P.%' normalizes
+                    in I.fromPrelude n1 :% fromInteger d1
   where
     max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
     max_ = 10 ^ (1000 :: Int)
@@ -211,15 +213,12 @@ unsafeFromPrelude = \case
 unsafeCheckPrelude :: P.Rational -> P.Rational
 unsafeCheckPrelude = toPrelude . unsafeFromPrelude
 
--- | Convert a term-level "KindRational" 'Rational' into a term-level
--- "Prelude" 'P.Rational'.
+-- | Convert a term-level "KindRational" 'Rational' into a 'Normalized'
+-- term-level "Prelude" 'P.Rational'.
 --
--- @
--- 'fromPrelude' . 'toPrelude'      == 'Just'
--- 'fmap' 'toPrelude' . 'fromPrelude' == 'Just'
--- @
+-- @'fromPrelude' . 'toPrelude' == 'Just'@
 toPrelude :: Rational -> P.Rational
-toPrelude r = I.toPrelude (num r) P.:% toInteger (den r)
+toPrelude (n :% d) = I.toPrelude n P.% toInteger d -- 'P.%' normalizes.
 
 --------------------------------------------------------------------------------
 
@@ -239,7 +238,7 @@ type family Den_ (r :: Rational) :: Natural where
 -- which not only accepts more polymorphic inputs, but also 'Normalize's
 -- the type-level 'Rational'. Also note that while @n '%' 0@ is a valid
 -- type, all tools in the "KindRational" will reject such input.
-type (n :: I.Integer) % (d :: Natural) = n ':% d :: Rational
+type (n :: I.Integer) % (d :: Natural) = n :% d :: Rational
 
 -- | Normalize a type-level 'Rational' so that a /0/ denominator fails to
 -- type-check, and that the 'Num'erator and denominator have no common factors.
@@ -490,7 +489,7 @@ terminates = terminates' . unsafeFromPrelude
 -- | Term-level version of the "Terminates" function.
 -- Takes a "KindRational" 'P.Rational' as input.
 terminates' :: Rational -> Bool
-terminates' = go . den
+terminates' = \(_ :% d) -> go d
   where
     go = \case
       5 -> True
@@ -519,13 +518,19 @@ type instance Compare (a :: Rational) (b :: Rational) = CmpRational a b
 class KnownRational (r :: Rational) where
   rationalSing :: SRational r
 
+-- | This instance checks that @r@ 'Normalize's, but the obtained 'SRational' is
+-- not normalized. This is so that 'SDecide', 'TestEquality' and 'TestCoercion'
+-- behave as expected.  If you want a 'Normalize'd 'SRational', then use
+-- @'rationalSing' \@('Normalize' r)@.
 instance forall r n d.
   ( Normalize r ~ n % d
-  , I.KnownInteger n
-  , L.KnownNat d
+  , I.KnownInteger (Num_ r)
+  , L.KnownNat (Den_ r)
   ) => KnownRational r where
-  rationalSing = UnsafeSRational
-    (I.fromPrelude (I.integerVal (Proxy @n)) :% N.natVal (Proxy @d))
+  rationalSing =
+    let n = I.fromSInteger' (I.SInteger @(Num_ r))
+        d = N.natVal (Proxy @(Den_ r))
+    in UnsafeSRational (n :% d)
 
 -- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
@@ -596,6 +601,7 @@ cmpRational x y = case compare (rationalVal x) (rationalVal y) of
 
 -- | Singleton type for a type-level 'Rational' @r@.
 newtype SRational (r :: Rational) = UnsafeSRational Rational
+type role SRational nominal
 
 -- | A explicitly bidirectional pattern synonym relating an 'SRational' to a
 -- 'KnownRational' constraint.
@@ -632,18 +638,29 @@ instance Show (SRational r) where
   showsPrec p (UnsafeSRational r) = showParen (p > appPrec) $
     showString "SRational @" . showsPrecTypeLit appPrec1 r
 
+-- | Note that this checks for type equality, not arithmetic equality.
+-- That is, @'P' 1 '%' 2@ and @'P' 2 '%' 4@ are not equal types,
+-- even if they are arithmetically equal.
 instance TestEquality SRational where
-  testEquality (UnsafeSRational x) (UnsafeSRational y) = do
-    guard (toPrelude x P.== toPrelude y)
-    pure (unsafeCoerce Refl)
+  testEquality = decideEquality
+  {-# INLINE testEquality #-}
 
+-- | Note that this checks for type equality, not arithmetic equality.
+-- That is, @'P' 1 '%' 2@ and @'P' 2 '%' 4@ are not equal types,
+-- even if they are arithmetically equal.
 instance TestCoercion SRational where
-  testCoercion x y = fmap (\Refl -> Coercion) (testEquality x y)
+  testCoercion = decideCoercion
+  {-# INLINE testCoercion #-}
 
 -- | Return the term-level "Prelude" 'P.Rational' number corresponding
--- to @r@ in a @'SRational' r@ value.
+-- to @r@ in a @'SRational' r@ value. This 'P.Rational' is 'Normalize'd.
 fromSRational :: SRational r -> P.Rational
 fromSRational (UnsafeSRational r) = toPrelude r
+
+-- | Return the term-level "KindRational" 'Rational' number corresponding
+-- to @r@ in a @'SRational' r@ value. This 'Rational' is not 'Normalize'd.
+fromSRational' :: SRational r -> Rational
+fromSRational' (UnsafeSRational r) = r
 
 -- | Convert an explicit @'SRational' r@ value into an implicit
 -- @'KnownRational' r@ constraint.
@@ -658,6 +675,18 @@ withSomeSRational
 withSomeSRational r k = k (UnsafeSRational r)
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSRational #-}
+
+--------------------------------------------------------------------------------
+
+type instance Sing = SRational
+
+-- | Note that this checks for type equality, not arithmetic equality.
+-- That is, @'P' 1 '%' 2@ and @'P' 2 '%' 4@ are not equal types,
+-- even if they are arithmetically equal.
+instance SDecide Rational where
+  UnsafeSRational (ln :% ld) %~ UnsafeSRational (rn :% rd)
+    | ln == rn && ld == rd = Proved (unsafeCoerce Refl)
+    | otherwise = Disproved (\Refl -> error "SDecide.Rational")
 
 --------------------------------------------------------------------------------
 -- Extra stuff that doesn't belong here.

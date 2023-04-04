@@ -1,6 +1,19 @@
-# Version 0.3.1
+# Version 0.4
 
-* Minor cabal improvements.
+* COMPILER ASSISTED BREAKING CHANGE: `TestEquality` and `TestCoercion` consider
+  `N 0` and `P 0` to be different.
+
+* BREAKING CHANGE: Term-level `Integer`s and `SInteger`s are not automatically
+  normalized anymore. This is so that `SDecide`, `TestEquality` and
+  `TestCoercion` behave as expected. This is mostly an internal change,
+  but it can be observed in the `Show` instance for `SInteger`, for example.
+
+* Added role annotations to `SInteger`.
+
+* Add dependency on `singletons` so that we can give a `Sing` and `SDecide`
+  instances for type-level `Integer`s.
+
+* Export `fromSInteger'`.
 
 
 # Version 0.3

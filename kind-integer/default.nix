@@ -1,9 +1,9 @@
-{ mkDerivation, base, lib }:
+{ mkDerivation, base, lib, singletons }:
 mkDerivation {
   pname = "kind-integer";
-  version = "0.3";
+  version = "0.4";
   src = lib.sources.cleanSource ./.;
-  libraryHaskellDepends = [ base ];
+  libraryHaskellDepends = [ base singletons ];
   homepage = "https://github.com/k0001/hs-kind";
   description = "Type-level integers. Like KnownNat, but for integers.";
   license = lib.licenses.bsd3;

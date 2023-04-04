@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: kind-integer
-version: 0.3
+version: 0.4
 license: BSD-3-Clause
 license-file: LICENSE
 extra-source-files: README.md CHANGELOG.md
@@ -28,6 +28,7 @@ common basic
     DataKinds
     MultiWayIf
     NoStarIsType
+    RoleAnnotations
     PatternSynonyms
     TypeFamilies
     TypeOperators
@@ -35,6 +36,7 @@ common basic
 
 library
   import: basic
+  build-depends: singletons
   hs-source-dirs: lib
   exposed-modules: KindInteger
 

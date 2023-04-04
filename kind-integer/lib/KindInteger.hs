@@ -34,6 +34,7 @@ module KindInteger {--}
   , SInteger
   , pattern SInteger
   , fromSInteger
+  , fromSInteger'
   , withSomeSInteger
   , withKnownInteger
 
@@ -63,9 +64,11 @@ module KindInteger {--}
 import Control.Exception qualified as Ex
 import Data.Bits
 import Data.Proxy
+import Data.Singletons
+import Data.Singletons.Decide
 import Data.Type.Bool (If)
 import Data.Type.Coercion
-import Data.Type.Equality (TestEquality(..), (:~:)(..))
+import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
 import GHC.Exts (TYPE, Constraint)
@@ -179,15 +182,21 @@ class KnownInteger (i :: Integer) where
 
 -- | Positive numbers and zero.
 instance L.KnownNat x => KnownInteger (P x) where
-  integerSing = UnsafeSInteger (L.natVal (Proxy @x))
+  integerSing = UnsafeSInteger (P_ (fromInteger (L.natVal (Proxy @x))))
 
 -- | Negative numbers and zero.
+--
+-- Implementation note: Notice that @'N' 0@ will not be 'Normalize'd to
+-- @'P' 0@. This is so that 'SDecide', 'TestEquality' and 'TestCoercion'
+-- behave as expected. If you want a 'Normalize'd 'SInteger', then use
+-- @'integerSing' \@('Normalize' i)@.
 instance L.KnownNat x => KnownInteger (N x) where
-  integerSing = UnsafeSInteger (negate (L.natVal (Proxy @x)))
+  integerSing = UnsafeSInteger (N_ (fromInteger (L.natVal (Proxy @x))))
 
 -- | Term-level 'P.Integer' representation of the type-level 'Integer' @i@.
 integerVal :: forall i proxy. KnownInteger i => proxy i -> P.Integer
-integerVal _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
+integerVal _ = case integerSing :: SInteger i of
+                 UnsafeSInteger x -> toPrelude x
 
 -- | This type represents unknown type-level 'Integer'.
 data SomeInteger = forall n. KnownInteger n => SomeInteger (Proxy n)
@@ -464,7 +473,8 @@ cmpInteger x y = case compare (integerVal x) (integerVal y) of
 --------------------------------------------------------------------------------
 
 -- | Singleton type for a type-level 'Integer' @i@.
-newtype SInteger (i :: Integer) = UnsafeSInteger P.Integer
+newtype SInteger (i :: Integer) = UnsafeSInteger Integer
+type role SInteger representational
 
 -- | A explicitly bidirectional pattern synonym relating an 'SInteger' to a
 -- 'KnownInteger' constraint.
@@ -499,21 +509,33 @@ knownIntegerInstance si = withKnownInteger si KnownIntegeregerInstance
 
 instance Show (SInteger i) where
   showsPrec p (UnsafeSInteger i) = showParen (p > appPrec) $
-    showString "SInteger @" .
-    showsPrec appPrec1 (fromPrelude i)
+    showString "SInteger @" . showsPrecTypeLit appPrec1 i
 
+-- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
+-- are not equal types, even if they are treated equally elsewhere in
+-- "KindInteger".
 instance TestEquality SInteger where
-  testEquality (UnsafeSInteger x) (UnsafeSInteger y)
-    | x P.== y  = Just (unsafeCoerce Refl)
-    | otherwise = Nothing
+  testEquality = decideEquality
+  {-# INLINE testEquality #-}
 
+-- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
+-- are not equal types, even if they are treated equally elsewhere in
+-- "KindInteger".
 instance TestCoercion SInteger where
-  testCoercion x y = fmap (\Refl -> Coercion) (testEquality x y)
+  testCoercion = decideCoercion
+  {-# INLINE testCoercion #-}
 
--- | Return the term-level 'P.Integer' number corresponding to @i@ in
--- a @'SInteger' i@ value.
+-- | Return the term-level "Prelude" 'P.Integer' number corresponding to @i@
+-- in a @'SInteger' i@ value.
 fromSInteger :: SInteger i -> P.Integer
-fromSInteger (UnsafeSInteger i) = i
+fromSInteger (UnsafeSInteger i) = toPrelude i
+{-# INLINE fromSInteger #-}
+
+-- | Return the term-level "KindInteger" 'Integer' number corresponding to @i@
+-- in a @'SInteger' i@ value.
+fromSInteger' :: SInteger i -> Integer
+fromSInteger' (UnsafeSInteger i) = i
+{-# INLINE fromSInteger' #-}
 
 -- | Convert an explicit @'SInteger' i@ value into an implicit
 -- @'KnownInteger' i@ constraint.
@@ -525,9 +547,23 @@ withKnownInteger = withDict @(KnownInteger i)
 -- fresh type-level 'Integer'.
 withSomeSInteger
   :: forall rep (r :: TYPE rep). P.Integer -> (forall n. SInteger n -> r) -> r
-withSomeSInteger n k = k (UnsafeSInteger n)
+withSomeSInteger n k = k (UnsafeSInteger (fromPrelude n))
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSInteger #-}
+
+--------------------------------------------------------------------------------
+
+type instance Sing = SInteger
+
+-- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
+-- are not equal types, even if they are treated equally elsewhere in
+-- "KindInteger".
+instance SDecide Integer where
+  UnsafeSInteger (P_ l) %~ UnsafeSInteger (P_ r)
+    | l P.== r = Proved (unsafeCoerce Refl)
+  UnsafeSInteger (N_ l) %~ UnsafeSInteger (N_ r)
+    | l P.== r = Proved (unsafeCoerce Refl)
+  _ %~ _ = Disproved (\Refl -> error "SDecide.Integer")
 
 --------------------------------------------------------------------------------
 

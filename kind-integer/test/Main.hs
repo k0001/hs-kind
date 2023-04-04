@@ -9,6 +9,7 @@ import Control.Monad
 import Data.List qualified as List
 import Data.Maybe
 import Data.Ratio as P
+import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=))
 import GHC.Exts (Constraint)
 import Prelude hiding (Integer)
@@ -366,6 +367,49 @@ main = testsMain $
       in readMaybe @P.Integer str
             == fmap (\(K.SomeInteger p) -> K.integerVal p)
                     (readMaybe @K.SomeInteger str)
+
+  , assert "TestEquality +0 +0" $
+     isJust (testEquality (K.SInteger @(P 0)) (K.SInteger @(P 0)))
+  , assert "TestEquality -0 -0" $
+     isJust (testEquality (K.SInteger @(N 0)) (K.SInteger @(N 0)))
+  , assert "TestEquality +0 -0" $
+     isNothing (testEquality (K.SInteger @(P 0)) (K.SInteger @(N 0)))
+  , assert "TestEquality -0 +0" $
+     isNothing (testEquality (K.SInteger @(N 0)) (K.SInteger @(P 0)))
+  , assert "TestEquality +0 +1" $
+     isNothing (testEquality (K.SInteger @(P 0)) (K.SInteger @(P 1)))
+  , assert "TestEquality +0 -1" $
+     isNothing (testEquality (K.SInteger @(P 0)) (K.SInteger @(N 1)))
+  , assert "TestEquality -0 +1" $
+     isNothing (testEquality (K.SInteger @(N 0)) (K.SInteger @(P 1)))
+  , assert "TestEquality -0 -1" $
+     isNothing (testEquality (K.SInteger @(N 0)) (K.SInteger @(N 1)))
+  , assert "TestEquality +1 +0" $
+     isNothing (testEquality (K.SInteger @(P 1)) (K.SInteger @(P 0)))
+  , assert "TestEquality +1 -0" $
+     isNothing (testEquality (K.SInteger @(P 1)) (K.SInteger @(N 0)))
+  , assert "TestEquality -1 +0" $
+     isNothing (testEquality (K.SInteger @(N 1)) (K.SInteger @(P 0)))
+  , assert "TestEquality -1 -0" $
+     isNothing (testEquality (K.SInteger @(N 1)) (K.SInteger @(N 0)))
+
+  , assert "Show Integer +0" $
+     "0" == show (K.fromSInteger (K.SInteger @(P 0)))
+  , assert "Show Integer -0" $
+     "0" == show (K.fromSInteger (K.SInteger @(N 0)))
+  , assert "Show Integer +1" $
+     "1" == show (K.fromSInteger (K.SInteger @(P 1)))
+  , assert "Show Integer -1" $
+     "-1" == show (K.fromSInteger (K.SInteger @(N 1)))
+
+  , assert "Show SInteger +0" $
+     "SInteger @(P 0)" == show (K.SInteger @(P 0))
+  , assert "Show SInteger -0" $
+     "SInteger @(N 0)" == show (K.SInteger @(N 0))
+  , assert "Show SInteger +1" $
+     "SInteger @(P 1)" == show (K.SInteger @(P 1))
+  , assert "Show SInteger -1" $
+     "SInteger @(N 1)" == show (K.SInteger @(N 1))
 
   ] <> testsDivRem
 

@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: kind-rational
-version: 0.2
+version: 0.3
 license: BSD-3-Clause
 license-file: LICENSE
 extra-source-files: README.md CHANGELOG.md
@@ -26,11 +26,13 @@ common basic
   build-depends:
     base ==4.*,
     kind-integer >=0.2,
+    singletons,
   default-extensions:
     DataKinds
     NoStarIsType
     LambdaCase
     PatternSynonyms
+    RoleAnnotations
     TypeFamilies
     TypeOperators
     ViewPatterns

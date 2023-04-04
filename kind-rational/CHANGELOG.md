@@ -1,7 +1,19 @@
-# Version 0.2.1
+# Version 0.3
 
-* Minor cabal improvements.
+* COMPILER ASSISTED BREAKING CHANGE: `TestEquality` and `TestCoercion`
+  don't `Normalize` inputs before making a decision anymore.
 
+* BREAKING CHANGE: Term-level `Rational`s and `SRational`s are not
+  automatically normalized anymore. This is so that `SDecide`, `TestEquality`
+  and `TestCoercion` behave as expected. This is mostly an internal change,
+  but it can be observed in the `Show` instance for `SRational`, for example.
+
+* Added role annotations to `SRational`.
+
+* Add dependency on `singletons` so that we can give a `Sing` and `SDecide`
+  instances for type-level `Rational`s.
+
+* Export `fromSRational'`.
 
 # Version 0.2
 
