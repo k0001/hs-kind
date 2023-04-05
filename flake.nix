@@ -33,11 +33,24 @@
               config.packages.kind-rational__ghc943
               config.packages.kind-integer__ghc943.doc
               config.packages.kind-rational__ghc943.doc
+              config.packages.kind-integer__ghc943__sdist
+              config.packages.kind-rational__ghc943__sdist
+              config.packages.kind-integer__ghc943__sdistDoc
+              config.packages.kind-rational__ghc943__sdistDoc
               config.devShells.ghc943
             ];
           };
           kind-integer__ghc943 = pkgs.haskell.packages.ghc943.kind-integer;
           kind-rational__ghc943 = pkgs.haskell.packages.ghc943.kind-rational;
+          kind-integer__ghc943__sdist =
+            pkgs.haskell.packages.ghc943.cabalSdist { src = ./kind-integer; };
+          kind-rational__ghc943__sdist =
+            pkgs.haskell.packages.ghc943.cabalSdist { src = ./kind-rational; };
+          kind-integer__ghc943__sdistDoc = pkgs.haskell.lib.documentationTarball
+            config.packages.kind-integer__ghc943;
+          kind-rational__ghc943__sdistDoc =
+            pkgs.haskell.lib.documentationTarball
+            config.packages.kind-rational__ghc943;
         };
         devShells = {
           default = config.devShells.ghc943;
