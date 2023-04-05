@@ -9,6 +9,7 @@ import Control.Monad
 import Data.List qualified as List
 import Data.Maybe
 import Data.Proxy
+import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=), type (<))
 import GHC.Exts (Constraint)
 import System.Exit
@@ -483,6 +484,39 @@ main = testsMain $
                     (readMaybe @K.SomeRational str)
 
    -- TODO test TestEquality
+
+  , assert "TestEquality +0/1 +0/1" $
+     isJust (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(P 0 % 1)))
+  , assert "TestEquality -0/1 -0/1" $
+     isJust (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(N 0 % 1)))
+  , assert "TestEquality +1/2 +1/2" $
+     isJust (testEquality (K.SRational @(P 1 % 2)) (K.SRational @(P 1 % 2)))
+  , assert "TestEquality -1/2 -1/2" $
+     isJust (testEquality (K.SRational @(N 1 % 2)) (K.SRational @(N 1 % 2)))
+  , assert "TestEquality +0/1 -0/1" $
+     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(N 0 % 1)))
+  , assert "TestEquality -0/1 +0/1" $
+     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(P 0 % 1)))
+  , assert "TestEquality +0/1 +1/1" $
+     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(P 1 % 1)))
+  , assert "TestEquality +0/1 -1/1" $
+     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(N 1 % 1)))
+  , assert "TestEquality -0/1 +1/1" $
+     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(P 1 % 1)))
+  , assert "TestEquality -0/1 -1/1" $
+     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(N 1 % 1)))
+  , assert "TestEquality +1/1 +0/1" $
+     isNothing (testEquality (K.SRational @(P 1 % 1)) (K.SRational @(P 0 % 1)))
+  , assert "TestEquality +1/1 -0/1" $
+     isNothing (testEquality (K.SRational @(P 1 % 1)) (K.SRational @(N 0 % 1)))
+  , assert "TestEquality -1/1 +0/1" $
+     isNothing (testEquality (K.SRational @(N 1 % 1)) (K.SRational @(P 0 % 1)))
+  , assert "TestEquality -1/1 -0/1" $
+     isNothing (testEquality (K.SRational @(N 1 % 1)) (K.SRational @(N 0 % 1)))
+  , assert "TestEquality +1/2 +2/4" $
+     isNothing (testEquality (K.SRational @(P 1 % 2)) (K.SRational @(P 2 % 4)))
+  , assert "TestEquality -1/2 -2/4" $
+     isNothing (testEquality (K.SRational @(N 1 % 2)) (K.SRational @(N 2 % 4)))
 
   , assert "Show Rational +0" $
      "0 % 1" == show (K.fromSRational (K.SRational @(P 0 % 1)))

@@ -55,6 +55,7 @@ module KindInteger {--}
     -- * Comparisons
   , CmpInteger
   , cmpInteger
+  , eqIntegerRep
 
     -- * Extra
   , type (==?), type (==), type (/=?), type (/=)
@@ -537,6 +538,16 @@ fromSInteger' :: SInteger i -> Integer
 fromSInteger' (UnsafeSInteger i) = i
 {-# INLINE fromSInteger' #-}
 
+-- | Whether the internal representation of the 'Integer's are equal.
+--
+-- Note that this is not the same as '(==)'. Use '(==)' unless you
+-- know what you are doing.
+eqIntegerRep :: Integer -> Integer -> Bool
+eqIntegerRep (N_ l) (N_ r) = l P.== r
+eqIntegerRep (P_ l) (P_ r) = l P.== r
+eqIntegerRep _      _      = False
+{-# INLINE eqIntegerRep #-}
+
 -- | Convert an explicit @'SInteger' i@ value into an implicit
 -- @'KnownInteger' i@ constraint.
 withKnownInteger
@@ -559,11 +570,10 @@ type instance Sing = SInteger
 -- are not equal types, even if they are treated equally elsewhere in
 -- "KindInteger".
 instance SDecide Integer where
-  UnsafeSInteger (P_ l) %~ UnsafeSInteger (P_ r)
-    | l P.== r = Proved (unsafeCoerce Refl)
-  UnsafeSInteger (N_ l) %~ UnsafeSInteger (N_ r)
-    | l P.== r = Proved (unsafeCoerce Refl)
-  _ %~ _ = Disproved (\Refl -> error "SDecide.Integer")
+  UnsafeSInteger l %~ UnsafeSInteger r =
+    case eqIntegerRep l r of
+      True  -> Proved (unsafeCoerce Refl)
+      False -> Disproved (\Refl -> error "SDecide.Integer")
 
 --------------------------------------------------------------------------------
 

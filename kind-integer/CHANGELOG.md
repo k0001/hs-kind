@@ -14,7 +14,7 @@
 * Add dependency on `singletons` so that we can give a `Sing` and `SDecide`
   instances for type-level `Integer`s.
 
-* Export `fromSInteger'`.
+* Export `fromSInteger'`, `eqIntegerRep`.
 
 
 # Version 0.3

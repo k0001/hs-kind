@@ -69,6 +69,7 @@ module KindRational {--}
     -- * Comparisons
   , CmpRational
   , cmpRational
+  , eqRationalRep
 
     -- * Extra
     --
@@ -662,6 +663,14 @@ fromSRational (UnsafeSRational r) = toPrelude r
 fromSRational' :: SRational r -> Rational
 fromSRational' (UnsafeSRational r) = r
 
+-- | Whether the internal representation of the 'Rational's are equal.
+--
+-- Note that this is not the same as '(==)'. Use '(==)' unless you
+-- know what you are doing.
+eqRationalRep :: Rational -> Rational -> Bool
+eqRationalRep (ln :% ld) (rn :% rd) = I.eqIntegerRep ln rn && ld P.== rd
+{-# INLINE eqRationalRep #-}
+
 -- | Convert an explicit @'SRational' r@ value into an implicit
 -- @'KnownRational' r@ constraint.
 withKnownRational
@@ -684,9 +693,10 @@ type instance Sing = SRational
 -- That is, @'P' 1 '%' 2@ and @'P' 2 '%' 4@ are not equal types,
 -- even if they are arithmetically equal.
 instance SDecide Rational where
-  UnsafeSRational (ln :% ld) %~ UnsafeSRational (rn :% rd)
-    | ln == rn && ld == rd = Proved (unsafeCoerce Refl)
-    | otherwise = Disproved (\Refl -> error "SDecide.Rational")
+  UnsafeSRational l %~ UnsafeSRational r =
+    case eqRationalRep l r of
+      True  -> Proved (unsafeCoerce Refl)
+      False -> Disproved (\Refl -> error "SDecide.Rational")
 
 --------------------------------------------------------------------------------
 -- Extra stuff that doesn't belong here.
