@@ -665,7 +665,7 @@ fromSRational' (UnsafeSRational r) = r
 
 -- | Whether the internal representation of the 'Rational's are equal.
 --
--- Note that this is not the same as '(==)'. Use '(==)' unless you
+-- Note that this is not the same as '(P.==)'. Use '(P.==)' unless you
 -- know what you are doing.
 eqRationalRep :: Rational -> Rational -> Bool
 eqRationalRep (ln :% ld) (rn :% rd) = I.eqIntegerRep ln rn && ld P.== rd

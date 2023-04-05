@@ -540,7 +540,7 @@ fromSInteger' (UnsafeSInteger i) = i
 
 -- | Whether the internal representation of the 'Integer's are equal.
 --
--- Note that this is not the same as '(==)'. Use '(==)' unless you
+-- Note that this is not the same as '(P.==)'. Use '(P.==)' unless you
 -- know what you are doing.
 eqIntegerRep :: Integer -> Integer -> Bool
 eqIntegerRep (N_ l) (N_ r) = l P.== r
