@@ -3,10 +3,11 @@
 * COMPILER ASSISTED BREAKING CHANGE: `TestEquality` and `TestCoercion`
   don't `Normalize` inputs before making a decision anymore.
 
-* BREAKING CHANGE: Term-level `Rational`s and `SRational`s are not
-  automatically normalized anymore. This is so that `SDecide`, `TestEquality`
-  and `TestCoercion` behave as expected. This is mostly an internal change,
-  but it can be observed in the `Show` instance for `SRational`, for example.
+* BREAKING CHANGE: The `Rational` inside `SRational` is not automatically
+  normalized anymore. This is so that `SDecide`, `TestEquality` and
+  `TestCoercion` behave as expected, treating `1/2` differently than `2/4`,
+  for example. This is mostly an internal change, but it can be observed in
+  the `Show` instance for `SRational`, for example.
 
 * Added role annotations to `SRational`.
 

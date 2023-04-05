@@ -3,10 +3,11 @@
 * COMPILER ASSISTED BREAKING CHANGE: `TestEquality` and `TestCoercion` consider
   `N 0` and `P 0` to be different.
 
-* BREAKING CHANGE: Term-level `Integer`s and `SInteger`s are not automatically
+* BREAKING CHANGE: The `Integer` inside `SInteger`s is not automatically
   normalized anymore. This is so that `SDecide`, `TestEquality` and
-  `TestCoercion` behave as expected. This is mostly an internal change,
-  but it can be observed in the `Show` instance for `SInteger`, for example.
+  `TestCoercion` behave as expected, treating `N 0` and `P 0` differently.
+  This is mostly an internal change, but it can be observed in the `Show`
+  instance for `SInteger`, for example.
 
 * Added role annotations to `SInteger`.
 
