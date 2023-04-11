@@ -1,8 +1,8 @@
 # Version 0.3.1
 
-* COMPILER ASSISTED BREAKING CHANGE: `rationalVal`, `someRationalVal` and
-  `fromSRational` now deal with `KindRational`'s `Rational`s, rather than
-  `Prelude`'s `Rational`s.
+* COMPILER ASSISTED BREAKING CHANGE: `rationalVal`, `someRationalVal`,
+  `fromSRational`, `terminates`, `divRem`, `div` and `rem` now deal
+  with `KindRational`'s `Rational`s, rather than `Prelude`'s `Rational`s.
 
 * COMPILER ASSISTED BREAKING CHANGE: Removed `fromSRational'`.
 

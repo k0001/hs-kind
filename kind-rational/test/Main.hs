@@ -431,64 +431,53 @@ testsMain xs = do
     [] -> exitSuccess
     _  -> exitFailure
 
-rats :: P.Integer -> [P.Rational]
+rats :: P.Integer -> [K.Rational]
 rats i = do n <- [negate i .. i]
             d <- [negate i .. i]
-            guard (d /= 0)
-            pure (n P.% d)
+            maybeToList $ K.rational n d
 
 main :: IO ()
 main = testsMain $
   [ assert "rationalVal . someRationalVal == id" $
     flip all (rats 4) $ \a ->
-      let Just a' = K.fromPrelude a
-      in case K.someRationalVal a' of
-           K.SomeRational pa ->
-             a' == K.rationalVal pa
+      case K.someRationalVal a of
+        K.SomeRational pa ->
+          a == K.rationalVal pa
 
   , assert "sameRationalVal a a" $
     flip all (rats 4) $ \a ->
-      let Just a' = K.fromPrelude a
-      in case K.someRationalVal a' of
-           K.SomeRational pa ->
-              isJust (K.sameRational pa pa)
+      case K.someRationalVal a of
+        K.SomeRational pa ->
+          isJust (K.sameRational pa pa)
 
   , assert "sameRationalVal a a'" $
     flip all (rats 4) $ \a ->
-      let Just a' = K.fromPrelude a
-      in case (K.someRationalVal a', K.someRationalVal a') of
-           (K.SomeRational pa1, K.SomeRational pa2) ->
-             isJust (K.sameRational pa1 pa2)
+      case (K.someRationalVal a, K.someRationalVal a) of
+        (K.SomeRational pa1, K.SomeRational pa2) ->
+          isJust (K.sameRational pa1 pa2)
 
   , assert "sameRationalVal a b" $
     flip all (liftA2 (,) (rats 4) (rats 4)) $ \(a, b) ->
-      let Just a' = K.fromPrelude a
-          Just b' = K.fromPrelude b
-      in case (K.someRationalVal a', K.someRationalVal b') of
-           (K.SomeRational pa, K.SomeRational pb)
-             | a == b    -> isJust    (K.sameRational pa pb)
-             | otherwise -> isNothing (K.sameRational pa pb)
+      case (K.someRationalVal a, K.someRationalVal b) of
+        (K.SomeRational pa, K.SomeRational pb)
+          | a == b    -> isJust    (K.sameRational pa pb)
+          | otherwise -> isNothing (K.sameRational pa pb)
 
   , assert "Eq SomeRational" $
     flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      let Just a' = K.fromPrelude a
-          Just b' = K.fromPrelude b
-      in (a == b) == (K.someRationalVal a' == K.someRationalVal b')
+      (a == b) == (K.someRationalVal a == K.someRationalVal b)
 
   , assert "Ord SomeRational" $
     flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      let Just a' = K.fromPrelude a
-          Just b' = K.fromPrelude b
-       in compare a b == compare (K.someRationalVal a') (K.someRationalVal b')
+      compare a b == compare (K.someRationalVal a) (K.someRationalVal b)
 
   , assert "Show SomeRational" $
     flip all (rats 4) $ \a ->
-      let Just a' = K.fromPrelude a
-      in show a == show (K.someRationalVal a')
+      show a == show (K.someRationalVal a)
 
   , assert "Read SomeRational" $
-    flip all (rats 4) $ \r ->
-      let str = show r
+    flip all (rats 4) $ \a ->
+      let str = show a
       in readMaybe @P.Rational str
             == fmap (\(K.SomeRational p) -> K.toPrelude (K.rationalVal p))
                     (readMaybe @K.SomeRational str)
@@ -550,13 +539,15 @@ main = testsMain $
 
 testsDivRem :: [IO Bool]
 testsDivRem = do
-  a@(n P.:% d) <- rats 4
+  a <- rats 4
+  let n P.:% d = K.toPrelude a
   r :: K.Round <- [minBound .. maxBound]
   let tname :: String -> ShowS
       tname t = showString t . showChar ' ' . shows r . showChar ' '
               . shows n . showChar ' ' . shows d
-  [   assert (tname "divRem" "") $ case K.divRem r a of
-                                        (q, x) -> a == toRational q + x
+  [   assert (tname "divRem" "") $
+         case K.divRem r a of
+           (q, x) -> Just a == K.fromPrelude (toRational q + K.toPrelude x)
     , assert (tname "divRem/div" "") $ fst (K.divRem r a) == K.div r a
     , assert (tname "divRem/rem" "") $ snd (K.divRem r a) == K.rem r a
     ]

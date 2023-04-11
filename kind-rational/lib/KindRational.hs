@@ -76,7 +76,7 @@ module KindRational {--}
   , type (==?), type (==), type (/=?), type (/=)
   ) --}
   where
-import Control.Exception qualified as Ex
+
 import Control.Monad
 import Data.Proxy
 import Data.Singletons
@@ -108,7 +108,7 @@ import Unsafe.Coerce(unsafeCoerce)
 -- pattern-match on it.
 --
 -- 'Rational' is mostly used as a kind, with its types constructed
--- using '/'.  However, it might also be used as type, with its terms
+-- using '/'.  However, it is also used as type, with its terms
 -- constructed using 'rational' or 'fromPrelude'. One reason why you may want a
 -- 'Rational' at the term-level is so that you embed it in larger data-types
 -- (for example, this 'Rational' embeds the 'I.Integer' similarly offered by
@@ -117,8 +117,9 @@ import Unsafe.Coerce(unsafeCoerce)
 -- possible to construct one with a zero denominator, or so large that
 -- operating with it would exhaust system resources. Additionally,
 -- a "KindRational"'s 'Rational' can fully represent the internal structure
--- of a type-level 'Rational', which is why functions like 'fromSRational' and
--- 'withSomeSRational' deal with it, rather than with "Prelude"'s 'P.Rational'.
+-- of a type-level 'Rational'. For these reasons, functions like
+-- 'fromSRational' and 'withSomeSRational' deal with it, rather than with
+-- "Prelude"'s 'P.Rational'.
 data Rational
   = -- | This constructor is /unsafe/ because it doesn't check for the things
     -- that 'rational' checks for.
@@ -187,27 +188,9 @@ rational = \(toInteger -> n) (toInteger -> d) -> do
 --
 -- @
 -- 'fromPrelude' . 'toPrelude'      == 'Just'
--- 'fmap' 'toPrelude' . 'fromPrelude' == 'Just'
 -- @
 fromPrelude :: P.Rational -> Maybe Rational
 fromPrelude (n P.:% d) = rational n d
-
--- | Like 'fromPrelude', but 'Ex.throw's in situations where
--- 'fromPrelude' fails with 'Nothing'.
-unsafeFromPrelude :: P.Rational -> Rational
-unsafeFromPrelude = \case
-    n P.:% d
-     | d == 0 -> Ex.throw Ex.RatioZeroDenominator
-     | abs n > max_ || abs d > max_ -> Ex.throw Ex.Overflow
-     | otherwise -> let n1 P.:% d1 = n P.% d -- 'P.%' normalizes
-                    in I.fromPrelude n1 :% fromInteger d1
-  where
-    max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
-    max_ = 10 ^ (1000 :: Int)
-
--- | Like 'unsafeFromPrelude', but returns a "Prelude" 'P.Rational'.
-unsafeCheckPrelude :: P.Rational -> P.Rational
-unsafeCheckPrelude = toPrelude . unsafeFromPrelude
 
 -- | Convert a term-level "KindRational" 'Rational' into a 'Normalized'
 -- term-level "Prelude" 'P.Rational'.
@@ -396,33 +379,32 @@ type DivRem__ (d :: Natural) (qm :: (Integer, Integer)) =
 
 -- | Term-level version of 'Div'.
 --
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Integer'.
-div :: I.Round -> P.Rational -> P.Integer
+-- Takes a "KindInteger" 'Rational' as input, returns a "Prelude"
+-- 'P.Integer'.
+div :: I.Round -> Rational -> P.Integer
 div r = let f = I.div r
-        in \a -> let (n P.:% d) = unsafeCheckPrelude a
-                 in  f n d
+        in \(n :% d) -> f (I.toPrelude n) (toInteger d)
 
 -- | Term-level version of 'Rem'.
 --
--- Takes a "Prelude" 'P.Rational' as input, returns a "Prelude" 'P.Rational'.
-rem :: I.Round -> P.Rational -> P.Rational
+-- Takes a "KindInteger" 'Rational' as input, returns a "KindInteger" 'Rational'.
+rem :: I.Round -> Rational -> Rational
 rem r = snd . divRem r
 
 -- | Term-level version of 'DivRem'.
 --
--- Takes a "Prelude" 'P.Rational' as input, returns a pair of "Prelude"
--- 'P.Rational's /(quotient, remerence)/.
+-- Takes a "KindInteger" 'Rational' as input, returns a pair of
+-- /(quotient, reminder)/.
 --
 -- @
--- forall ('r' :: 'I.Round') (a :: 'P.Rational').
+-- forall ('r' :: 'I.Round') (a :: 'Rational').
 --   ('P.denominator' a 'P./=' 0) =>
 --     'divRem' r a  'P.=='  ('div' r a, 'rem' r a)
 -- @
-divRem :: I.Round -> P.Rational -> (P.Integer, P.Rational)
+divRem :: I.Round -> Rational -> (P.Integer, Rational)
 divRem r = let f = I.divRem r
-           in \a -> let (n P.:% d) = unsafeCheckPrelude a
-                        (q, m) = f n d
-                    in  (q, m P.% d) -- (m % d) == (a - q)
+           in \(n :% d) -> let (q, m) = f (I.toPrelude n) (toInteger d)
+                           in  (q, I.fromPrelude m :% d) -- (m % d) == (a - q)
 
 --------------------------------------------------------------------------------
 
@@ -451,7 +433,7 @@ withTerminating
   => (Terminating r => a)
   -> Maybe a
 withTerminating g = do
-  guard (terminates' (rationalVal (Proxy @r)))
+  guard (terminates (rationalVal (Proxy @r)))
   case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
     (Dict :: Dict (Terminating r)) -> pure g
 
@@ -478,14 +460,9 @@ type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
   Terminates_2 _ _ = 'False
 
 -- | Term-level version of the "Terminates" function.
--- Takes a "Prelude" 'P.Rational' as input.
-terminates :: P.Rational -> Bool
-terminates = terminates' . unsafeFromPrelude
-
--- | Term-level version of the "Terminates" function.
--- Takes a "KindRational" 'P.Rational' as input.
-terminates' :: Rational -> Bool
-terminates' = \(_ :% d) -> go d
+-- Takes a "KindRational" 'Rational' as input.
+terminates :: Rational -> Bool
+terminates = \(_ :% d) -> go (toInteger d)
   where
     go = \case
       5 -> True
