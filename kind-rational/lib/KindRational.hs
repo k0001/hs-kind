@@ -40,7 +40,6 @@ module KindRational {--}
   , SRational
   , pattern SRational
   , fromSRational
-  , fromSRational'
   , withSomeSRational
   , withKnownRational
 
@@ -116,14 +115,10 @@ import Unsafe.Coerce(unsafeCoerce)
 -- the "KindInteger" module). But perhaps more importantly, this 'Rational'
 -- offers better safety than the 'P.Rational' from "Prelude", since it's not
 -- possible to construct one with a zero denominator, or so large that
--- operating with it would exhaust system resources. Notwithstanding this, for
--- ergonomic reasons, all of the functions exported by this module take
--- "Prelude" 'Rational's as input and produce "Prelude" 'Rational's as outputs.
--- Internally, however, the beforementioned checks are always performed, and
--- fail with 'Ex.throw' if necessary. If you want to be sure those 'error's
--- never happen, just filter your "Prelude" 'Rational's with 'fromPrelude'. In
--- practice, it's very unlikely that you will be affected by this unless if
--- you are unsafelly constructing "Prelude" 'Rational's.
+-- operating with it would exhaust system resources. Additionally,
+-- a "KindRational"'s 'Rational' can fully represent the internal structure
+-- of a type-level 'Rational', which is why functions like 'fromSRational' and
+-- 'withSomeSRational' deal with it, rather than with "Prelude"'s 'P.Rational'.
 data Rational
   = -- | This constructor is /unsafe/ because it doesn't check for the things
     -- that 'rational' checks for.
@@ -456,7 +451,7 @@ withTerminating
   => (Terminating r => a)
   -> Maybe a
 withTerminating g = do
-  guard (terminates' (rationalVal' (Proxy @r)))
+  guard (terminates' (rationalVal (Proxy @r)))
   case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
     (Dict :: Dict (Terminating r)) -> pure g
 
@@ -529,31 +524,25 @@ instance forall r n d.
   , L.KnownNat (Den_ r)
   ) => KnownRational r where
   rationalSing =
-    let n = I.fromSInteger' (I.SInteger @(Num_ r))
+    let n = I.fromSInteger (I.SInteger @(Num_ r))
         d = N.natVal (Proxy @(Den_ r))
     in UnsafeSRational (n :% d)
 
 -- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
-rationalVal' :: forall r proxy. KnownRational r => proxy r -> Rational
-rationalVal' _ = case rationalSing :: SRational r of
-                   UnsafeSRational x -> x
-
--- | Term-level "Prelude" 'P.Rational' representation of the type-level
--- 'Rational' @r@.
-rationalVal :: forall r proxy. KnownRational r => proxy r -> P.Rational
-rationalVal = toPrelude . rationalVal'
+rationalVal :: forall r proxy. KnownRational r => proxy r -> Rational
+rationalVal _ = case rationalSing :: SRational r of UnsafeSRational x -> x
 
 -- | This type represents unknown type-level 'Rational'.
 data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
 
--- | Convert a term-level "Prelude" 'Rational' into an unknown
+-- | Convert a term-level "KindRational" 'Rational' into an unknown
 -- type-level 'Rational'.
-someRationalVal :: P.Rational -> SomeRational
-someRationalVal r =
-  withSomeSRational (unsafeFromPrelude r) $ \(sr :: SRational r) ->
-    withKnownRational sr (SomeRational @r Proxy)
+someRationalVal :: Rational -> SomeRational
+someRationalVal r = withSomeSRational r $ \(sr :: SRational r) ->
+                    withKnownRational sr (SomeRational @r Proxy)
 
+-- | Arithmethic equality. That is, \(\frac{1}{2} == \frac{2}{4}\).
 instance Eq SomeRational where
   SomeRational x == SomeRational y = rationalVal x P.== rationalVal y
 
@@ -653,15 +642,10 @@ instance TestCoercion SRational where
   testCoercion = decideCoercion
   {-# INLINE testCoercion #-}
 
--- | Return the term-level "Prelude" 'P.Rational' number corresponding
--- to @r@ in a @'SRational' r@ value. This 'P.Rational' is 'Normalize'd.
-fromSRational :: SRational r -> P.Rational
-fromSRational (UnsafeSRational r) = toPrelude r
-
 -- | Return the term-level "KindRational" 'Rational' number corresponding
 -- to @r@ in a @'SRational' r@ value. This 'Rational' is not 'Normalize'd.
-fromSRational' :: SRational r -> Rational
-fromSRational' (UnsafeSRational r) = r
+fromSRational :: SRational r -> Rational
+fromSRational (UnsafeSRational r) = r
 
 -- | Whether the internal representation of the 'Rational's are equal.
 --
@@ -677,7 +661,7 @@ withKnownRational
   :: forall r rep (a :: TYPE rep). SRational r -> (KnownRational r => a) -> a
 withKnownRational = withDict @(KnownRational r)
 
--- | Convert a "Prelude" 'P.Rational' number into an @'SRational' n@ value,
+-- | Convert a "KindRational" 'Rational' number into an @'SRational' n@ value,
 -- where @n@ is a fresh type-level 'Rational'.
 withSomeSRational
   :: forall rep (a :: TYPE rep). Rational -> (forall r. SRational r -> a) -> a
@@ -688,6 +672,20 @@ withSomeSRational r k = k (UnsafeSRational r)
 --------------------------------------------------------------------------------
 
 type instance Sing = SRational
+
+instance KnownRational r => SingI (r :: Rational) where
+  sing = rationalSing
+  {-# INLINE sing #-}
+
+-- | 'Demote' refers to "KindRational"'s 'Rational' rather than "Prelude"'s
+-- 'Rational' so that the 'SRational''s internal representation is preserved.
+-- Use 'toPrelude' and 'fromPrelude' as necessary.
+instance SingKind Rational where
+  type Demote Rational = Rational
+  fromSing = fromSRational
+  {-# INLINE fromSing #-}
+  toSing r = withSomeSRational r SomeSing
+  {-# INLINE toSing #-}
 
 -- | Note that this checks for type equality, not arithmetic equality.
 -- That is, @'P' 1 '%' 2@ and @'P' 2 '%' 4@ are not equal types,

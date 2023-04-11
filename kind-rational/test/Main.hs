@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-incomplete-uni-patterns #-}
 module Main {--}
   ( main
   ) --}
@@ -440,47 +440,57 @@ rats i = do n <- [negate i .. i]
 main :: IO ()
 main = testsMain $
   [ assert "rationalVal . someRationalVal == id" $
-    flip all (rats 4) $ \r ->
-      case K.someRationalVal r of
-        K.SomeRational pa ->
-          r == K.rationalVal pa
+    flip all (rats 4) $ \a ->
+      let Just a' = K.fromPrelude a
+      in case K.someRationalVal a' of
+           K.SomeRational pa ->
+             a' == K.rationalVal pa
 
   , assert "sameRationalVal a a" $
-    flip all (rats 4) $ \r ->
-      case K.someRationalVal r of
-        K.SomeRational pa ->
-          isJust (K.sameRational pa pa)
+    flip all (rats 4) $ \a ->
+      let Just a' = K.fromPrelude a
+      in case K.someRationalVal a' of
+           K.SomeRational pa ->
+              isJust (K.sameRational pa pa)
 
   , assert "sameRationalVal a a'" $
     flip all (rats 4) $ \a ->
-      case (K.someRationalVal a, K.someRationalVal a) of
-        (K.SomeRational pa1, K.SomeRational pa2) ->
-          isJust (K.sameRational pa1 pa2)
+      let Just a' = K.fromPrelude a
+      in case (K.someRationalVal a', K.someRationalVal a') of
+           (K.SomeRational pa1, K.SomeRational pa2) ->
+             isJust (K.sameRational pa1 pa2)
 
   , assert "sameRationalVal a b" $
     flip all (liftA2 (,) (rats 4) (rats 4)) $ \(a, b) ->
-      case (K.someRationalVal a, K.someRationalVal b) of
-        (K.SomeRational pa, K.SomeRational pb)
-          | a == b    -> isJust    (K.sameRational pa pb)
-          | otherwise -> isNothing (K.sameRational pa pb)
+      let Just a' = K.fromPrelude a
+          Just b' = K.fromPrelude b
+      in case (K.someRationalVal a', K.someRationalVal b') of
+           (K.SomeRational pa, K.SomeRational pb)
+             | a == b    -> isJust    (K.sameRational pa pb)
+             | otherwise -> isNothing (K.sameRational pa pb)
 
   , assert "Eq SomeRational" $
     flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      (a == b) == (K.someRationalVal a == K.someRationalVal b)
+      let Just a' = K.fromPrelude a
+          Just b' = K.fromPrelude b
+      in (a == b) == (K.someRationalVal a' == K.someRationalVal b')
 
   , assert "Ord SomeRational" $
     flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      (a `compare` b) == (K.someRationalVal a `compare` K.someRationalVal b)
+      let Just a' = K.fromPrelude a
+          Just b' = K.fromPrelude b
+       in compare a b == compare (K.someRationalVal a') (K.someRationalVal b')
 
   , assert "Show SomeRational" $
     flip all (rats 4) $ \a ->
-      show a == show (K.someRationalVal a)
+      let Just a' = K.fromPrelude a
+      in show a == show (K.someRationalVal a')
 
   , assert "Read SomeRational" $
     flip all (rats 4) $ \r ->
       let str = show r
       in readMaybe @P.Rational str
-            == fmap (\(K.SomeRational p) -> K.rationalVal p)
+            == fmap (\(K.SomeRational p) -> K.toPrelude (K.rationalVal p))
                     (readMaybe @K.SomeRational str)
 
    -- TODO test TestEquality
@@ -566,8 +576,9 @@ testsTerminating = concat
                isNothing (K.withTerminating @a () :: Maybe ())
     ]
   where
-   ok :: [P.Rational]
-   ok = [ 0 P.% 1
+   ok :: [K.Rational]
+   Just ok = traverse K.fromPrelude
+        [ 0 P.% 1
         , -1 P.% 1
         , 2 P.% 1
         , -1 P.% 2
@@ -589,8 +600,9 @@ testsTerminating = concat
         , -3 P.% 50
         , 3 P.% 10000000
         ]
-   no :: [P.Rational]
-   no = [ 1 P.% 3
+   no :: [K.Rational]
+   Just no = traverse K.fromPrelude
+        [ 1 P.% 3
         , -1 P.% 12
         , 1 P.% 15
         , -2 P.% 3

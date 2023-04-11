@@ -1,3 +1,14 @@
+# Version 0.5
+
+* COMPILER ASSISTED BREAKING CHANGE: `integerVal`, `someIntegerVal`,
+  `fromSInteger` and `withSomeSInteger` now deal with `KindInteger`'s
+  `Integer`s, rather than `Prelude`'s `Integer`s.
+
+* COMPILER ASSISTED BREAKING CHANGE: Removed `fromSInteger'`.
+
+* Added `SingI` and `SingKind` instances.
+
+
 # Version 0.4
 
 * COMPILER ASSISTED BREAKING CHANGE: `TestEquality` and `TestCoercion` consider

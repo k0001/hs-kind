@@ -34,7 +34,6 @@ module KindInteger {--}
   , SInteger
   , pattern SInteger
   , fromSInteger
-  , fromSInteger'
   , withSomeSInteger
   , withKnownInteger
 
@@ -83,8 +82,7 @@ import Unsafe.Coerce(unsafeCoerce)
 
 --------------------------------------------------------------------------------
 
--- | Type-level version of 'P.Integer', only ever used as a /kind/
--- for 'P' and 'N'
+-- | Type-level version of 'P.Integer', mostly used as a /kind/ for 'P' and 'N'.
 --
 -- * A positive number /+x/ is represented as @'P' x@.
 --
@@ -102,11 +100,16 @@ import Unsafe.Coerce(unsafeCoerce)
 -- at the term-level is so that you embed it in larger data-types (for example,
 -- the "KindRational" module from the
 -- [@kind-rational@](https://hackage.haskell.org/package/kind-rational)
--- library embeds this 'I.Integer' in its 'KindRational.Rational' type)
+-- library embeds this 'I.Integer' in its 'KindRational.Rational' type).
+-- Contrary to "Prelude"'s 'P.Integer', "KindInteger"'s 'Integer' preserves
+-- the internal distinction between @'P' 0@ and @'N' 0@, this is why functions
+-- such as 'fromSInteger' prefer to use "KindInteger"'s 'Integer' rather
+-- than "Prelude"'s 'P.Integer'.
 data Integer
   = P_ Natural
   | N_ Natural
 
+-- | Note that @'P' 0 '==' 'N' 0@.
 instance Eq Integer where
   a == b = toPrelude a P.== toPrelude b
 
@@ -194,19 +197,21 @@ instance L.KnownNat x => KnownInteger (P x) where
 instance L.KnownNat x => KnownInteger (N x) where
   integerSing = UnsafeSInteger (N_ (fromInteger (L.natVal (Proxy @x))))
 
--- | Term-level 'P.Integer' representation of the type-level 'Integer' @i@.
-integerVal :: forall i proxy. KnownInteger i => proxy i -> P.Integer
-integerVal _ = case integerSing :: SInteger i of
-                 UnsafeSInteger x -> toPrelude x
+-- | Term-level "KindRational" 'Integer' representation of the type-level
+-- 'Integer' @i@.
+integerVal :: forall i proxy. KnownInteger i => proxy i -> Integer
+integerVal _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
 
 -- | This type represents unknown type-level 'Integer'.
 data SomeInteger = forall n. KnownInteger n => SomeInteger (Proxy n)
 
--- | Convert a term-level 'P.Integer' into an unknown type-level 'Integer'.
-someIntegerVal :: P.Integer -> SomeInteger
-someIntegerVal i = withSomeSInteger i (\(si :: SInteger i) ->
-                   withKnownInteger si (SomeInteger @i Proxy))
+-- | Convert a term-level "KindInteger" 'Integer' into an unknown
+-- type-level 'Integer'.
+someIntegerVal :: Integer -> SomeInteger
+someIntegerVal i = withSomeSInteger i $ \(si :: SInteger i) ->
+                   withKnownInteger si (SomeInteger @i Proxy)
 
+-- | Note that @'P' 0 '==' 'N' 0@.
 instance Eq SomeInteger where
   SomeInteger x == SomeInteger y = integerVal x P.== integerVal y
 
@@ -526,17 +531,11 @@ instance TestCoercion SInteger where
   testCoercion = decideCoercion
   {-# INLINE testCoercion #-}
 
--- | Return the term-level "Prelude" 'P.Integer' number corresponding to @i@
--- in a @'SInteger' i@ value.
-fromSInteger :: SInteger i -> P.Integer
-fromSInteger (UnsafeSInteger i) = toPrelude i
-{-# INLINE fromSInteger #-}
-
 -- | Return the term-level "KindInteger" 'Integer' number corresponding to @i@
 -- in a @'SInteger' i@ value.
-fromSInteger' :: SInteger i -> Integer
-fromSInteger' (UnsafeSInteger i) = i
-{-# INLINE fromSInteger' #-}
+fromSInteger :: SInteger i -> Integer
+fromSInteger (UnsafeSInteger i) = i
+{-# INLINE fromSInteger #-}
 
 -- | Whether the internal representation of the 'Integer's are equal.
 --
@@ -554,17 +553,31 @@ withKnownInteger
   :: forall i rep (r :: TYPE rep). SInteger i -> (KnownInteger i => r) -> r
 withKnownInteger = withDict @(KnownInteger i)
 
--- | Convert a 'P.Integer' number into an @'SInteger' n@ value, where @n@ is a
--- fresh type-level 'Integer'.
+-- | Convert a "KindIiteger" 'Integer' number into an @'SInteger' n@ value,
+-- where @n@ is a fresh type-level 'Integer'.
 withSomeSInteger
-  :: forall rep (r :: TYPE rep). P.Integer -> (forall n. SInteger n -> r) -> r
-withSomeSInteger n k = k (UnsafeSInteger (fromPrelude n))
+  :: forall rep (r :: TYPE rep). Integer -> (forall n. SInteger n -> r) -> r
+withSomeSInteger n k = k (UnsafeSInteger n)
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSInteger #-}
 
 --------------------------------------------------------------------------------
 
 type instance Sing = SInteger
+
+instance KnownInteger i => SingI (i :: Integer) where
+  sing = integerSing
+  {-# INLINE sing #-}
+
+-- | 'Demote' refers to "KindInteger"'s 'Integer' rather than "Prelude"'s
+-- 'Integer' so that the 'SInteger''s internal representation is preserved.
+-- Use 'toPrelude' and 'fromPrelude' as necessary.
+instance SingKind Integer where
+  type Demote Integer = Integer
+  fromSing = fromSInteger
+  {-# INLINE fromSing #-}
+  toSing i = withSomeSInteger i SomeSing
+  {-# INLINE toSing #-}
 
 -- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
 -- are not equal types, even if they are treated equally elsewhere in

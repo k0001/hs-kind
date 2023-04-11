@@ -1,7 +1,7 @@
 { mkDerivation, base, lib, singletons }:
 mkDerivation {
   pname = "kind-integer";
-  version = "0.4";
+  version = "0.5";
   src = lib.sources.cleanSource ./.;
   libraryHaskellDepends = [ base singletons ];
   homepage = "https://github.com/k0001/hs-kind";

@@ -308,28 +308,33 @@ main = testsMain $
 
   , assert "integerVal . someIntegerVal == id" $
     flip all [-5 .. 5] $ \a ->
-      case K.someIntegerVal a of
-        K.SomeInteger pa ->
-          a == K.integerVal pa
+      let a' = K.fromPrelude a
+      in case K.someIntegerVal a' of
+           K.SomeInteger pa ->
+             a' == K.integerVal pa
 
   , assert "sameIntegerVal a a" $
     flip all [-5 .. 5] $ \a ->
-      case K.someIntegerVal a of
-        K.SomeInteger pa ->
-          isJust (K.sameInteger pa pa)
+      let a' = K.fromPrelude a
+      in case K.someIntegerVal a' of
+           K.SomeInteger pa ->
+             isJust (K.sameInteger pa pa)
 
   , assert "sameIntegerVal a a'" $
     flip all [-5 .. 5] $ \a ->
-      case (K.someIntegerVal a, K.someIntegerVal a) of
-        (K.SomeInteger pa1, K.SomeInteger pa2) ->
-          isJust (K.sameInteger pa1 pa2)
+      let a' = K.fromPrelude a
+      in case (K.someIntegerVal a', K.someIntegerVal a') of
+           (K.SomeInteger pa1, K.SomeInteger pa2) ->
+             isJust (K.sameInteger pa1 pa2)
 
   , assert "sameIntegerVal a b" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      case (K.someIntegerVal a, K.someIntegerVal b) of
-        (K.SomeInteger pa, K.SomeInteger pb)
-          | a == b    -> isJust    (K.sameInteger pa pb)
-          | otherwise -> isNothing (K.sameInteger pa pb)
+      let a' = K.fromPrelude a
+          b' = K.fromPrelude b
+      in case (K.someIntegerVal a', K.someIntegerVal b') of
+           (K.SomeInteger pa, K.SomeInteger pb)
+             | a == b    -> isJust    (K.sameInteger pa pb)
+             | otherwise -> isNothing (K.sameInteger pa pb)
 
   , assert "Eq fromPrelude" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
@@ -351,21 +356,26 @@ main = testsMain $
 
   , assert "Eq SomeInteger" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      (a == b) == (K.someIntegerVal a == K.someIntegerVal b)
+      let a' = K.fromPrelude a
+          b' = K.fromPrelude b
+      in (a == b) == (K.someIntegerVal a' == K.someIntegerVal b')
 
   , assert "Ord SomeInteger" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      (a `compare` b) == (K.someIntegerVal a `compare` K.someIntegerVal b)
+      compare a b ==
+         compare (K.someIntegerVal (K.fromPrelude a))
+                 (K.someIntegerVal (K.fromPrelude b))
 
   , assert "Show SomeInteger" $
-    flip all [-5 .. 5] $ \i ->
-      show i == show (K.someIntegerVal i)
+    flip all [-5 .. 5] $ \a ->
+      let a' = K.fromPrelude a
+      in show a == show (K.someIntegerVal a')
 
   , assert "Read SomeInteger" $
     flip all [-5 .. 5] $ \i ->
       let str = show (i :: P.Integer)
       in readMaybe @P.Integer str
-            == fmap (\(K.SomeInteger p) -> K.integerVal p)
+            == fmap (\(K.SomeInteger p) -> K.toPrelude (K.integerVal p))
                     (readMaybe @K.SomeInteger str)
 
   , assert "TestEquality +0 +0" $
