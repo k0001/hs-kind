@@ -1,4 +1,9 @@
-# Version 0.3.1
+# Version 0.4.1
+
+* Simplify `KindRational` instance constraints for better type inferrence.
+  Use overlapping instances approach.
+
+# Version 0.4
 
 * COMPILER ASSISTED BREAKING CHANGE: `rationalVal`, `someRationalVal`,
   `fromSRational`, `terminates`, `divRem`, `div` and `rem` now deal
