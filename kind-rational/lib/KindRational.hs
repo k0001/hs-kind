@@ -495,8 +495,8 @@ class KnownRational (r :: Rational) where
 -- not normalized. This is so that 'SDecide', 'TestEquality' and 'TestCoercion'
 -- behave as expected.  If you want a 'Normalize'd 'SRational', then use
 -- @'rationalSing' \@('Normalize' r)@.
-instance forall r n d.
-  ( Normalize r ~ n % d
+instance forall r.
+  ( Normalize r ~ Num r % Den r
   , I.KnownInteger (Num_ r)
   , L.KnownNat (Den_ r)
   ) => KnownRational r where
