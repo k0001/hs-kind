@@ -491,19 +491,20 @@ type instance Compare (a :: Rational) (b :: Rational) = CmpRational a b
 class KnownRational (r :: Rational) where
   rationalSing :: SRational r
 
--- | This instance checks that @r@ 'Normalize's, but the obtained 'SRational' is
--- not normalized. This is so that 'SDecide', 'TestEquality' and 'TestCoercion'
--- behave as expected.  If you want a 'Normalize'd 'SRational', then use
--- @'rationalSing' \@('Normalize' r)@.
-instance forall r.
-  ( Normalize r ~ Num r % Den r
-  , I.KnownInteger (Num_ r)
-  , L.KnownNat (Den_ r)
-  ) => KnownRational r where
+-- | The obtained 'SRational' is not 'Normalize'd. This is so that 'SDecide',
+-- 'TestEquality' and 'TestCoercion' behave as expected.  If you want a
+-- 'Normalize'd 'SRational', then use @'rationalSing' \@('Normalize' r)@.
+instance {-# OVERLAPPABLE #-} forall n d.
+  ( I.KnownInteger n, N.KnownNat d
+  ) => KnownRational (n % d) where
   rationalSing =
-    let n = I.fromSInteger (I.SInteger @(Num_ r))
-        d = N.natVal (Proxy @(Den_ r))
+    let n = I.fromSInteger (I.SInteger @n)
+        d = N.natVal (Proxy @d)
     in UnsafeSRational (n :% d)
+
+instance L.TypeError ('L.Text "KindRational: Denominator is zero")
+  => KnownRational (n % 0) where
+  rationalSing = undefined
 
 -- | Term-level "KindRational" 'Rational' representation of the type-level
 -- 'Rational' @r@.
