@@ -60,10 +60,9 @@ module KindRational {--}
   , I.Round(..)
 
     -- * Decimals
-  , Terminating
-  , withTerminating
   , Terminates
   , terminates
+  , termination
 
     -- * Comparisons
   , CmpRational
@@ -81,12 +80,11 @@ import Control.Monad
 import Data.Proxy
 import Data.Singletons
 import Data.Singletons.Decide
-import Data.Type.Bool (If)
 import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Exts (TYPE, Constraint)
+import GHC.Exts (TYPE)
 import GHC.Read qualified as Read
 import GHC.Real qualified as P (Ratio(..), (%))
 import GHC.Show (appPrec, appPrec1)
@@ -408,34 +406,16 @@ divRem r = let f = I.divRem r
 
 --------------------------------------------------------------------------------
 
--- | 'Constraint' version of @'Terminates' r@. Satisfied by all type-level
--- 'Rational's that can be represented as a finite decimal number.
-
--- Written as a class rather than as a type-synonym so that downstream doesn't
--- need to use UndecidableSuperClasses.
-class (KnownRational r, Terminates r ~ True)
-  => Terminating (r :: Rational)
-
--- Note: Even if @Terminates r ~ 'False@, GHC shows our @TypeError@ first.
-instance
-  ( KnownRational r
-  , Terminates r ~ 'True
-  , If (Terminates r)
-       (() :: Constraint)
-       (L.TypeError ('L.Text "‘" 'L.:<>: 'L.ShowType r 'L.:<>:
-                     'L.Text "’ is not a terminating "
-                     'L.:<>: 'L.ShowType Rational))
-  ) => Terminating r
-
-withTerminating
+termination
   :: forall r a
-  .  KnownRational r
-  => (Terminating r => a)
-  -> Maybe a
-withTerminating g = do
-  guard (terminates (rationalVal (Proxy @r)))
-  case unsafeCoerce (Dict @(Terminating (P 1 % 1))) of
-    (Dict :: Dict (Terminating r)) -> pure g
+  .  (Terminates r ~ 'False => a)
+  -> (Terminates r ~ 'True  => a)
+  -> SRational r
+  -> a
+termination f t r
+  | terminates (fromSRational r)
+  , Refl <- unsafeCoerce Refl :: Terminates r :~: 'True  = t
+  | Refl <- unsafeCoerce Refl :: Terminates r :~: 'False = f
 
 -- | Whether the type-level 'Rational' terminates. That is, whether
 -- it can be fully represented as a finite decimal number.
@@ -679,8 +659,6 @@ instance SDecide Rational where
 
 -- | /Greatest Common Divisor/ of 'Natural' numbers @a@ and @b@.
 type GCD (a :: Natural) (b :: Natural) = I.GCD (P a) (P b) :: Natural
-
-data Dict c where Dict :: c => Dict c
 
 type family Fst (ab :: (a, b)) :: a where Fst '(a, b) = a
 type family Snd (ab :: (a, b)) :: b where Snd '(a, b) = b

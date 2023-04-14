@@ -1,4 +1,7 @@
-# Version 0.4.1
+# Version 0.5
+
+* COMPILER ASSISTED BREAKING CHANGE: Removed `withTerminating` in favor of
+  `termination`. Removed `Terminating r` in favor of `Terminates r ~ 'True`.
 
 * Simplify `KindRational` instance constraints for better type inferrence.
   Use overlapping instances approach.

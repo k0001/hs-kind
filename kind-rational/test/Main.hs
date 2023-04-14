@@ -8,7 +8,6 @@ import Control.Applicative
 import Control.Monad
 import Data.List qualified as List
 import Data.Maybe
-import Data.Proxy
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=), type (<))
 import GHC.Exts (Constraint)
@@ -357,30 +356,7 @@ _testDivRem :: Dict
 
 _testTerminates =  Dict
 _testTerminates :: Dict
-  ( K.Terminating (0/1)
-  , K.Terminating (N 1/1)
-  , K.Terminating (2/1)
-  , K.Terminating (N 1/2)
-  , K.Terminating (1/4)
-  , K.Terminating (N 1/5)
-  , K.Terminating (1/10)
-  , K.Terminating (N 1/20)
-  , K.Terminating (1/50)
-  , K.Terminating (N 1/10000000)
-
-  , K.Terminating (3/1)
-  , K.Terminating (N 3/1)
-  , K.Terminating (3/2)
-  , K.Terminating (N 3/3)
-  , K.Terminating (3/4)
-  , K.Terminating (N 3/5)
-  , K.Terminating (3/6)
-  , K.Terminating (N 3/10)
-  , K.Terminating (3/20)
-  , K.Terminating (N 3/50)
-  , K.Terminating (3/10000000)
-
-  , 'True ~ K.Terminates (N 0/1)
+  ( 'True ~ K.Terminates (N 0/1)
   , 'True ~ K.Terminates (1/1)
   , 'True ~ K.Terminates (N 2/1)
   , 'True ~ K.Terminates (1/2)
@@ -535,7 +511,7 @@ main = testsMain $
   , assert "Show SRational -1" $
      "SRational @(N 1 % 1)" == show (K.SRational @(N 1 % 1))
 
-  ] <> testsDivRem <> testsTerminating
+  ] <> testsDivRem <> testsTermination
 
 testsDivRem :: [IO Bool]
 testsDivRem = do
@@ -552,19 +528,17 @@ testsDivRem = do
     , assert (tname "divRem/rem" "") $ snd (K.divRem r a) == K.rem r a
     ]
 
-testsTerminating  :: [IO Bool]
-testsTerminating = concat
+testsTermination  :: [IO Bool]
+testsTermination = concat
     [ do a <- ok
-         pure $ assert ("withTerminating(ok) (" <> show a <> ")") $
-           case K.someRationalVal a of
-             K.SomeRational (_ :: Proxy a) ->
-               isJust (K.withTerminating @a () :: Maybe ())
+         pure $ assert ("termination(ok) (" <> show a <> ")") $
+           K.withSomeSRational a $ \(sa :: K.SRational a) ->
+             K.termination False True sa
 
     , do a <- no
-         pure $ assert ("withTerminating(no) (" <> show a <> ")") $
-           case K.someRationalVal a of
-             K.SomeRational (_ :: Proxy a) ->
-               isNothing (K.withTerminating @a () :: Maybe ())
+         pure $ assert ("termination(no) (" <> show a <> ")") $
+           K.withSomeSRational a $ \(sa :: K.SRational a) ->
+             K.termination True False sa
     ]
   where
    ok :: [K.Rational]
