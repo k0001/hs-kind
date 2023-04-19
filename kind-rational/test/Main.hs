@@ -354,6 +354,32 @@ _testDivRem :: Dict
   , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfOdd (N 3 / 4)
   )
 
+_testTerminating =  Dict
+_testTerminating :: Dict
+  ( K.Terminating (N 0/1)
+  , K.Terminating (1/1)
+  , K.Terminating (N 2/1)
+  , K.Terminating (1/2)
+  , K.Terminating (N 1/4)
+  , K.Terminating (1/5)
+  , K.Terminating (N 1/10)
+  , K.Terminating (1/20)
+  , K.Terminating (N 1/50)
+  , K.Terminating (1/10000000)
+
+  , K.Terminating (N 3/1)
+  , K.Terminating (3/1)
+  , K.Terminating (N 3/2)
+  , K.Terminating (3/3)
+  , K.Terminating (N 3/4)
+  , K.Terminating (3/5)
+  , K.Terminating (N 3/6)
+  , K.Terminating (3/10)
+  , K.Terminating (N 3/20)
+  , K.Terminating (3/50)
+  , K.Terminating (N 3/10000000)
+  )
+
 _testTerminates =  Dict
 _testTerminates :: Dict
   ( 'True ~ K.Terminates (N 0/1)

@@ -63,6 +63,7 @@ module KindRational {--}
   , Terminates
   , terminates
   , termination
+  , Terminating
 
     -- * Comparisons
   , CmpRational
@@ -84,7 +85,7 @@ import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Exts (TYPE)
+import GHC.Exts (TYPE, Constraint)
 import GHC.Read qualified as Read
 import GHC.Real qualified as P (Ratio(..), (%))
 import GHC.Show (appPrec, appPrec1)
@@ -406,6 +407,8 @@ divRem r = let f = I.divRem r
 
 --------------------------------------------------------------------------------
 
+-- | Determine whether @r@ 'Terminates' or not at the term-level, and bring
+-- create the corresponding type-level proof.
 termination
   :: forall r a
   .  (Terminates r ~ 'False => a)
@@ -416,6 +419,15 @@ termination f t r
   | terminates (fromSRational r)
   , Refl <- unsafeCoerce Refl :: Terminates r :~: 'True  = t
   | Refl <- unsafeCoerce Refl :: Terminates r :~: 'False = f
+
+-- | This is essentially the same as @'Terminates' r ~ 'True'@, except with
+-- a nicer error message when @'Terminates' r ~ 'False'@.
+type Terminating (r :: Rational) = Terminating_ r (Terminates r) :: Constraint
+type family Terminating_ r (b :: Bool):: Constraint where
+  Terminating_ r 'True = Terminates r ~ 'True
+  Terminating_ r 'False = L.TypeError
+    ('L.Text "Unexpected: KindRational.Terminates ("
+     'L.:<>: 'L.ShowType r 'L.:<>: 'L.Text ") ~ 'False")
 
 -- | Whether the type-level 'Rational' terminates. That is, whether
 -- it can be fully represented as a finite decimal number.
