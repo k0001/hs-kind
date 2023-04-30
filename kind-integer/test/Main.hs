@@ -11,7 +11,9 @@ import Data.Maybe
 import Data.Ratio as P
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=))
+import Data.Singletons
 import GHC.Exts (Constraint)
+import GHC.Show (appPrec, appPrec1)
 import Prelude hiding (Integer)
 import Prelude qualified as P
 import System.Exit
@@ -300,6 +302,19 @@ testsMain xs = do
     [] -> exitSuccess
     _  -> exitFailure
 
+n1, n0, p0, p1 :: K.Integer
+n1 = demote @(N 1)
+n0 = demote @(N 0)
+p0 = demote @(P 0)
+p1 = demote @(P 1)
+
+sn1, sn0, sp0, sp1 :: K.SomeInteger
+sn1 = K.SomeInteger (Proxy @(N 1))
+sn0 = K.SomeInteger (Proxy @(N 0))
+sp0 = K.SomeInteger (Proxy @(P 0))
+sp1 = K.SomeInteger (Proxy @(P 1))
+
+
 main :: IO ()
 main = testsMain $
   [ assert "Prelude % throws RatioZeroDenominator" =<< do
@@ -308,33 +323,28 @@ main = testsMain $
 
   , assert "integerVal . someIntegerVal == id" $
     flip all [-5 .. 5] $ \a ->
-      let a' = K.fromPrelude a
-      in case K.someIntegerVal a' of
-           K.SomeInteger pa ->
-             a' == K.integerVal pa
+      case K.someIntegerVal a of
+        K.SomeInteger pa ->
+          a == K.integerVal pa
 
   , assert "sameIntegerVal a a" $
     flip all [-5 .. 5] $ \a ->
-      let a' = K.fromPrelude a
-      in case K.someIntegerVal a' of
-           K.SomeInteger pa ->
-             isJust (K.sameInteger pa pa)
+      case K.someIntegerVal a of
+        K.SomeInteger pa ->
+          isJust (K.sameInteger pa pa)
 
   , assert "sameIntegerVal a a'" $
     flip all [-5 .. 5] $ \a ->
-      let a' = K.fromPrelude a
-      in case (K.someIntegerVal a', K.someIntegerVal a') of
-           (K.SomeInteger pa1, K.SomeInteger pa2) ->
-             isJust (K.sameInteger pa1 pa2)
+      case (K.someIntegerVal a, K.someIntegerVal a) of
+        (K.SomeInteger pa1, K.SomeInteger pa2) ->
+          isJust (K.sameInteger pa1 pa2)
 
   , assert "sameIntegerVal a b" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      let a' = K.fromPrelude a
-          b' = K.fromPrelude b
-      in case (K.someIntegerVal a', K.someIntegerVal b') of
-           (K.SomeInteger pa, K.SomeInteger pb)
-             | a == b    -> isJust    (K.sameInteger pa pb)
-             | otherwise -> isNothing (K.sameInteger pa pb)
+      case (K.someIntegerVal a, K.someIntegerVal b) of
+        (K.SomeInteger pa, K.SomeInteger pb)
+          | a == b    -> isJust    (K.sameInteger pa pb)
+          | otherwise -> isNothing (K.sameInteger pa pb)
 
   , assert "Eq fromPrelude" $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
@@ -344,39 +354,40 @@ main = testsMain $
     flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
       (a `compare` b) == (K.fromPrelude a `compare` K.fromPrelude b)
 
-  , assert "Show fromPrelude" $
-    flip all [-5 .. 5] $ \i ->
-      show i == show (K.fromPrelude i)
+  , assert "Show (N 1)" $ show n1 == "N 1"
+  , assert "Show (N 0)" $ show n0 == "N 0"
+  , assert "Show (P 0)" $ show p0 == "P 0"
+  , assert "Show (P 1)" $ show p1 == "P 1"
 
-  , assert "Read fromPrelude" $
-    flip all [-5 .. 5] $ \i ->
-      let str = show (i :: P.Integer)
-      in readMaybe @P.Integer str
-            == fmap K.toPrelude (readMaybe @K.Integer str)
+  , assert "Read Integer" $
+    all (\i -> Just i == readMaybe (show i))
+        [n1, n0, p0, p1]
 
-  , assert "Eq SomeInteger" $
-    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      let a' = K.fromPrelude a
-          b' = K.fromPrelude b
-      in (a == b) == (K.someIntegerVal a' == K.someIntegerVal b')
+  , assert "Eq Integer" $
+    and [ n1 == n1, n1 /= n0, n1 /= p0, n1 /= p1
+        , n0 /= n1, n0 == n0, n0 /= p0, n0 /= p1
+        , p0 /= n1, p0 /= n0, p0 == p0, p0 /= p1
+        , p1 /= n1, p1 /= n0, p1 /= p0, p1 == p1 ]
 
-  , assert "Ord SomeInteger" $
-    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
-      compare a b ==
-         compare (K.someIntegerVal (K.fromPrelude a))
-                 (K.someIntegerVal (K.fromPrelude b))
+  , assert "Ord Integer" $
+    and [ n1 <= n1, n1 >= n1
+        , n0 <= n0, n0 >= n0
+        , p0 <= p0, p0 >= p0
+        , p1 <= p1, p1 >= p1
+        , n1 < n0, n0 < p0, n1 < p0, n1 < p1 ]
 
   , assert "Show SomeInteger" $
-    flip all [-5 .. 5] $ \a ->
-      let a' = K.fromPrelude a
-      in show a == show (K.someIntegerVal a')
+    and [ show sn1 == show n1
+        , show sn0 == show n0
+        , show sp0 == show p0
+        , show sp1 == show p1 ]
+
 
   , assert "Read SomeInteger" $
-    flip all [-5 .. 5] $ \i ->
-      let str = show (i :: P.Integer)
-      in readMaybe @P.Integer str
-            == fmap (\(K.SomeInteger p) -> K.toPrelude (K.integerVal p))
-                    (readMaybe @K.SomeInteger str)
+    and [ fmap show (readMaybe @K.SomeInteger (show n1)) == Just (show n1)
+        , fmap show (readMaybe @K.SomeInteger (show n0)) == Just (show n0)
+        , fmap show (readMaybe @K.SomeInteger (show p0)) == Just (show p0)
+        , fmap show (readMaybe @K.SomeInteger (show p1)) == Just (show p1) ]
 
   , assert "TestEquality +0 +0" $
      isJust (testEquality (K.SInteger @(P 0)) (K.SInteger @(P 0)))
@@ -464,11 +475,11 @@ _divRemTestCode = unlines $ List.sort $ do
            . showString " :: Dict (K.Div 'K."
            . shows r
            . showChar ' '
-           . K.showsPrecTypeLit 11 (K.fromPrelude a)
+           . showsPrec appPrec1 (K.fromPrelude a)
            . showChar ' '
-           . K.showsPrecTypeLit 11 (K.fromPrelude b)
+           . showsPrec appPrec1 (K.fromPrelude b)
            . showString " ~ "
-           . K.showsPrecTypeLit 0 (K.fromPrelude q)
+           . showsPrec appPrec (K.fromPrelude q)
            . showString ")\n"
            . sname "Div"
            . showString " =  Dict"
@@ -477,11 +488,11 @@ _divRemTestCode = unlines $ List.sort $ do
            . showString " :: Dict (K.Rem 'K."
            . shows r
            . showChar ' '
-           . K.showsPrecTypeLit 11 (K.fromPrelude a)
+           . showsPrec appPrec1 (K.fromPrelude a)
            . showChar ' '
-           . K.showsPrecTypeLit 11 (K.fromPrelude b)
+           . showsPrec appPrec1 (K.fromPrelude b)
            . showString " ~ "
-           . K.showsPrecTypeLit 0 (K.fromPrelude m)
+           . showsPrec appPrec (K.fromPrelude m)
            . showString ")\n"
            . sname "Rem"
            . showString " =  Dict"

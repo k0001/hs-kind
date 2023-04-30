@@ -1,3 +1,17 @@
+# Version 0.6
+
+* COMPILER ASSISTED BREAKING CHANGE: `integerVal`, `someIntegerVal`,
+  `fromSInteger` and `withSomeSInteger` now deal with `Prelude`'s
+  `Integer`s, rather than `KindInteger`'s `Integer`s.
+
+* COMPILER ASSISTED BREAKING CHANGE: Removed `showsPrecTypeLit`,
+  `eqIntegerRep`. Use `Show` and `Eq` instead.
+
+* COMPILER ASSISTED BREAKING CHANGE: The `Eq`, `Ord`, `Show` and `Read`
+  instances for `KindInteger`'s `Integer` behave differently than those
+  of `Prelude`'s `Integer`. They now take the internal `Integer`
+  representation into account.
+
 # Version 0.5
 
 * COMPILER ASSISTED BREAKING CHANGE: `integerVal`, `someIntegerVal`,

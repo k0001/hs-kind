@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: kind-integer
-version: 0.5
+version: 0.6
 license: BSD-3-Clause
 license-file: LICENSE
 extra-source-files: README.md CHANGELOG.md
@@ -23,7 +23,7 @@ source-repository head
 common basic
   default-language: GHC2021
   ghc-options: -O2 -Wall -Werror=incomplete-patterns
-  build-depends: base ==4.*
+  build-depends: base ==4.*, singletons
   default-extensions:
     DataKinds
     MultiWayIf
@@ -36,7 +36,6 @@ common basic
 
 library
   import: basic
-  build-depends: singletons
   hs-source-dirs: lib
   exposed-modules: KindInteger
 

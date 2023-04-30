@@ -22,7 +22,6 @@ module KindInteger {--}
     -- * Prelude support
   , toPrelude
   , fromPrelude
-  , showsPrecTypeLit
 
     -- * Types ⇔ Terms
   , KnownInteger(integerSing), integerVal
@@ -54,15 +53,16 @@ module KindInteger {--}
     -- * Comparisons
   , CmpInteger
   , cmpInteger
-  , eqIntegerRep
 
     -- * Extra
   , type (==?), type (==), type (/=?), type (/=)
   ) --}
   where
 
+import Control.Applicative
 import Control.Exception qualified as Ex
 import Data.Bits
+import Data.Char qualified as Char
 import Data.Proxy
 import Data.Singletons
 import Data.Singletons.Decide
@@ -78,6 +78,9 @@ import GHC.TypeLits qualified as L
 import Numeric.Natural (Natural)
 import Prelude hiding (Integer, (==), (/=), div, rem)
 import Prelude qualified as P
+import Text.ParserCombinators.ReadP qualified as ReadP
+import Text.ParserCombinators.ReadPrec qualified as ReadPrec
+import Text.Read qualified as Read
 import Unsafe.Coerce(unsafeCoerce)
 
 --------------------------------------------------------------------------------
@@ -103,42 +106,43 @@ import Unsafe.Coerce(unsafeCoerce)
 -- library embeds this 'I.Integer' in its 'KindRational.Rational' type).
 -- Contrary to "Prelude"'s 'P.Integer', "KindInteger"'s 'Integer' preserves
 -- the internal distinction between @'P' 0@ and @'N' 0@, this is why functions
--- such as 'fromSInteger' prefer to use "KindInteger"'s 'Integer' rather
--- than "Prelude"'s 'P.Integer'.
+-- such as 'fromSing' use "KindInteger"'s 'Integer' rather than "Prelude"'s
+-- 'P.Integer'.
 data Integer
-  = P_ Natural
-  | N_ Natural
+  = N_ Natural
+  | P_ Natural
 
--- | Note that @'P' 0 '==' 'N' 0@.
+-- | Note that @'N' 0 '/=' 'P' 0@.
 instance Eq Integer where
-  a == b = toPrelude a P.== toPrelude b
+  (==) (N_ l) (N_ r) = l P.== r
+  (==) (P_ l) (P_ r) = l P.== r
+  (==) _      _      = False
 
+-- | Note that @'N' 0 '<' 'P' 0@.
 instance Ord Integer where
-  compare a b = compare (toPrelude a) (toPrelude b)
-  a <= b = toPrelude a <= toPrelude b
-
--- | Same as "Prelude" 'P.Integer'.
-instance Show Integer where
-  showsPrec p = showsPrec p . toPrelude
-
--- | Same as "Prelude" 'P.Integer'.
-instance Read Integer where
-  readsPrec p xs = do (a, ys) <- readsPrec p xs
-                      [(fromPrelude a, ys)]
+  compare (N_ l) (N_ r) = compare r l
+  compare (N_ _) (P_ _) = LT
+  compare (P_ _) (N_ _) = GT
+  compare (P_ l) (P_ r) = compare l r
 
 -- | Shows the 'Integer' as it appears literally at the type-level.
 --
--- This is different from normal 'show' for 'Integer', which shows
--- the term-level value.
+-- This is different from normal 'show' for "Prelude"'s 'P.Integer'.
 --
 -- @
--- 'shows'            0 ('fromPrelude' 8) \"z\" == \"8z\"
--- 'showsPrecTypeLit' 0 ('fromPrelude' 8) \"z\" == \"P 8z\"
+-- 'show' ('fromPrelude' 8) == \"P 8\"
 -- @
-showsPrecTypeLit :: Int -> Integer -> ShowS
-showsPrecTypeLit p i = showParen (p > appPrec) $ case i of
-  P_ x -> showString "P " . shows x
-  N_ x -> showString "N " . shows x
+instance Show Integer where
+  showsPrec p i = showParen (p > appPrec) $ case i of
+    P_ x -> showString "P " . shows x
+    N_ x -> showString "N " . shows x
+
+-- | See 'Show'.
+instance Read Integer where
+  readPrec = Read.parens $ ReadPrec.lift $ do
+    f <- (N_ <$ ReadP.char 'N') <|> (P_ <$ ReadP.char 'P')
+    _ <- ReadP.munch1 Char.isSpace
+    f <$> ReadPrec.readPrec_to_P Read.readPrec 0
 
 -- | * A positive number /+x/ is represented as @'P' x@.
 --
@@ -153,29 +157,26 @@ type N (x :: Natural) = 'N_ x :: Integer
 -- | Convert a term-level "KindInteger" 'Integer' into a term-level
 -- "Prelude" 'P.Integer'.
 --
--- @
--- 'fromPrelude' . 'toPrelude' == 'id'
--- 'toPrelude' . 'fromPrelude' == 'id'
--- @
+-- Note that @'toPrelude' . 'fromPrelude' == 'id'@, but the inverse is not
+-- necessarily true, because 'toPrelude' converts both @'P' 0@ and @'N' 0@
+-- to @0@.
 toPrelude :: Integer -> P.Integer
 toPrelude (P_ n) = toInteger n
 toPrelude (N_ n) = negate (toInteger n)
 
 -- | Obtain a term-level "KindInteger" 'Integer' from a term-level
--- "Prelude" 'P.Integer'. This can fail if the "Prelude" 'P.Integer' is
--- infinite, or if it is so big that it would exhaust system resources.
+-- "Prelude" 'P.Integer'.
 --
--- @
--- 'fromPrelude' . 'toPrelude' == 'id'
--- 'toPrelude' . 'fromPrelude' == 'id'
--- @
+-- Note that @'toPrelude' . 'fromPrelude' == 'id'@, but the inverse is not
+-- necessarily true, because 'toPrelude' converts both @'P' 0@ and @'N' 0@
+-- to @0@.
 --
 -- This function can be handy if you are passing "KindInteger"'s 'Integer'
 -- around for some reason. But, other than this, "KindInteger" doesn't offer
 -- any tool to deal with the internals of its 'Integer'.
 fromPrelude :: P.Integer -> Integer
-fromPrelude i = if i >= 0 then P_ (fromInteger i)
-                          else N_ (fromInteger (negate i))
+fromPrelude i | i >= 0    = P_ (fromInteger i)
+              | otherwise = N_ (fromInteger (negate i))
 
 --------------------------------------------------------------------------------
 
@@ -197,34 +198,48 @@ instance L.KnownNat x => KnownInteger (P x) where
 instance L.KnownNat x => KnownInteger (N x) where
   integerSing = UnsafeSInteger (N_ (fromInteger (L.natVal (Proxy @x))))
 
--- | Term-level "KindRational" 'Integer' representation of the type-level
+-- | Term-level "Prelude" 'P.Integer' representation of the type-level
 -- 'Integer' @i@.
-integerVal :: forall i proxy. KnownInteger i => proxy i -> Integer
-integerVal _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
+integerVal :: forall i proxy. KnownInteger i => proxy i -> P.Integer
+integerVal p = toPrelude (integerValK p)
+{-# INLINE integerVal #-}
+
+integerValK :: forall i proxy. KnownInteger i => proxy i -> Integer
+integerValK _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
+{-# INLINE integerValK #-}
 
 -- | This type represents unknown type-level 'Integer'.
 data SomeInteger = forall n. KnownInteger n => SomeInteger (Proxy n)
 
--- | Convert a term-level "KindInteger" 'Integer' into an unknown
--- type-level 'Integer'.
-someIntegerVal :: Integer -> SomeInteger
-someIntegerVal i = withSomeSInteger i $ \(si :: SInteger i) ->
-                   withKnownInteger si (SomeInteger @i Proxy)
+-- | Convert a term-level "Prelude" 'P.Integer' into an unknown
+-- type-level 'Integer' wrapped in 'SomeInteger'.
+someIntegerVal :: P.Integer -> SomeInteger
+someIntegerVal = someIntegerValK . fromPrelude
+{-# INLINE someIntegerVal #-}
 
--- | Note that @'P' 0 '==' 'N' 0@.
+-- | Convert a term-level "KindInteger" 'Integer' into an unknown
+-- type-level 'Integer' wrapped in 'SomeInteger'.
+someIntegerValK :: Integer -> SomeInteger
+someIntegerValK = \i ->
+  withSomeSIntegerK i $ \(si :: SInteger i) ->
+  withKnownInteger si (SomeInteger @i Proxy)
+{-# INLINE someIntegerValK #-}
+
+-- | Note that @'N' 0 '/=' 'P' 0@.
 instance Eq SomeInteger where
-  SomeInteger x == SomeInteger y = integerVal x P.== integerVal y
+  SomeInteger x == SomeInteger y =
+    integerValK x P.== integerValK y
 
 instance Ord SomeInteger where
   compare (SomeInteger x) (SomeInteger y) =
-    compare (integerVal x) (integerVal y)
+    compare (integerValK x) (integerValK y)
 
 instance Show SomeInteger where
-  showsPrec p (SomeInteger x) = showsPrec p (integerVal x)
+  showsPrec p (SomeInteger x) = showsPrec p (integerValK x)
 
 instance Read SomeInteger where
   readsPrec p xs = do (a, ys) <- readsPrec p xs
-                      [(someIntegerVal a, ys)]
+                      [(someIntegerValK a, ys)]
 
 --------------------------------------------------------------------------------
 -- Within this module, we use these “normalization” tools to make sure that
@@ -500,22 +515,22 @@ type role SInteger representational
 -- f SInteger = {- SInteger i in scope -}
 -- @
 pattern SInteger :: forall i. () => KnownInteger i => SInteger i
-pattern SInteger <- (knownIntegerInstance -> KnownIntegeregerInstance)
+pattern SInteger <- (knownIntegerInstance -> KnownIntegerInstance)
   where SInteger = integerSing
 
 -- | An internal data type that is only used for defining the 'SInteger' pattern
 -- synonym.
-data KnownIntegeregerInstance (i :: Integer) where
-  KnownIntegeregerInstance :: KnownInteger i => KnownIntegeregerInstance i
+data KnownIntegerInstance (i :: Integer) where
+  KnownIntegerInstance :: KnownInteger i => KnownIntegerInstance i
 
 -- | An internal function that is only used for defining the 'SInteger' pattern
 -- synonym.
-knownIntegerInstance :: SInteger i -> KnownIntegeregerInstance i
-knownIntegerInstance si = withKnownInteger si KnownIntegeregerInstance
+knownIntegerInstance :: SInteger i -> KnownIntegerInstance i
+knownIntegerInstance si = withKnownInteger si KnownIntegerInstance
 
 instance Show (SInteger i) where
   showsPrec p (UnsafeSInteger i) = showParen (p > appPrec) $
-    showString "SInteger @" . showsPrecTypeLit appPrec1 i
+    showString "SInteger @" . showsPrec appPrec1 i
 
 -- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
 -- are not equal types, even if they are treated equally elsewhere in
@@ -531,35 +546,36 @@ instance TestCoercion SInteger where
   testCoercion = decideCoercion
   {-# INLINE testCoercion #-}
 
--- | Return the term-level "KindInteger" 'Integer' number corresponding to @i@
+-- | Return the term-level "Prelude" 'P.Integer' number corresponding to @i@
 -- in a @'SInteger' i@ value.
-fromSInteger :: SInteger i -> Integer
-fromSInteger (UnsafeSInteger i) = i
+fromSInteger :: SInteger i -> P.Integer
+fromSInteger = toPrelude . fromSIntegerK
 {-# INLINE fromSInteger #-}
 
--- | Whether the internal representation of the 'Integer's are equal.
---
--- Note that this is not the same as '(P.==)'. Use '(P.==)' unless you
--- know what you are doing.
-eqIntegerRep :: Integer -> Integer -> Bool
-eqIntegerRep (N_ l) (N_ r) = l P.== r
-eqIntegerRep (P_ l) (P_ r) = l P.== r
-eqIntegerRep _      _      = False
-{-# INLINE eqIntegerRep #-}
+fromSIntegerK :: SInteger i -> Integer
+fromSIntegerK (UnsafeSInteger i) = i
+{-# INLINE fromSIntegerK #-}
 
 -- | Convert an explicit @'SInteger' i@ value into an implicit
 -- @'KnownInteger' i@ constraint.
 withKnownInteger
   :: forall i rep (r :: TYPE rep). SInteger i -> (KnownInteger i => r) -> r
 withKnownInteger = withDict @(KnownInteger i)
+{-# INLINE withKnownInteger #-}
 
--- | Convert a "KindIiteger" 'Integer' number into an @'SInteger' n@ value,
+-- | Convert a "Prelude" 'P.Integer' number into an @'SInteger' n@ value,
 -- where @n@ is a fresh type-level 'Integer'.
 withSomeSInteger
-  :: forall rep (r :: TYPE rep). Integer -> (forall n. SInteger n -> r) -> r
-withSomeSInteger n k = k (UnsafeSInteger n)
+  :: forall rep (r :: TYPE rep). P.Integer -> (forall n. SInteger n -> r) -> r
+withSomeSInteger n k = k (UnsafeSInteger (fromPrelude n))
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSInteger #-}
+
+withSomeSIntegerK
+  :: forall rep (r :: TYPE rep). Integer -> (forall n. SInteger n -> r) -> r
+withSomeSIntegerK n k = k (UnsafeSInteger n)
+-- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
+{-# NOINLINE withSomeSIntegerK #-}
 
 --------------------------------------------------------------------------------
 
@@ -574,9 +590,9 @@ instance KnownInteger i => SingI (i :: Integer) where
 -- Use 'toPrelude' and 'fromPrelude' as necessary.
 instance SingKind Integer where
   type Demote Integer = Integer
-  fromSing = fromSInteger
+  fromSing = fromSIntegerK
   {-# INLINE fromSing #-}
-  toSing i = withSomeSInteger i SomeSing
+  toSing i = withSomeSIntegerK i SomeSing
   {-# INLINE toSing #-}
 
 -- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
@@ -584,7 +600,7 @@ instance SingKind Integer where
 -- "KindInteger".
 instance SDecide Integer where
   UnsafeSInteger l %~ UnsafeSInteger r =
-    case eqIntegerRep l r of
+    case l P.== r of
       True  -> Proved (unsafeCoerce Refl)
       False -> Disproved (\Refl -> error "SDecide.Integer")
 
