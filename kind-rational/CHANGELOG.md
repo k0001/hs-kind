@@ -22,7 +22,8 @@
   that implies `Normalize r ~ r`, `KnownInteger (Num r)` and
   `KnownNat (Den r)` as well.
 
-* Added `readPrecTypeLit`, `SRationalTerminates`, `SRationalTerminatesNot`.
+* Added `readPrecTypeLit`, `SRationalTerminates`, `SRationalTerminatesNot`,
+  `normalize`.
 
 
 # Version 0.4
