@@ -111,18 +111,6 @@ import Unsafe.Coerce(unsafeCoerce)
 -- Use '/' to construct one, use '%' to pattern-match on it.
 data Rational = Integer :% Natural -- ^ See the docs for '%'.
 
-{-# COMPLETE UnsafeNormalizedRational #-}
-pattern UnsafeNormalizedRational
-  :: HasCallStack => P.Integer -> Natural -> P.Rational
-pattern UnsafeNormalizedRational n d <-
-  (pattern_UnsafeNormalizedRational -> n P.:% (fromInteger -> d))
-
-pattern_UnsafeNormalizedRational :: HasCallStack => P.Rational -> P.Rational
-pattern_UnsafeNormalizedRational = \(n P.:% d) ->
-  case rationalLit n d of
-    Left e  -> error ("KindRational: " <> show e)
-    Right r -> r
-
 -- | Shows the "Prelude".'P.Rational' as it would appear literally at
 -- the type-level.
 --
@@ -130,9 +118,9 @@ pattern_UnsafeNormalizedRational = \(n P.:% d) ->
 -- 'show' ('demote' \@('N' 0 '%' 4)) == \"N 0 % 4\"
 -- @
 --
--- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
+-- NB: 'error's if a 'P.Rational' with zero denominator is given.
 showsPrecTypeLit :: Int -> P.Rational -> ShowS
-showsPrecTypeLit p (UnsafeNormalizedRational n d) =
+showsPrecTypeLit p (unsafeNormalize -> n P.:% d) =
   showParen (p >= appPrec1) $
     I.showsPrecTypeLit appPrec n .
     showString " % " .
@@ -153,7 +141,7 @@ readPrecTypeLit = Read.parens $ do
 -- and denominator, if they are already normalized.
 rationalLit :: P.Integer -> P.Integer -> Either String P.Rational
 rationalLit = \n d -> do
-    when (d == 0) $ Left "Denominator is zero"
+    when (d == 0) $ Left "Denominator is zero."
     when (d < 0) $ Left notNormMsg
     let r@(n' P.:% d') = n P.% d
     when (n /= n' || d /= d') $ Left notNormMsg
@@ -173,6 +161,16 @@ rational = \n d -> (n P.% d) <$ guard (d /= 0)
 normalize :: P.Rational -> Maybe P.Rational
 normalize = \(n P.:% d) -> rational n d
 {-# INLINE normalize #-}
+
+-- | Normalizes a "Prelude".'P.Rational'.
+-- Fails with 'error' if denominator is zero.
+unsafeNormalize :: HasCallStack => P.Rational -> P.Rational
+unsafeNormalize = maybe (error "Denominator is zero.") id . normalize
+{-# INLINE unsafeNormalize #-}
+
+unsafeNormalizedLit :: HasCallStack => P.Rational -> P.Rational
+unsafeNormalizedLit = \(n P.:% d) -> either error id (rationalLit n d)
+{-# INLINE unsafeNormalizedLit #-}
 
 --------------------------------------------------------------------------------
 
@@ -376,10 +374,10 @@ type DivRem__ (d :: Natural) (qm :: (Integer, Integer)) =
 -- Takes a "KindInteger" 'Rational' as input, returns a "Prelude"
 -- 'P.Integer'.
 --
--- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
+-- NB: 'error's if a 'P.Rational' with zero denominator is given.
 div :: I.Round -> P.Rational -> P.Integer
-div rnd = let f = I.div rnd
-          in \(UnsafeNormalizedRational n d) -> f n (toInteger d)
+div rnd = \(unsafeNormalize -> n P.:% d) -> f n d
+  where f = I.div rnd
 
 -- | Term-level version of 'Rem'.
 --
@@ -402,11 +400,10 @@ rem rnd = snd . divRem rnd
 --
 -- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
 divRem :: I.Round -> P.Rational -> (P.Integer, P.Rational)
-divRem rnd = let f = I.divRem rnd
-             in \(UnsafeNormalizedRational n d0) ->
-                    let d = toInteger d0
-                        (q, m) = f n d
-                    in  (q, m P.:% d) -- (m % d) == ((n % d) - q)
+divRem rnd = \(unsafeNormalize -> n P.:% d) ->
+                 let (q, m) = f n d
+                 in  (q, m P.:% d) -- (m % d) == ((n % d) - q)
+  where f = I.divRem rnd
 
 --------------------------------------------------------------------------------
 
@@ -455,8 +452,10 @@ type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
   Terminates_2 _ _ = 'False
 
 -- | Term-level version of the "Terminates" function.
+--
+-- NB: 'error's if a 'P.Rational' with zero denominator is given.
 terminates :: P.Rational -> Bool
-terminates = \(UnsafeNormalizedRational _ d) -> go (toInteger d)
+terminates = \(unsafeNormalize -> _ P.:% d) -> go d
   where
     go = \case
       5 -> True
@@ -681,7 +680,7 @@ withKnownRational sr x
 -- where @n@ is a fresh type-level 'Rational'.
 withSomeSRational
   :: forall rep (x :: TYPE rep). P.Rational -> (forall r. SRational r -> x) -> x
-withSomeSRational r@UnsafeNormalizedRational{} k = k (UnsafeSRational r)
+withSomeSRational (unsafeNormalizedLit -> !r) k = k (UnsafeSRational r)
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSRational #-}
 
