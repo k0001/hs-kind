@@ -106,13 +106,14 @@ import Unsafe.Coerce(unsafeCoerce)
 -- Use '/' to construct one, use '%' to pattern-match on it.
 data Rational = Integer :% Natural -- ^ See the docs for '%'.
 
-{-# COMPLETE NormalizedRational #-}
-pattern NormalizedRational :: HasCallStack => P.Integer -> Natural -> P.Rational
-pattern NormalizedRational n d <-
-  (pattern_NormalizedRational -> n P.:% (fromInteger -> d))
+{-# COMPLETE UnsafeNormalizedRational #-}
+pattern UnsafeNormalizedRational
+  :: HasCallStack => P.Integer -> Natural -> P.Rational
+pattern UnsafeNormalizedRational n d <-
+  (pattern_UnsafeNormalizedRational -> n P.:% (fromInteger -> d))
 
-pattern_NormalizedRational :: HasCallStack => P.Rational -> P.Rational
-pattern_NormalizedRational = \(n P.:% d) ->
+pattern_UnsafeNormalizedRational :: HasCallStack => P.Rational -> P.Rational
+pattern_UnsafeNormalizedRational = \(n P.:% d) ->
   case mkRational n d of
     Left e  -> error ("KindRational: " <> show e)
     Right r -> r
@@ -126,7 +127,7 @@ pattern_NormalizedRational = \(n P.:% d) ->
 --
 -- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
 showsPrecTypeLit :: Int -> P.Rational -> ShowS
-showsPrecTypeLit p (NormalizedRational n d) =
+showsPrecTypeLit p (UnsafeNormalizedRational n d) =
   showParen (p >= appPrec1) $
     I.showsPrecTypeLit appPrec n .
     showString " % " .
@@ -143,29 +144,17 @@ readPrecTypeLit = Read.parens $ do
     pNatural :: ReadP.ReadP Natural
     pNatural = read <$> ReadP.munch1 (\c -> c >= '0' && c <= '9')
 
--- | Construct and 'Normalize' a "Prelude".'P.Rational' from the specified
--- numerator and denominator. 'Left' if too large.
-mkNormalizedRational :: P.Integer -> P.Integer -> Either String P.Rational
-mkNormalizedRational n d
-  | d <= 0    = Left "Denominator is not positive."
-  | d >= max_ = Left "Absolute denominator value is too large."
-  | n <= min_ = Left "Absolute numerator value is too large."
-  | n >= max_ = Left "Absolute numerator value is too large."
-  | otherwise = Right (n P.% d)
-  where
-    max_ :: P.Integer -- Some big enough number. TODO: Pick good number.
-    max_ = 10 ^ (1000 :: Int)
-    min_ :: P.Integer
-    min_ = negate max_
-
 -- | Creates a 'Prelude'.'P.Rational' using the given literal numerator
 -- and denominator, which are expected to be already normalized.
 mkRational :: P.Integer -> P.Integer -> Either String P.Rational
-mkRational n0 d0 = do
-  r@(n1 P.:% d1) <- mkNormalizedRational n0 d0
-  when (n0 /= n1 || d0 /= d1) $ Left
-    "Rational is not normalized. Use Data.Ratio.% to normalize it."
-  pure r
+mkRational = \n d -> do
+    when (d == 0) $ Left "Denominator is zero"
+    when (d < 0) $ Left notNormMsg
+    let r@(n' P.:% d') = n P.% d
+    when (n /= n' || d /= d') $ Left notNormMsg
+    Right r
+  where
+    notNormMsg = "Rational is not normalized. Use Data.Ratio.% to normalize it."
 
 --------------------------------------------------------------------------------
 
@@ -372,7 +361,7 @@ type DivRem__ (d :: Natural) (qm :: (Integer, Integer)) =
 -- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
 div :: I.Round -> P.Rational -> P.Integer
 div rnd = let f = I.div rnd
-          in \(NormalizedRational n d) -> f n (toInteger d)
+          in \(UnsafeNormalizedRational n d) -> f n (toInteger d)
 
 -- | Term-level version of 'Rem'.
 --
@@ -396,7 +385,7 @@ rem rnd = snd . divRem rnd
 -- NB: 'error's if a non-'Normalized' 'P.Rational' is given.
 divRem :: I.Round -> P.Rational -> (P.Integer, P.Rational)
 divRem rnd = let f = I.divRem rnd
-             in \(NormalizedRational n d0) ->
+             in \(UnsafeNormalizedRational n d0) ->
                     let d = toInteger d0
                         (q, m) = f n d
                     in  (q, m P.:% d) -- (m % d) == ((n % d) - q)
@@ -449,7 +438,7 @@ type family Terminates_2 (d :: Natural) (md2 :: Natural) :: Bool where
 
 -- | Term-level version of the "Terminates" function.
 terminates :: P.Rational -> Bool
-terminates = \(NormalizedRational _ d) -> go (toInteger d)
+terminates = \(UnsafeNormalizedRational _ d) -> go (toInteger d)
   where
     go = \case
       5 -> True
@@ -659,7 +648,7 @@ withKnownRational sr x
 -- where @n@ is a fresh type-level 'Rational'.
 withSomeSRational
   :: forall rep (x :: TYPE rep). P.Rational -> (forall r. SRational r -> x) -> x
-withSomeSRational r@NormalizedRational{} k = k (UnsafeSRational r)
+withSomeSRational r@UnsafeNormalizedRational{} k = k (UnsafeSRational r)
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSRational #-}
 
