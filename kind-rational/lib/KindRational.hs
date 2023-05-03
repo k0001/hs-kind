@@ -18,6 +18,7 @@ module KindRational {--}
   ( -- * Rational kind
     Rational
   , rational
+  , rationalLit
   , type (%)
   , type (/)
   , Num
@@ -118,7 +119,7 @@ pattern UnsafeNormalizedRational n d <-
 
 pattern_UnsafeNormalizedRational :: HasCallStack => P.Rational -> P.Rational
 pattern_UnsafeNormalizedRational = \(n P.:% d) ->
-  case rational n d of
+  case rationalLit n d of
     Left e  -> error ("KindRational: " <> show e)
     Right r -> r
 
@@ -143,15 +144,15 @@ readPrecTypeLit = Read.parens $ do
     n :: P.Integer <- Read.parens $ ReadPrec.step I.readPrecTypeLit
     Read.expectP (Read.Symbol "%")
     d :: Natural <- Read.parens $ ReadPrec.step $ ReadPrec.lift pNatural
-    either fail pure $ rational n (toInteger d)
+    either fail pure $ rationalLit n (toInteger d)
   where
     pNatural :: ReadP.ReadP Natural
     pNatural = read <$> ReadP.munch1 (\c -> c >= '0' && c <= '9')
 
 -- | Creates a "Prelude".'P.Rational' using the given literal numerator
 -- and denominator, if they are already normalized.
-rational :: P.Integer -> P.Integer -> Either String P.Rational
-rational = \n d -> do
+rationalLit :: P.Integer -> P.Integer -> Either String P.Rational
+rationalLit = \n d -> do
     when (d == 0) $ Left "Denominator is zero"
     when (d < 0) $ Left notNormMsg
     let r@(n' P.:% d') = n P.% d
@@ -161,9 +162,17 @@ rational = \n d -> do
     notNormMsg = "Rational is not normalized. Use Data.Ratio.% or \
                  \KindRational.normalize to normalize it."
 
+-- | Creates a "Prelude".'P.Rational' using the given numerator
+-- and denominator, which will be normalized if necessary.
+-- 'Nothing' if denominator is zero.
+rational :: P.Integer -> P.Integer -> Maybe P.Rational
+rational = \n d -> (n P.% d) <$ guard (d /= 0)
+{-# INLINE rational #-}
+
 -- | Normalizes a "Prelude".'P.Rational'. 'Nothing' if denominator is zero.
 normalize :: P.Rational -> Maybe P.Rational
-normalize = \(n P.:% d) -> (n P.% d) <$ guard (d /= 0)
+normalize = \(n P.:% d) -> rational n d
+{-# INLINE normalize #-}
 
 --------------------------------------------------------------------------------
 

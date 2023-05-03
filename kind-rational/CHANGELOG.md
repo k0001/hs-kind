@@ -23,7 +23,7 @@
   `KnownNat (Den r)` as well.
 
 * Added `readPrecTypeLit`, `SRationalTerminates`, `SRationalTerminatesNot`,
-  `normalize`.
+  `normalize`, `rationalLit`.
 
 
 # Version 0.4
