@@ -1,7 +1,7 @@
 { mkDerivation, base, lib, singletons }:
 mkDerivation {
   pname = "kind-integer";
-  version = "0.6";
+  version = "0.6.0";
   src = lib.sources.cleanSource ./.;
   libraryHaskellDepends = [ base singletons ];
   testHaskellDepends = [ base singletons ];

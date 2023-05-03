@@ -1,16 +1,23 @@
-# Version 0.6
+# Version 0.6.0
 
-* COMPILER ASSISTED BREAKING CHANGE: `integerVal`, `someIntegerVal`,
-  `fromSInteger` and `withSomeSInteger` now deal with `Prelude`'s
-  `Integer`s, rather than `KindInteger`'s `Integer`s.
+* COMPILER ASSISTED BREAKING CHANGE: `KindInteger.Integer` is now
+  is now only ever used as a kind. So, all term-level functions in
+  the `KindInteger` consume and produce `Prelude.Integer`s.
 
-* COMPILER ASSISTED BREAKING CHANGE: Removed `showsPrecTypeLit`,
-  `eqIntegerRep`. Use `Show` and `Eq` instead.
+* COMPILER ASSISTED BREAKING CHANGE: Removed `Eq`, `Ord`, `Show` and
+  `Read` instances for `KindInteger.Integer`.
 
-* COMPILER ASSISTED BREAKING CHANGE: The `Eq`, `Ord`, `Show` and `Read`
-  instances for `KindInteger`'s `Integer` behave differently than those
-  of `Prelude`'s `Integer`. They now take the internal `Integer`
-  representation into account.
+* COMPILER ASSISTED BREAKING CHANGE: `Z` is now used to represent
+  zero, instead of the previous `P 0`.
+
+* COMPILER ASSISTED BREAKING CHANGE: `P 0` and `N 0` are not
+  `KnownInteger`s anymore.
+
+* COMPILER ASSISTED BREAKING CHANGE: `KnownInteger` is now a type-synonym
+  that implies `Normalize i ~ i` and `KnownNat (Abs i)` as well.
+
+* Added `readPrecTypeLit`.
+
 
 # Version 0.5
 

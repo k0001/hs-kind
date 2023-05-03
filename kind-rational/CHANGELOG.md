@@ -1,4 +1,13 @@
-# Version 0.5
+# Version 0.5.0
+
+* COMPILER ASSISTED BREAKING CHANGE: `KindRational.Rational` is now
+  is now only ever used as a kind. So, all term-level functions in
+  the `KindRational` consume and produce `Prelude.Rational`s. Term-level
+  functions crash will `error` if they are supplied `Rational`s that
+  are not `Normalize`d as input.
+
+* COMPILER ASSISTED BREAKING CHANGE: Removed `Eq`, `Ord`, `Show` and
+  `Read` instances for `KindRational.Rational`.
 
 * COMPILER ASSISTED BREAKING CHANGE: Removed `withTerminating` in favor of
   `termination`.
@@ -6,8 +15,15 @@
 * COMPILER ASSISTED BREAKING CHANGE: `Terminating` doesn't imply
   `KnownRational` anymore.
 
-* Simplify `KindRational` instance constraints for better type inferrence.
-  Use overlapping instances approach.
+* COMPILER ASSISTED BREAKING CHANGE: `Rational`s that are not `Nomalized`
+  are not `KnownRational`s anymore.
+
+* COMPILER ASSISTED BREAKING CHANGE: `KnownRational` is now a type-synonym
+  that implies `Normalize r ~ r`, `KnownInteger (Num r)` and
+  `KnownNat (Den r)` as well.
+
+* Added `readPrecTypeLit`.
+
 
 # Version 0.4
 

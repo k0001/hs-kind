@@ -8,16 +8,17 @@ import Control.Applicative
 import Control.Monad
 import Data.List qualified as List
 import Data.Maybe
+import Data.Singletons
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=), type (<))
 import GHC.Exts (Constraint)
 import System.Exit
-import Text.Read
+import Text.Read (readMaybe)
 import GHC.Real qualified as P
 import Prelude hiding (Rational, Integer)
 import Prelude qualified as P
 
-import KindInteger (P, N)
+import KindInteger (P, N, Z)
 import KindRational (type (%), type (/))
 import KindRational qualified as K
 
@@ -30,41 +31,41 @@ data Dict (c :: Constraint) where
 
 _testNormalize =  Dict
 _testNormalize :: Dict
-  ( P 0 % 1 ~ K.Normalize (P 0 % 1)
+  ( Z % 1 ~ K.Normalize (Z % 1)
   , P 1 % 1 ~ K.Normalize (P 1 % 1)
   , P 2 % 1 ~ K.Normalize (P 2 % 1)
   , P 3 % 1 ~ K.Normalize (P 3 % 1)
   , P 4 % 1 ~ K.Normalize (P 4 % 1)
-  , P 0 % 1 ~ K.Normalize (P 0 % 2)
+  , Z % 1 ~ K.Normalize (Z % 2)
   , P 1 % 1 ~ K.Normalize (P 2 % 2)
   , P 3 % 2 ~ K.Normalize (P 3 % 2)
   , P 2 % 1 ~ K.Normalize (P 4 % 2)
-  , P 0 % 1 ~ K.Normalize (P 0 % 3)
+  , Z % 1 ~ K.Normalize (Z % 3)
   , P 1 % 3 ~ K.Normalize (P 1 % 3)
   , P 2 % 3 ~ K.Normalize (P 2 % 3)
   , P 1 % 1 ~ K.Normalize (P 3 % 3)
   , P 4 % 3 ~ K.Normalize (P 4 % 3)
-  , P 0 % 1 ~ K.Normalize (P 0 % 4)
+  , Z % 1 ~ K.Normalize (Z % 4)
   , P 1 % 4 ~ K.Normalize (P 1 % 4)
   , P 1 % 2 ~ K.Normalize (P 2 % 4)
   , P 3 % 4 ~ K.Normalize (P 3 % 4)
   , P 1 % 1 ~ K.Normalize (P 4 % 4)
-  , P 0 % 1 ~ K.Normalize (N 0 % 1)
+  , Z % 1 ~ K.Normalize (N 0 % 1)
   , N 1 % 1 ~ K.Normalize (N 1 % 1)
   , N 2 % 1 ~ K.Normalize (N 2 % 1)
   , N 3 % 1 ~ K.Normalize (N 3 % 1)
   , N 4 % 1 ~ K.Normalize (N 4 % 1)
-  , P 0 % 1 ~ K.Normalize (N 0 % 2)
+  , Z % 1 ~ K.Normalize (N 0 % 2)
   , N 1 % 2 ~ K.Normalize (N 1 % 2)
   , N 1 % 1 ~ K.Normalize (N 2 % 2)
   , N 3 % 2 ~ K.Normalize (N 3 % 2)
   , N 2 % 1 ~ K.Normalize (N 4 % 2)
-  , P 0 % 1 ~ K.Normalize (N 0 % 3)
+  , Z % 1 ~ K.Normalize (N 0 % 3)
   , N 1 % 3 ~ K.Normalize (N 1 % 3)
   , N 2 % 3 ~ K.Normalize (N 2 % 3)
   , N 1 % 1 ~ K.Normalize (N 3 % 3)
   , N 4 % 3 ~ K.Normalize (N 4 % 3)
-  , P 0 % 1 ~ K.Normalize (N 0 % 4)
+  , Z % 1 ~ K.Normalize (N 0 % 4)
   , N 1 % 4 ~ K.Normalize (N 1 % 4)
   , N 1 % 2 ~ K.Normalize (N 2 % 4)
   , N 3 % 4 ~ K.Normalize (N 3 % 4)
@@ -73,10 +74,10 @@ _testNormalize :: Dict
 
 _testNegate  = Dict
 _testNegate :: Dict
-  ( P 0 % 1 ~ K.Negate (P 0 % 1)
-  , P 0 % 1 ~ K.Negate (P 0 % 2)
-  , P 0 % 1 ~ K.Negate (N 0 % 1)
-  , P 0 % 1 ~ K.Negate (N 0 % 2)
+  ( Z % 1 ~ K.Negate (Z % 1)
+  , Z % 1 ~ K.Negate (Z % 2)
+  , Z % 1 ~ K.Negate (N 0 % 1)
+  , Z % 1 ~ K.Negate (N 0 % 2)
 
   , P 1 % 1 ~ K.Negate (N 1 % 1)
   , P 1 % 2 ~ K.Negate (N 1 % 2)
@@ -101,10 +102,10 @@ _testNegate :: Dict
 
 _testSign  = Dict
 _testSign :: Dict
-  ( P 0 ~ K.Sign (P 0 % 1)
-  , P 0 ~ K.Sign (P 0 % 2)
-  , P 0 ~ K.Sign (N 0 % 1)
-  , P 0 ~ K.Sign (N 0 % 2)
+  ( Z ~ K.Sign (Z % 1)
+  , Z ~ K.Sign (Z % 2)
+  , Z ~ K.Sign (N 0 % 1)
+  , Z ~ K.Sign (N 0 % 2)
 
   , N 1 ~ K.Sign (N 1 % 1)
   , N 1 ~ K.Sign (N 1 % 2)
@@ -129,10 +130,10 @@ _testSign :: Dict
 
 _testAbs  = Dict
 _testAbs :: Dict
-  ( P 0 % 1 ~ K.Abs (P 0 % 1)
-  , P 0 % 1 ~ K.Abs (P 0 % 2)
-  , P 0 % 1 ~ K.Abs (N 0 % 1)
-  , P 0 % 1 ~ K.Abs (N 0 % 2)
+  ( Z % 1 ~ K.Abs (Z % 1)
+  , Z % 1 ~ K.Abs (Z % 2)
+  , Z % 1 ~ K.Abs (N 0 % 1)
+  , Z % 1 ~ K.Abs (N 0 % 2)
 
   , P 1 % 1 ~ K.Abs (N 1 % 1)
   , P 1 % 2 ~ K.Abs (N 1 % 2)
@@ -184,7 +185,7 @@ _testCmp :: Dict
 
 _testAdd =  Dict
 _testAdd :: Dict
-  ( (P 0 / 1) ~ (N 0 / 1) K.+ (N 0 / 1)
+  ( (Z / 1) ~ (N 0 / 1) K.+ (N 0 / 1)
   , (N 0 / 1) ~ (N 5 / 1) K.+ (P 5 / 1)
   , (N 5 / 9) ~ (N 0 / 1) K.+ (N 5 / 9)
   , (N 9 / 2) ~ (N 3 / 2) K.+ (N 3 / 1)
@@ -237,9 +238,9 @@ _testDiv :: Dict
   , N 2 ~ K.Div 'K.RoundHalfEven (N 3 / 2)
   , N 1 ~ K.Div 'K.RoundHalfOdd (N 3 / 2)
 
-  , P 0 ~ K.Div 'K.RoundDown (3 / 4)
+  , Z ~ K.Div 'K.RoundDown (3 / 4)
   , P 1 ~ K.Div 'K.RoundUp (3 / 4)
-  , P 0 ~ K.Div 'K.RoundZero (3 / 4)
+  , Z ~ K.Div 'K.RoundZero (3 / 4)
   , P 1 ~ K.Div 'K.RoundAway (3 / 4)
   , P 1 ~ K.Div 'K.RoundHalfDown (3 / 4)
   , P 1 ~ K.Div 'K.RoundHalfUp (3 / 4)
@@ -249,8 +250,8 @@ _testDiv :: Dict
   , P 1 ~ K.Div 'K.RoundHalfOdd (3 / 4)
 
   , N 1 ~ K.Div 'K.RoundDown (N 3 / 4)
-  , P 0 ~ K.Div 'K.RoundUp (N 3 / 4)
-  , P 0 ~ K.Div 'K.RoundZero (N 3 / 4)
+  , Z ~ K.Div 'K.RoundUp (N 3 / 4)
+  , Z ~ K.Div 'K.RoundZero (N 3 / 4)
   , N 1 ~ K.Div 'K.RoundAway (N 3 / 4)
   , N 1 ~ K.Div 'K.RoundHalfDown (N 3 / 4)
   , N 1 ~ K.Div 'K.RoundHalfUp (N 3 / 4)
@@ -331,9 +332,9 @@ _testDivRem :: Dict
   , '(N 2, P 1 / 2) ~ K.DivRem 'K.RoundHalfEven (N 3 / 2)
   , '(N 1, N 1 / 2) ~ K.DivRem 'K.RoundHalfOdd (N 3 / 2)
 
-  , '(P 0, P 3 / 4) ~ K.DivRem 'K.RoundDown (3 / 4)
+  , '(Z, P 3 / 4) ~ K.DivRem 'K.RoundDown (3 / 4)
   , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundUp (3 / 4)
-  , '(P 0, P 3 / 4) ~ K.DivRem 'K.RoundZero (3 / 4)
+  , '(Z, P 3 / 4) ~ K.DivRem 'K.RoundZero (3 / 4)
   , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundAway (3 / 4)
   , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfDown (3 / 4)
   , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfUp (3 / 4)
@@ -343,8 +344,8 @@ _testDivRem :: Dict
   , '(P 1, N 1 / 4) ~ K.DivRem 'K.RoundHalfOdd (3 / 4)
 
   , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundDown (N 3 / 4)
-  , '(P 0, N 3 / 4) ~ K.DivRem 'K.RoundUp (N 3 / 4)
-  , '(P 0, N 3 / 4) ~ K.DivRem 'K.RoundZero (N 3 / 4)
+  , '(Z, N 3 / 4) ~ K.DivRem 'K.RoundUp (N 3 / 4)
+  , '(Z, N 3 / 4) ~ K.DivRem 'K.RoundZero (N 3 / 4)
   , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundAway (N 3 / 4)
   , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfDown (N 3 / 4)
   , '(N 1, P 1 / 4) ~ K.DivRem 'K.RoundHalfUp (N 3 / 4)
@@ -433,10 +434,11 @@ testsMain xs = do
     [] -> exitSuccess
     _  -> exitFailure
 
-rats :: P.Integer -> [K.Rational]
+rats :: P.Integer -> [P.Rational]
 rats i = do n <- [negate i .. i]
             d <- [negate i .. i]
-            maybeToList $ K.rational n d
+            guard (d /= 0)
+            pure (n P.% d)
 
 main :: IO ()
 main = testsMain $
@@ -465,73 +467,64 @@ main = testsMain $
           | a == b    -> isJust    (K.sameRational pa pb)
           | otherwise -> isNothing (K.sameRational pa pb)
 
+  , assert "demote @(Z % 1)" $ demote @(Z % 1) == (0 :: P.Rational)
+  , assert "demote @(P 1 % 1)" $ demote @(P 1 % 1) == (1 :: P.Rational)
+  , assert "demote @(N 1 % 1)" $ demote @(N 1 % 1) == ((-1) :: P.Rational)
+
+  , assert "show (SRational @(Z % 1))" $
+    show (K.SRational @(Z % 1)) == "SRational @(Z % 1)"
+  , assert "show (SRational @(P 1 % 1))" $
+    show (K.SRational @(P 1 % 1)) == "SRational @(P 1 % 1)"
+  , assert "show (SRational @(N 1 % 1))" $
+    show (K.SRational @(N 1 % 1)) == "SRational @(N 1 % 1)"
+
   , assert "Eq SomeRational" $
-    flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      (a == b) == (K.someRationalVal a == K.someRationalVal b)
+    and [ K.someRationalVal 0 == K.someRationalVal 0
+        , K.someRationalVal 1 == K.someRationalVal 1
+        , K.someRationalVal 2 == K.someRationalVal 2
+        , K.someRationalVal (1 P.% 2) == K.someRationalVal (1 P.% 2)
+        ]
 
   , assert "Ord SomeRational" $
-    flip all (liftA2 (,) (rats 4) (rats 4))$ \(a, b) ->
-      compare a b == compare (K.someRationalVal a) (K.someRationalVal b)
+    flip all (liftA2 (,) (rats 4) (rats 4)) $ \(a, b) ->
+      compare (K.someRationalVal a) (K.someRationalVal b)
+        == compare a b
 
   , assert "Show SomeRational" $
     flip all (rats 4) $ \a ->
-      show a == show (K.someRationalVal a)
+      show (K.someRationalVal a) == show a
 
   , assert "Read SomeRational" $
     flip all (rats 4) $ \a ->
-      let str = show a
-      in readMaybe @P.Rational str
-            == fmap (\(K.SomeRational p) -> K.toPrelude (K.rationalVal p))
-                    (readMaybe @K.SomeRational str)
+    fmap K.someRationalVal (readMaybe (show a))
+       == Just (K.someRationalVal a)
 
-   -- TODO test TestEquality
-
-  , assert "TestEquality +0/1 +0/1" $
-     isJust (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(P 0 % 1)))
-  , assert "TestEquality -0/1 -0/1" $
-     isJust (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(N 0 % 1)))
+  , assert "TestEquality 0/1 0/1" $
+     isJust (testEquality (K.SRational @(Z % 1)) (K.SRational @(Z % 1)))
   , assert "TestEquality +1/2 +1/2" $
      isJust (testEquality (K.SRational @(P 1 % 2)) (K.SRational @(P 1 % 2)))
   , assert "TestEquality -1/2 -1/2" $
      isJust (testEquality (K.SRational @(N 1 % 2)) (K.SRational @(N 1 % 2)))
-  , assert "TestEquality +0/1 -0/1" $
-     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(N 0 % 1)))
-  , assert "TestEquality -0/1 +0/1" $
-     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(P 0 % 1)))
-  , assert "TestEquality +0/1 +1/1" $
-     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(P 1 % 1)))
-  , assert "TestEquality +0/1 -1/1" $
-     isNothing (testEquality (K.SRational @(P 0 % 1)) (K.SRational @(N 1 % 1)))
-  , assert "TestEquality -0/1 +1/1" $
-     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(P 1 % 1)))
-  , assert "TestEquality -0/1 -1/1" $
-     isNothing (testEquality (K.SRational @(N 0 % 1)) (K.SRational @(N 1 % 1)))
-  , assert "TestEquality +1/1 +0/1" $
-     isNothing (testEquality (K.SRational @(P 1 % 1)) (K.SRational @(P 0 % 1)))
-  , assert "TestEquality +1/1 -0/1" $
-     isNothing (testEquality (K.SRational @(P 1 % 1)) (K.SRational @(N 0 % 1)))
-  , assert "TestEquality -1/1 +0/1" $
-     isNothing (testEquality (K.SRational @(N 1 % 1)) (K.SRational @(P 0 % 1)))
-  , assert "TestEquality -1/1 -0/1" $
-     isNothing (testEquality (K.SRational @(N 1 % 1)) (K.SRational @(N 0 % 1)))
-  , assert "TestEquality +1/2 +2/4" $
-     isNothing (testEquality (K.SRational @(P 1 % 2)) (K.SRational @(P 2 % 4)))
-  , assert "TestEquality -1/2 -2/4" $
-     isNothing (testEquality (K.SRational @(N 1 % 2)) (K.SRational @(N 2 % 4)))
+  , assert "TestEquality 0/1 +1/1" $
+     isNothing (testEquality (K.SRational @(Z % 1)) (K.SRational @(P 1 % 1)))
+  , assert "TestEquality 0/1 -1/1" $
+     isNothing (testEquality (K.SRational @(Z % 1)) (K.SRational @(N 1 % 1)))
+  , assert "TestEquality 0/1 +1/1" $
+     isNothing (testEquality (K.SRational @(Z % 1)) (K.SRational @(P 1 % 1)))
+  , assert "TestEquality +1/1 0/1" $
+     isNothing (testEquality (K.SRational @(P 1 % 1)) (K.SRational @(Z % 1)))
+  , assert "TestEquality -1/1 0/1" $
+     isNothing (testEquality (K.SRational @(N 1 % 1)) (K.SRational @(Z % 1)))
 
-  , assert "Show Rational +0" $
-     "0 % 1" == show (K.fromSRational (K.SRational @(P 0 % 1)))
-  , assert "Show Rational -0" $
-     "0 % 1" == show (K.fromSRational (K.SRational @(N 0 % 1)))
+  , assert "Show Rational 0" $
+     "0 % 1" == show (K.fromSRational (K.SRational @(Z % 1)))
   , assert "Show Rational +1" $
      "1 % 1" == show (K.fromSRational (K.SRational @(P 1 % 1)))
   , assert "Show Rational -1" $
      "(-1) % 1" == show (K.fromSRational (K.SRational @(N 1 % 1)))
 
-  , assert "Show SRational +0" $
-     "SRational @(P 0 % 1)" == show (K.SRational @(P 0 % 1))
-  , assert "Show SRational -0" $
-     "SRational @(N 0 % 1)" == show (K.SRational @(N 0 % 1))
+  , assert "Show SRational 0" $
+     "SRational @(Z % 1)" == show (K.SRational @(Z % 1))
   , assert "Show SRational +1" $
      "SRational @(P 1 % 1)" == show (K.SRational @(P 1 % 1))
   , assert "Show SRational -1" $
@@ -541,15 +534,14 @@ main = testsMain $
 
 testsDivRem :: [IO Bool]
 testsDivRem = do
-  a <- rats 4
-  let n P.:% d = K.toPrelude a
+  a@(n P.:% d) <- rats 4
   r :: K.Round <- [minBound .. maxBound]
   let tname :: String -> ShowS
       tname t = showString t . showChar ' ' . shows r . showChar ' '
               . shows n . showChar ' ' . shows d
   [   assert (tname "divRem" "") $
          case K.divRem r a of
-           (q, x) -> Just a == K.fromPrelude (toRational q + K.toPrelude x)
+           (q, x) -> a == toRational q + x
     , assert (tname "divRem/div" "") $ fst (K.divRem r a) == K.div r a
     , assert (tname "divRem/rem" "") $ snd (K.divRem r a) == K.rem r a
     ]
@@ -567,9 +559,8 @@ testsTermination = concat
              K.termination True False sa
     ]
   where
-   ok :: [K.Rational]
-   Just ok = traverse K.fromPrelude
-        [ 0 P.% 1
+   ok :: [P.Rational]
+   ok = [ 0 P.% 1
         , -1 P.% 1
         , 2 P.% 1
         , -1 P.% 2
@@ -591,9 +582,8 @@ testsTermination = concat
         , -3 P.% 50
         , 3 P.% 10000000
         ]
-   no :: [K.Rational]
-   Just no = traverse K.fromPrelude
-        [ 1 P.% 3
+   no :: [P.Rational]
+   no = [ 1 P.% 3
         , -1 P.% 12
         , 1 P.% 15
         , -2 P.% 3
@@ -602,40 +592,40 @@ testsTermination = concat
         ]
 
 
-_testSlash_Nat0_Nat1 = Dict @((P 0 % 1) ~ (0 / 1))
-_testSlash_Nat0_Nat2 = Dict @((P 0 % 1) ~ (0 / 2))
-_testSlash_Nat0_Nat3 = Dict @((P 0 % 1) ~ (0 / 3))
-_testSlash_Nat0_Nat4 = Dict @((P 0 % 1) ~ (0 / 4))
-_testSlash_Nat0_IntN4 = Dict @((P 0 % 1) ~ (0 / (N 4)))
-_testSlash_Nat0_IntN3 = Dict @((P 0 % 1) ~ (0 / (N 3)))
-_testSlash_Nat0_IntN2 = Dict @((P 0 % 1) ~ (0 / (N 2)))
-_testSlash_Nat0_IntN1 = Dict @((P 0 % 1) ~ (0 / (N 1)))
-_testSlash_Nat0_IntP1 = Dict @((P 0 % 1) ~ (0 / (P 1)))
-_testSlash_Nat0_IntP2 = Dict @((P 0 % 1) ~ (0 / (P 2)))
-_testSlash_Nat0_IntP3 = Dict @((P 0 % 1) ~ (0 / (P 3)))
-_testSlash_Nat0_IntP4 = Dict @((P 0 % 1) ~ (0 / (P 4)))
-_testSlash_Nat0_Rat4N1 = Dict @((P 0 % 1) ~ (0 / (N 4 % 1)))
-_testSlash_Nat0_Rat3N1 = Dict @((P 0 % 1) ~ (0 / (N 3 % 1)))
-_testSlash_Nat0_Rat2N1 = Dict @((P 0 % 1) ~ (0 / (N 2 % 1)))
-_testSlash_Nat0_Rat3N2 = Dict @((P 0 % 1) ~ (0 / (N 3 % 2)))
-_testSlash_Nat0_Rat4N3 = Dict @((P 0 % 1) ~ (0 / (N 4 % 3)))
-_testSlash_Nat0_Rat1N1 = Dict @((P 0 % 1) ~ (0 / (N 1 % 1)))
-_testSlash_Nat0_Rat3N4 = Dict @((P 0 % 1) ~ (0 / (N 3 % 4)))
-_testSlash_Nat0_Rat2N3 = Dict @((P 0 % 1) ~ (0 / (N 2 % 3)))
-_testSlash_Nat0_Rat1N2 = Dict @((P 0 % 1) ~ (0 / (N 1 % 2)))
-_testSlash_Nat0_Rat1N3 = Dict @((P 0 % 1) ~ (0 / (N 1 % 3)))
-_testSlash_Nat0_Rat1N4 = Dict @((P 0 % 1) ~ (0 / (N 1 % 4)))
-_testSlash_Nat0_Rat1P4 = Dict @((P 0 % 1) ~ (0 / (P 1 % 4)))
-_testSlash_Nat0_Rat1P3 = Dict @((P 0 % 1) ~ (0 / (P 1 % 3)))
-_testSlash_Nat0_Rat1P2 = Dict @((P 0 % 1) ~ (0 / (P 1 % 2)))
-_testSlash_Nat0_Rat2P3 = Dict @((P 0 % 1) ~ (0 / (P 2 % 3)))
-_testSlash_Nat0_Rat3P4 = Dict @((P 0 % 1) ~ (0 / (P 3 % 4)))
-_testSlash_Nat0_Rat1P1 = Dict @((P 0 % 1) ~ (0 / (P 1 % 1)))
-_testSlash_Nat0_Rat4P3 = Dict @((P 0 % 1) ~ (0 / (P 4 % 3)))
-_testSlash_Nat0_Rat3P2 = Dict @((P 0 % 1) ~ (0 / (P 3 % 2)))
-_testSlash_Nat0_Rat2P1 = Dict @((P 0 % 1) ~ (0 / (P 2 % 1)))
-_testSlash_Nat0_Rat3P1 = Dict @((P 0 % 1) ~ (0 / (P 3 % 1)))
-_testSlash_Nat0_Rat4P1 = Dict @((P 0 % 1) ~ (0 / (P 4 % 1)))
+_testSlash_Nat0_Nat1 = Dict @((Z % 1) ~ (0 / 1))
+_testSlash_Nat0_Nat2 = Dict @((Z % 1) ~ (0 / 2))
+_testSlash_Nat0_Nat3 = Dict @((Z % 1) ~ (0 / 3))
+_testSlash_Nat0_Nat4 = Dict @((Z % 1) ~ (0 / 4))
+_testSlash_Nat0_IntN4 = Dict @((Z % 1) ~ (0 / (N 4)))
+_testSlash_Nat0_IntN3 = Dict @((Z % 1) ~ (0 / (N 3)))
+_testSlash_Nat0_IntN2 = Dict @((Z % 1) ~ (0 / (N 2)))
+_testSlash_Nat0_IntN1 = Dict @((Z % 1) ~ (0 / (N 1)))
+_testSlash_Nat0_IntP1 = Dict @((Z % 1) ~ (0 / (P 1)))
+_testSlash_Nat0_IntP2 = Dict @((Z % 1) ~ (0 / (P 2)))
+_testSlash_Nat0_IntP3 = Dict @((Z % 1) ~ (0 / (P 3)))
+_testSlash_Nat0_IntP4 = Dict @((Z % 1) ~ (0 / (P 4)))
+_testSlash_Nat0_Rat4N1 = Dict @((Z % 1) ~ (0 / (N 4 % 1)))
+_testSlash_Nat0_Rat3N1 = Dict @((Z % 1) ~ (0 / (N 3 % 1)))
+_testSlash_Nat0_Rat2N1 = Dict @((Z % 1) ~ (0 / (N 2 % 1)))
+_testSlash_Nat0_Rat3N2 = Dict @((Z % 1) ~ (0 / (N 3 % 2)))
+_testSlash_Nat0_Rat4N3 = Dict @((Z % 1) ~ (0 / (N 4 % 3)))
+_testSlash_Nat0_Rat1N1 = Dict @((Z % 1) ~ (0 / (N 1 % 1)))
+_testSlash_Nat0_Rat3N4 = Dict @((Z % 1) ~ (0 / (N 3 % 4)))
+_testSlash_Nat0_Rat2N3 = Dict @((Z % 1) ~ (0 / (N 2 % 3)))
+_testSlash_Nat0_Rat1N2 = Dict @((Z % 1) ~ (0 / (N 1 % 2)))
+_testSlash_Nat0_Rat1N3 = Dict @((Z % 1) ~ (0 / (N 1 % 3)))
+_testSlash_Nat0_Rat1N4 = Dict @((Z % 1) ~ (0 / (N 1 % 4)))
+_testSlash_Nat0_Rat1P4 = Dict @((Z % 1) ~ (0 / (P 1 % 4)))
+_testSlash_Nat0_Rat1P3 = Dict @((Z % 1) ~ (0 / (P 1 % 3)))
+_testSlash_Nat0_Rat1P2 = Dict @((Z % 1) ~ (0 / (P 1 % 2)))
+_testSlash_Nat0_Rat2P3 = Dict @((Z % 1) ~ (0 / (P 2 % 3)))
+_testSlash_Nat0_Rat3P4 = Dict @((Z % 1) ~ (0 / (P 3 % 4)))
+_testSlash_Nat0_Rat1P1 = Dict @((Z % 1) ~ (0 / (P 1 % 1)))
+_testSlash_Nat0_Rat4P3 = Dict @((Z % 1) ~ (0 / (P 4 % 3)))
+_testSlash_Nat0_Rat3P2 = Dict @((Z % 1) ~ (0 / (P 3 % 2)))
+_testSlash_Nat0_Rat2P1 = Dict @((Z % 1) ~ (0 / (P 2 % 1)))
+_testSlash_Nat0_Rat3P1 = Dict @((Z % 1) ~ (0 / (P 3 % 1)))
+_testSlash_Nat0_Rat4P1 = Dict @((Z % 1) ~ (0 / (P 4 % 1)))
 _testSlash_Nat1_Nat1 = Dict @((P 1 % 1) ~ (1 / 1))
 _testSlash_Nat1_Nat2 = Dict @((P 1 % 2) ~ (1 / 2))
 _testSlash_Nat1_Nat3 = Dict @((P 1 % 3) ~ (1 / 3))
@@ -908,40 +898,40 @@ _testSlash_IntN1_Rat3P2 = Dict @((N 2 % 3) ~ ((N 1) / (P 3 % 2)))
 _testSlash_IntN1_Rat2P1 = Dict @((N 1 % 2) ~ ((N 1) / (P 2 % 1)))
 _testSlash_IntN1_Rat3P1 = Dict @((N 1 % 3) ~ ((N 1) / (P 3 % 1)))
 _testSlash_IntN1_Rat4P1 = Dict @((N 1 % 4) ~ ((N 1) / (P 4 % 1)))
-_testSlash_IntP0_Nat1 = Dict @((P 0 % 1) ~ ((P 0) / 1))
-_testSlash_IntP0_Nat2 = Dict @((P 0 % 1) ~ ((P 0) / 2))
-_testSlash_IntP0_Nat3 = Dict @((P 0 % 1) ~ ((P 0) / 3))
-_testSlash_IntP0_Nat4 = Dict @((P 0 % 1) ~ ((P 0) / 4))
-_testSlash_IntP0_IntN4 = Dict @((P 0 % 1) ~ ((P 0) / (N 4)))
-_testSlash_IntP0_IntN3 = Dict @((P 0 % 1) ~ ((P 0) / (N 3)))
-_testSlash_IntP0_IntN2 = Dict @((P 0 % 1) ~ ((P 0) / (N 2)))
-_testSlash_IntP0_IntN1 = Dict @((P 0 % 1) ~ ((P 0) / (N 1)))
-_testSlash_IntP0_IntP1 = Dict @((P 0 % 1) ~ ((P 0) / (P 1)))
-_testSlash_IntP0_IntP2 = Dict @((P 0 % 1) ~ ((P 0) / (P 2)))
-_testSlash_IntP0_IntP3 = Dict @((P 0 % 1) ~ ((P 0) / (P 3)))
-_testSlash_IntP0_IntP4 = Dict @((P 0 % 1) ~ ((P 0) / (P 4)))
-_testSlash_IntP0_Rat4N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 4 % 1)))
-_testSlash_IntP0_Rat3N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 1)))
-_testSlash_IntP0_Rat2N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 2 % 1)))
-_testSlash_IntP0_Rat3N2 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 2)))
-_testSlash_IntP0_Rat4N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 4 % 3)))
-_testSlash_IntP0_Rat1N1 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 1)))
-_testSlash_IntP0_Rat3N4 = Dict @((P 0 % 1) ~ ((P 0) / (N 3 % 4)))
-_testSlash_IntP0_Rat2N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 2 % 3)))
-_testSlash_IntP0_Rat1N2 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 2)))
-_testSlash_IntP0_Rat1N3 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 3)))
-_testSlash_IntP0_Rat1N4 = Dict @((P 0 % 1) ~ ((P 0) / (N 1 % 4)))
-_testSlash_IntP0_Rat1P4 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 4)))
-_testSlash_IntP0_Rat1P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 3)))
-_testSlash_IntP0_Rat1P2 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 2)))
-_testSlash_IntP0_Rat2P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 2 % 3)))
-_testSlash_IntP0_Rat3P4 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 4)))
-_testSlash_IntP0_Rat1P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 1 % 1)))
-_testSlash_IntP0_Rat4P3 = Dict @((P 0 % 1) ~ ((P 0) / (P 4 % 3)))
-_testSlash_IntP0_Rat3P2 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 2)))
-_testSlash_IntP0_Rat2P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 2 % 1)))
-_testSlash_IntP0_Rat3P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 3 % 1)))
-_testSlash_IntP0_Rat4P1 = Dict @((P 0 % 1) ~ ((P 0) / (P 4 % 1)))
+_testSlash_IntP0_Nat1 = Dict @((Z % 1) ~ (Z / 1))
+_testSlash_IntP0_Nat2 = Dict @((Z % 1) ~ (Z / 2))
+_testSlash_IntP0_Nat3 = Dict @((Z % 1) ~ (Z / 3))
+_testSlash_IntP0_Nat4 = Dict @((Z % 1) ~ (Z / 4))
+_testSlash_IntP0_IntN4 = Dict @((Z % 1) ~ (Z / (N 4)))
+_testSlash_IntP0_IntN3 = Dict @((Z % 1) ~ (Z / (N 3)))
+_testSlash_IntP0_IntN2 = Dict @((Z % 1) ~ (Z / (N 2)))
+_testSlash_IntP0_IntN1 = Dict @((Z % 1) ~ (Z / (N 1)))
+_testSlash_IntP0_IntP1 = Dict @((Z % 1) ~ (Z / (P 1)))
+_testSlash_IntP0_IntP2 = Dict @((Z % 1) ~ (Z / (P 2)))
+_testSlash_IntP0_IntP3 = Dict @((Z % 1) ~ (Z / (P 3)))
+_testSlash_IntP0_IntP4 = Dict @((Z % 1) ~ (Z / (P 4)))
+_testSlash_IntP0_Rat4N1 = Dict @((Z % 1) ~ (Z / (N 4 % 1)))
+_testSlash_IntP0_Rat3N1 = Dict @((Z % 1) ~ (Z / (N 3 % 1)))
+_testSlash_IntP0_Rat2N1 = Dict @((Z % 1) ~ (Z / (N 2 % 1)))
+_testSlash_IntP0_Rat3N2 = Dict @((Z % 1) ~ (Z / (N 3 % 2)))
+_testSlash_IntP0_Rat4N3 = Dict @((Z % 1) ~ (Z / (N 4 % 3)))
+_testSlash_IntP0_Rat1N1 = Dict @((Z % 1) ~ (Z / (N 1 % 1)))
+_testSlash_IntP0_Rat3N4 = Dict @((Z % 1) ~ (Z / (N 3 % 4)))
+_testSlash_IntP0_Rat2N3 = Dict @((Z % 1) ~ (Z / (N 2 % 3)))
+_testSlash_IntP0_Rat1N2 = Dict @((Z % 1) ~ (Z / (N 1 % 2)))
+_testSlash_IntP0_Rat1N3 = Dict @((Z % 1) ~ (Z / (N 1 % 3)))
+_testSlash_IntP0_Rat1N4 = Dict @((Z % 1) ~ (Z / (N 1 % 4)))
+_testSlash_IntP0_Rat1P4 = Dict @((Z % 1) ~ (Z / (P 1 % 4)))
+_testSlash_IntP0_Rat1P3 = Dict @((Z % 1) ~ (Z / (P 1 % 3)))
+_testSlash_IntP0_Rat1P2 = Dict @((Z % 1) ~ (Z / (P 1 % 2)))
+_testSlash_IntP0_Rat2P3 = Dict @((Z % 1) ~ (Z / (P 2 % 3)))
+_testSlash_IntP0_Rat3P4 = Dict @((Z % 1) ~ (Z / (P 3 % 4)))
+_testSlash_IntP0_Rat1P1 = Dict @((Z % 1) ~ (Z / (P 1 % 1)))
+_testSlash_IntP0_Rat4P3 = Dict @((Z % 1) ~ (Z / (P 4 % 3)))
+_testSlash_IntP0_Rat3P2 = Dict @((Z % 1) ~ (Z / (P 3 % 2)))
+_testSlash_IntP0_Rat2P1 = Dict @((Z % 1) ~ (Z / (P 2 % 1)))
+_testSlash_IntP0_Rat3P1 = Dict @((Z % 1) ~ (Z / (P 3 % 1)))
+_testSlash_IntP0_Rat4P1 = Dict @((Z % 1) ~ (Z / (P 4 % 1)))
 _testSlash_IntP1_Nat1 = Dict @((P 1 % 1) ~ ((P 1) / 1))
 _testSlash_IntP1_Nat2 = Dict @((P 1 % 2) ~ ((P 1) / 2))
 _testSlash_IntP1_Nat3 = Dict @((P 1 % 3) ~ ((P 1) / 3))
@@ -1452,40 +1442,40 @@ _testSlash_Rat1N4_Rat3P2 = Dict @((N 1 % 6) ~ ((N 1 % 4) / (P 3 % 2)))
 _testSlash_Rat1N4_Rat2P1 = Dict @((N 1 % 8) ~ ((N 1 % 4) / (P 2 % 1)))
 _testSlash_Rat1N4_Rat3P1 = Dict @((N 1 % 12) ~ ((N 1 % 4) / (P 3 % 1)))
 _testSlash_Rat1N4_Rat4P1 = Dict @((N 1 % 16) ~ ((N 1 % 4) / (P 4 % 1)))
-_testSlash_Rat0P1_Nat1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 1))
-_testSlash_Rat0P1_Nat2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 2))
-_testSlash_Rat0P1_Nat3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 3))
-_testSlash_Rat0P1_Nat4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / 4))
-_testSlash_Rat0P1_IntN4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4)))
-_testSlash_Rat0P1_IntN3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3)))
-_testSlash_Rat0P1_IntN2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2)))
-_testSlash_Rat0P1_IntN1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1)))
-_testSlash_Rat0P1_IntP1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1)))
-_testSlash_Rat0P1_IntP2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2)))
-_testSlash_Rat0P1_IntP3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3)))
-_testSlash_Rat0P1_IntP4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4)))
-_testSlash_Rat0P1_Rat4N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4 % 1)))
-_testSlash_Rat0P1_Rat3N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 1)))
-_testSlash_Rat0P1_Rat2N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2 % 1)))
-_testSlash_Rat0P1_Rat3N2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 2)))
-_testSlash_Rat0P1_Rat4N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 4 % 3)))
-_testSlash_Rat0P1_Rat1N1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 1)))
-_testSlash_Rat0P1_Rat3N4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 3 % 4)))
-_testSlash_Rat0P1_Rat2N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 2 % 3)))
-_testSlash_Rat0P1_Rat1N2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 2)))
-_testSlash_Rat0P1_Rat1N3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 3)))
-_testSlash_Rat0P1_Rat1N4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (N 1 % 4)))
-_testSlash_Rat0P1_Rat1P4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 4)))
-_testSlash_Rat0P1_Rat1P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 3)))
-_testSlash_Rat0P1_Rat1P2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 2)))
-_testSlash_Rat0P1_Rat2P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2 % 3)))
-_testSlash_Rat0P1_Rat3P4 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 4)))
-_testSlash_Rat0P1_Rat1P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 1 % 1)))
-_testSlash_Rat0P1_Rat4P3 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4 % 3)))
-_testSlash_Rat0P1_Rat3P2 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 2)))
-_testSlash_Rat0P1_Rat2P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 2 % 1)))
-_testSlash_Rat0P1_Rat3P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 3 % 1)))
-_testSlash_Rat0P1_Rat4P1 = Dict @((P 0 % 1) ~ ((P 0 % 1) / (P 4 % 1)))
+_testSlash_Rat0P1_Nat1 = Dict @((Z % 1) ~ ((Z % 1) / 1))
+_testSlash_Rat0P1_Nat2 = Dict @((Z % 1) ~ ((Z % 1) / 2))
+_testSlash_Rat0P1_Nat3 = Dict @((Z % 1) ~ ((Z % 1) / 3))
+_testSlash_Rat0P1_Nat4 = Dict @((Z % 1) ~ ((Z % 1) / 4))
+_testSlash_Rat0P1_IntN4 = Dict @((Z % 1) ~ ((Z % 1) / (N 4)))
+_testSlash_Rat0P1_IntN3 = Dict @((Z % 1) ~ ((Z % 1) / (N 3)))
+_testSlash_Rat0P1_IntN2 = Dict @((Z % 1) ~ ((Z % 1) / (N 2)))
+_testSlash_Rat0P1_IntN1 = Dict @((Z % 1) ~ ((Z % 1) / (N 1)))
+_testSlash_Rat0P1_IntP1 = Dict @((Z % 1) ~ ((Z % 1) / (P 1)))
+_testSlash_Rat0P1_IntP2 = Dict @((Z % 1) ~ ((Z % 1) / (P 2)))
+_testSlash_Rat0P1_IntP3 = Dict @((Z % 1) ~ ((Z % 1) / (P 3)))
+_testSlash_Rat0P1_IntP4 = Dict @((Z % 1) ~ ((Z % 1) / (P 4)))
+_testSlash_Rat0P1_Rat4N1 = Dict @((Z % 1) ~ ((Z % 1) / (N 4 % 1)))
+_testSlash_Rat0P1_Rat3N1 = Dict @((Z % 1) ~ ((Z % 1) / (N 3 % 1)))
+_testSlash_Rat0P1_Rat2N1 = Dict @((Z % 1) ~ ((Z % 1) / (N 2 % 1)))
+_testSlash_Rat0P1_Rat3N2 = Dict @((Z % 1) ~ ((Z % 1) / (N 3 % 2)))
+_testSlash_Rat0P1_Rat4N3 = Dict @((Z % 1) ~ ((Z % 1) / (N 4 % 3)))
+_testSlash_Rat0P1_Rat1N1 = Dict @((Z % 1) ~ ((Z % 1) / (N 1 % 1)))
+_testSlash_Rat0P1_Rat3N4 = Dict @((Z % 1) ~ ((Z % 1) / (N 3 % 4)))
+_testSlash_Rat0P1_Rat2N3 = Dict @((Z % 1) ~ ((Z % 1) / (N 2 % 3)))
+_testSlash_Rat0P1_Rat1N2 = Dict @((Z % 1) ~ ((Z % 1) / (N 1 % 2)))
+_testSlash_Rat0P1_Rat1N3 = Dict @((Z % 1) ~ ((Z % 1) / (N 1 % 3)))
+_testSlash_Rat0P1_Rat1N4 = Dict @((Z % 1) ~ ((Z % 1) / (N 1 % 4)))
+_testSlash_Rat0P1_Rat1P4 = Dict @((Z % 1) ~ ((Z % 1) / (P 1 % 4)))
+_testSlash_Rat0P1_Rat1P3 = Dict @((Z % 1) ~ ((Z % 1) / (P 1 % 3)))
+_testSlash_Rat0P1_Rat1P2 = Dict @((Z % 1) ~ ((Z % 1) / (P 1 % 2)))
+_testSlash_Rat0P1_Rat2P3 = Dict @((Z % 1) ~ ((Z % 1) / (P 2 % 3)))
+_testSlash_Rat0P1_Rat3P4 = Dict @((Z % 1) ~ ((Z % 1) / (P 3 % 4)))
+_testSlash_Rat0P1_Rat1P1 = Dict @((Z % 1) ~ ((Z % 1) / (P 1 % 1)))
+_testSlash_Rat0P1_Rat4P3 = Dict @((Z % 1) ~ ((Z % 1) / (P 4 % 3)))
+_testSlash_Rat0P1_Rat3P2 = Dict @((Z % 1) ~ ((Z % 1) / (P 3 % 2)))
+_testSlash_Rat0P1_Rat2P1 = Dict @((Z % 1) ~ ((Z % 1) / (P 2 % 1)))
+_testSlash_Rat0P1_Rat3P1 = Dict @((Z % 1) ~ ((Z % 1) / (P 3 % 1)))
+_testSlash_Rat0P1_Rat4P1 = Dict @((Z % 1) ~ ((Z % 1) / (P 4 % 1)))
 _testSlash_Rat1P4_Nat1 = Dict @((P 1 % 4) ~ ((P 1 % 4) / 1))
 _testSlash_Rat1P4_Nat2 = Dict @((P 1 % 8) ~ ((P 1 % 4) / 2))
 _testSlash_Rat1P4_Nat3 = Dict @((P 1 % 12) ~ ((P 1 % 4) / 3))

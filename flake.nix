@@ -15,7 +15,11 @@
             (prev.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
               kind-integer = hself.callPackage ./kind-integer { };
               kind-rational = hself.callPackage ./kind-rational { };
+              # dependencies
+              chell = prev.haskell.lib.doJailbreak hsuper.chell;
               singletons = hself.callHackage "singletons" "3.0.2" { };
+              singletons-base = hself.callHackage "singletons-base" "3.1.1" { };
+              singletons-th = hself.callHackage "singletons-th" "3.1.1" { };
             });
         };
       };

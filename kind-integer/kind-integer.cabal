@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: kind-integer
-version: 0.6
+version: 0.6.0
 license: BSD-3-Clause
 license-file: LICENSE
 extra-source-files: README.md CHANGELOG.md
@@ -26,6 +26,7 @@ common basic
   build-depends: base ==4.*, singletons
   default-extensions:
     DataKinds
+    LambdaCase
     MultiWayIf
     NoStarIsType
     RoleAnnotations

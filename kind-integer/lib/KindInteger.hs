@@ -1,3 +1,4 @@
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | This module provides a type-level representation for term-level
@@ -15,16 +16,17 @@
 module KindInteger {--}
   ( -- * Integer kind
     Integer
-  , type P
+  , type Z
   , type N
+  , type P
   , Normalize
-
-    -- * Prelude support
-  , toPrelude
-  , fromPrelude
+  , showsPrecTypeLit
+  , readPrecTypeLit
 
     -- * Types ⇔ Terms
-  , KnownInteger(integerSing), integerVal
+  , KnownInteger
+  , integerSing
+  , integerVal
   , SomeInteger(..)
   , someIntegerVal
   , sameInteger
@@ -61,6 +63,7 @@ module KindInteger {--}
 
 import Control.Applicative
 import Control.Exception qualified as Ex
+import Control.Monad
 import Data.Bits
 import Data.Char qualified as Char
 import Data.Proxy
@@ -73,195 +76,155 @@ import Data.Type.Ord
 import GHC.Base (WithDict(..))
 import GHC.Exts (TYPE, Constraint)
 import GHC.Real qualified as P
-import GHC.Show (appPrec, appPrec1)
-import GHC.TypeLits qualified as L
+import GHC.Show (appPrec1)
+import GHC.TypeLits qualified as L hiding (someNatVal)
+import GHC.TypeNats qualified as L (someNatVal)
 import Numeric.Natural (Natural)
 import Prelude hiding (Integer, (==), (/=), div, rem)
 import Prelude qualified as P
 import Text.ParserCombinators.ReadP qualified as ReadP
 import Text.ParserCombinators.ReadPrec qualified as ReadPrec
 import Text.Read qualified as Read
-import Unsafe.Coerce(unsafeCoerce)
+import Unsafe.Coerce (unsafeCoerce)
 
 --------------------------------------------------------------------------------
 
--- | Type-level version of 'P.Integer', mostly used as a /kind/ for 'P' and 'N'.
+-- | Type-level version of 'P.Integer', used as a /kind/ for 'Z', 'N' and 'P'.
+--
+-- * Zero is represented as 'Z'.
 --
 -- * A positive number /+x/ is represented as @'P' x@.
 --
 -- * A negative number /-x/ is represented as @'N' x@.
---
--- * /Zero/ can be represented as @'P' 0@ or @'N' 0@. For consistency, all
--- /zero/ outputs from type families in this "KindInteger" module use the
--- @'P' 0@, but don't assume that this will be the case elsewhere. So, if you
--- need to treat /zero/ specially in some situation, be sure to handle both the
--- @'P' 0@ and @'N' 0@ cases.
---
--- __NB__: 'Integer' is mostly used as a kind, with its types constructed
--- using 'P' and 'N'.  However, it might also be used as type, with its terms
--- constructed using 'fromPrelude'. One reason why you may want a 'Integer'
--- at the term-level is so that you embed it in larger data-types (for example,
--- the "KindRational" module from the
--- [@kind-rational@](https://hackage.haskell.org/package/kind-rational)
--- library embeds this 'I.Integer' in its 'KindRational.Rational' type).
--- Contrary to "Prelude"'s 'P.Integer', "KindInteger"'s 'Integer' preserves
--- the internal distinction between @'P' 0@ and @'N' 0@, this is why functions
--- such as 'fromSing' use "KindInteger"'s 'Integer' rather than "Prelude"'s
--- 'P.Integer'.
+
+-- Note: We could use a better internal representation that guarantees that
+-- Negative and Positive don't contain zero. However, this one looks better
+-- on compiler errors, that's why we use it. The KindInteger module doesn't
+-- export anything that would allow the construction of a non-'Normalize'd
+-- 'Integer' anyway, so throughout this module we can make some assumptions.
 data Integer
-  = N_ Natural
-  | P_ Natural
+  = Z         -- ^ This is the only way to represent 0.
+  | N Natural -- ^ Never 0.
+  | P Natural -- ^ Never 0.
 
--- | Note that @'N' 0 '/=' 'P' 0@.
-instance Eq Integer where
-  (==) (N_ l) (N_ r) = l P.== r
-  (==) (P_ l) (P_ r) = l P.== r
-  (==) _      _      = False
+-- | Zero is represented as 'Z'.
+type Z = 'Z :: Integer
+-- | A negative number /-x/ is represented as @'N' x@.
+type N (x :: Natural) = 'N x :: Integer
+-- | A positive number /+x/ is represented as @'P' x@.
+type P (x :: Natural) = 'P x :: Integer
 
--- | Note that @'N' 0 '<' 'P' 0@.
-instance Ord Integer where
-  compare (N_ l) (N_ r) = compare r l
-  compare (N_ _) (P_ _) = LT
-  compare (P_ _) (N_ _) = GT
-  compare (P_ l) (P_ r) = compare l r
+-- | Displays the "Prelude".'P.Integer' as it would appear
+-- literally in the types (@\"Z\"@, @\"P 1\"@, @\"N 1\"@, etc.)
+-- as a type of kind "KindInteger".'Integer'.
+showsPrecTypeLit :: Int -> P.Integer -> ShowS
+showsPrecTypeLit p = \case
+  0         -> showChar 'Z'
+  i | i > 0 -> showParen (p >= appPrec1) (showString "P " . shows i)
+  i         -> showParen (p >= appPrec1) (showString "N " . shows (abs i))
 
--- | Shows the 'Integer' as it appears literally at the type-level.
---
--- This is different from normal 'show' for "Prelude"'s 'P.Integer'.
---
--- @
--- 'show' ('fromPrelude' 8) == \"P 8\"
--- @
-instance Show Integer where
-  showsPrec p i = showParen (p > appPrec) $ case i of
-    P_ x -> showString "P " . shows x
-    N_ x -> showString "N " . shows x
-
--- | See 'Show'.
-instance Read Integer where
-  readPrec = Read.parens $ ReadPrec.lift $ do
-    f <- (N_ <$ ReadP.char 'N') <|> (P_ <$ ReadP.char 'P')
-    _ <- ReadP.munch1 Char.isSpace
-    f <$> ReadPrec.readPrec_to_P Read.readPrec 0
-
--- | * A positive number /+x/ is represented as @'P' x@.
---
--- * /Zero/ can be represented as @'P' 0@ (see notes at 'Integer').
-type P (x :: Natural) = 'P_ x :: Integer
-
--- | * A negative number /-x/ is represented as @'N' x@.
---
--- * /Zero/ can be represented as @'N' 0@ (but often isn't, see notes at 'Integer').
-type N (x :: Natural) = 'N_ x :: Integer
-
--- | Convert a term-level "KindInteger" 'Integer' into a term-level
--- "Prelude" 'P.Integer'.
---
--- Note that @'toPrelude' . 'fromPrelude' == 'id'@, but the inverse is not
--- necessarily true, because 'toPrelude' converts both @'P' 0@ and @'N' 0@
--- to @0@.
-toPrelude :: Integer -> P.Integer
-toPrelude (P_ n) = toInteger n
-toPrelude (N_ n) = negate (toInteger n)
-
--- | Obtain a term-level "KindInteger" 'Integer' from a term-level
--- "Prelude" 'P.Integer'.
---
--- Note that @'toPrelude' . 'fromPrelude' == 'id'@, but the inverse is not
--- necessarily true, because 'toPrelude' converts both @'P' 0@ and @'N' 0@
--- to @0@.
---
--- This function can be handy if you are passing "KindInteger"'s 'Integer'
--- around for some reason. But, other than this, "KindInteger" doesn't offer
--- any tool to deal with the internals of its 'Integer'.
-fromPrelude :: P.Integer -> Integer
-fromPrelude i | i >= 0    = P_ (fromInteger i)
-              | otherwise = N_ (fromInteger (negate i))
+-- | Inverse of 'showsPrecTypeLit'.
+readPrecTypeLit :: ReadPrec.ReadPrec P.Integer
+readPrecTypeLit = Read.parens $ asum
+    [ 0 <$ ReadPrec.lift (ReadP.char 'Z')
+    , do ReadPrec.lift $ ReadP.char 'N' >> pSkipSpaces1
+         fmap (negate . fromIntegral) $ Read.parens (ReadPrec.lift pNatural)
+    , do ReadPrec.lift $ ReadP.char 'P' >> pSkipSpaces1
+         fmap toInteger $ Read.parens (ReadPrec.lift pNatural)
+    ]
+  where
+    pNatural :: ReadP.ReadP Natural
+    pNatural = read <$> ReadP.munch1 (\c -> c >= '0' && c <= '9')
 
 --------------------------------------------------------------------------------
 
--- | This class gives the integer associated with a type-level integer.
--- There are instances of the class for every integer.
-class KnownInteger (i :: Integer) where
-  integerSing :: SInteger i
-
--- | Positive numbers and zero.
-instance L.KnownNat x => KnownInteger (P x) where
-  integerSing = UnsafeSInteger (P_ (fromInteger (L.natVal (Proxy @x))))
-
--- | Negative numbers and zero.
+-- | This class gives the 'SInteger' associated with a type-level 'Integer'.
 --
--- Implementation note: Notice that @'N' 0@ will not be 'Normalize'd to
--- @'P' 0@. This is so that 'SDecide', 'TestEquality' and 'TestCoercion'
--- behave as expected. If you want a 'Normalize'd 'SInteger', then use
--- @'integerSing' \@('Normalize' i)@.
-instance L.KnownNat x => KnownInteger (N x) where
-  integerSing = UnsafeSInteger (N_ (fromInteger (L.natVal (Proxy @x))))
+-- There are instances for every 'Normalize'd 'Integer'.
 
--- | Term-level "Prelude" 'P.Integer' representation of the type-level
--- 'Integer' @i@.
+-- Note: Ideally,  @'Normalize' i ~ i@ would be a superclass. However,
+-- 'withDict' doesn't allow having a superclass here, so we treat
+-- 'KnownInteger_' as internal an export 'KnownInteger' only.
+class KnownInteger_ (i :: Integer) where
+  integerSing_ :: SInteger i
+
+-- | Type-level 'Integer's satisfying 'KnownInteger' can be converted to
+-- 'SInteger's using 'integerSing'.
+type KnownInteger (i :: Integer) =
+  (KnownInteger_ i, Normalize i ~ i, L.KnownNat (Abs_ i))
+
+-- | Convert an implicit 'KnownInteger' to an explicit 'SInteger'.
+integerSing :: KnownInteger i => SInteger i
+integerSing = integerSing_ -- The difference is in the constraint.
+{-# INLINE integerSing #-}
+
+-- | Positive.
+instance (KnownInteger (P x)) => KnownInteger_ (P x) where
+  integerSing_ = UnsafeSInteger (L.natVal (Proxy @x))
+
+-- | Negative.
+instance (KnownInteger (N x)) => KnownInteger_ (N x) where
+  integerSing_ = UnsafeSInteger (negate (L.natVal (Proxy @x)))
+
+-- | Zero.
+instance KnownInteger Z => KnownInteger_ Z where
+  integerSing_ = UnsafeSInteger 0
+
+-- | Term-level "Prelude".'P.Integer' representation of the type-level
+-- 'Integer'.
 integerVal :: forall i proxy. KnownInteger i => proxy i -> P.Integer
-integerVal p = toPrelude (integerValK p)
+integerVal _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
 {-# INLINE integerVal #-}
 
-integerValK :: forall i proxy. KnownInteger i => proxy i -> Integer
-integerValK _ = case integerSing :: SInteger i of UnsafeSInteger x -> x
-{-# INLINE integerValK #-}
+-- | Term-level representation of an existentialized 'KnownInteger'.
+data SomeInteger = forall i. KnownInteger i => SomeInteger (Proxy i)
 
--- | This type represents unknown type-level 'Integer'.
-data SomeInteger = forall n. KnownInteger n => SomeInteger (Proxy n)
-
--- | Convert a term-level "Prelude" 'P.Integer' into an unknown
--- type-level 'Integer' wrapped in 'SomeInteger'.
+-- | Convert a term-level "Prelude".'P.Integer' into an
+-- extistentialized 'KnownInteger' wrapped in 'SomeInteger'.
 someIntegerVal :: P.Integer -> SomeInteger
-someIntegerVal = someIntegerValK . fromPrelude
-{-# INLINE someIntegerVal #-}
+someIntegerVal = \i ->
+  withSomeSInteger i $ \(si :: SInteger i) ->
+  withKnownInteger si $ SomeInteger (Proxy @i)
 
--- | Convert a term-level "KindInteger" 'Integer' into an unknown
--- type-level 'Integer' wrapped in 'SomeInteger'.
-someIntegerValK :: Integer -> SomeInteger
-someIntegerValK = \i ->
-  withSomeSIntegerK i $ \(si :: SInteger i) ->
-  withKnownInteger si (SomeInteger @i Proxy)
-{-# INLINE someIntegerValK #-}
-
--- | Note that @'N' 0 '/=' 'P' 0@.
 instance Eq SomeInteger where
   SomeInteger x == SomeInteger y =
-    integerValK x P.== integerValK y
+    integerVal x P.== integerVal y
+  {-# INLINE (==) #-}
 
 instance Ord SomeInteger where
   compare (SomeInteger x) (SomeInteger y) =
-    compare (integerValK x) (integerValK y)
+    compare (integerVal x) (integerVal y)
+  {-# INLINE compare #-}
 
+-- | As for "Prelude".'P.Integer'.
 instance Show SomeInteger where
-  showsPrec p (SomeInteger x) = showsPrec p (integerValK x)
+  showsPrec p (SomeInteger i) = showsPrec p (integerVal i)
 
+-- | As for "Prelude".'P.Integer'.
 instance Read SomeInteger where
-  readsPrec p xs = do (a, ys) <- readsPrec p xs
-                      [(someIntegerValK a, ys)]
+  readPrec = fmap someIntegerVal Read.readPrec
 
 --------------------------------------------------------------------------------
--- Within this module, we use these “normalization” tools to make sure that
--- /zero/ is always represented as @'P' 0@. We don't export any of these
--- normalization tools to end-users because it seems like we can't make them
--- reliable enough so as to offer a decent user experience. So, we just tell
--- users to deal with the fact that both @'P' 0@ and @'N' 0@ mean /zero/.
 
 -- | Make sure /zero/ is represented as @'P' 0@, not as @'N' 0@
 --
--- Notice that all the tools in the "KindInteger" can readily handle
--- non-'Normalize'd inputs. This 'Normalize' type-family is offered offered
--- only as a convenience in case you want to simplify /your/ dealing with
--- /zeros/.
+-- Notice that all type-families in the "KindInteger" module can readily handle
+-- non-'Normalize'd inputs. You may need to use 'Normalize' when dealing with
+-- 'KnownInteger', though.
 type family Normalize (i :: Integer) :: Integer where
-  Normalize (N 0) = P 0
+  Normalize (N 0) = Z
+  Normalize (P 0) = Z
   Normalize i     = i
 
 -- | Construct a 'Normalize'd 'N'egative type-level 'Integer'.
 --
--- To be used for producing all negative outputs in this module.
+-- | To be used for producing all negative outputs in this module.
 type NN (a :: Natural) = Normalize (N a) :: Integer
+
+-- | Construct a 'Normalize'd 'P'ositive type-level 'Integer'.
+--
+-- To be used for producing all positive outputs in this module.
+type PP (a :: Natural) = Normalize (P a) :: Integer
 
 --------------------------------------------------------------------------------
 
@@ -276,41 +239,48 @@ type Odd (x :: Integer) = L.Mod (Abs x) 2 ==? 1 :: Bool
 type Even (x :: Integer) = L.Mod (Abs x) 2 ==? 0 :: Bool
 
 -- | Negation of type-level 'Integer's.
-type family Negate (x :: Integer) :: Integer where
-  Negate (P 0) = P 0
-  Negate (P x) = N x
-  Negate (N x) = P x
+type Negate (x :: Integer) = Negate_ (Normalize x) :: Integer
+type family Negate_ (x :: Integer) :: Integer where
+  Negate_ Z     = Z
+  Negate_ (P x) = N x
+  Negate_ (N x) = P x
 
 -- | Sign of type-level 'Integer's.
 --
--- * @'P' 0@ if zero.
+-- * 'Z' if zero.
 --
 -- * @'P' 1@ if positive.
 --
 -- * @'N' 1@ if negative.
-type family Sign (x :: Integer) :: Integer where
-  Sign (P 0) = P 0
-  Sign (N 0) = P 0
-  Sign (P _) = P 1
-  Sign (N _) = N 1
+type Sign (x :: Integer) = Sign_ (Normalize x) :: Integer
+type family Sign_ (x :: Integer) :: Integer where
+  Sign_  Z    = Z
+  Sign_ (P _) = P 1
+  Sign_ (N _) = N 1
 
 -- | Absolute value of a type-level 'Integer', as a type-level 'Natural'.
-type family Abs (x :: Integer) :: Natural where
-  Abs (P x) = x
-  Abs (N x) = x
+type Abs (x :: Integer) = Abs_ (Normalize x) :: Natural
+type family Abs_ (x :: Integer) :: Natural where
+  Abs_  Z    = 0
+  Abs_ (P x) = x
+  Abs_ (N x) = x
 
 -- | Addition of type-level 'Integer's.
 type (a :: Integer) + (b :: Integer) = Add_ (Normalize a) (Normalize b) :: Integer
 type family Add_ (a :: Integer) (b :: Integer) :: Integer where
-  Add_ (P a) (P b) = P (a L.+ b)
+  Add_ Z     b     = b
+  Add_ a     Z     = a
+  Add_ (P a) (P b) = PP (a L.+ b)
   Add_ (N a) (N b) = NN (a L.+ b)
-  Add_ (P a) (N b) = If (b <=? a) (P (a L.- b)) (NN (b L.- a))
+  Add_ (P a) (N b) = If (b <=? a) (PP (a L.- b)) (NN (b L.- a))
   Add_ (N a) (P b) = Add_ (P b) (N a)
 
 -- | Multiplication of type-level 'Integer's.
 type (a :: Integer) * (b :: Integer) = Mul_ (Normalize a) (Normalize b) :: Integer
 type family Mul_ (a :: Integer) (b :: Integer) :: Integer where
-  Mul_ (P a) (P b) = P (a L.* b)
+  Mul_ Z     b     = Z
+  Mul_ a     Z     = Z
+  Mul_ (P a) (P b) = PP (a L.* b)
   Mul_ (N a) (N b) = Mul_ (P a) (P b)
   Mul_ (P a) (N b) = NN (a L.* b)
   Mul_ (N a) (P b) = Mul_ (P a) (N b)
@@ -318,9 +288,14 @@ type family Mul_ (a :: Integer) (b :: Integer) :: Integer where
 -- | Exponentiation of type-level 'Integer's.
 --
 -- * Exponentiation by negative 'Integer' doesn't type-check.
+--
+-- * @'Z' '^' 'Z'@ doesn't type-check.
 type (a :: Integer) ^ (b :: Integer) = Pow_ (Normalize a) (Normalize b) :: Integer
 type family Pow_ (a :: Integer) (b :: Integer) :: Integer where
-  Pow_ (P a) (P b) = P (a L.^ b)
+  Pow_ Z      Z    = L.TypeError ('L.Text "KindInteger.(^): 0^0 is undefined")
+  Pow_ Z     (P _) = Z
+  Pow_ _      Z    = P 1
+  Pow_ (P a) (P b) = PP (a L.^ b)
   Pow_ (N a) (P b) = NN (a L.^ b)
   Pow_ _     (N _) = L.TypeError ('L.Text "KindInteger.(^): Negative exponent")
 
@@ -359,6 +334,9 @@ type Div (r :: Round) (a :: Integer) (b :: Integer) =
   Div_ r (Normalize a) (Normalize b) :: Integer
 
 type family Div_ (r :: Round) (a :: Integer) (b :: Integer) :: Integer where
+  Div_ r Z Z = Div__ r Z 0
+  Div_ r Z (P b) = Div__ r Z b
+  Div_ r Z (N b) = Div__ r Z b
   Div_ r (P a) (P b) = Div__ r (P a) b
   Div_ r (N a) (N b) = Div__ r (P a) b
   Div_ r (P a) (N b) = Div__ r (N a) b
@@ -366,10 +344,9 @@ type family Div_ (r :: Round) (a :: Integer) (b :: Integer) :: Integer where
 
 type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
   Div__ _ _ 0 = L.TypeError ('L.Text "KindInteger.Div: Division by zero")
-  Div__ _ (P 0) _ = P 0
-  Div__ _ (N 0) _ = P 0
+  Div__ _ Z _ = Z
 
-  Div__ 'RoundDown (P a) b = P (L.Div a b)
+  Div__ 'RoundDown (P a) b = PP (L.Div a b)
   Div__ 'RoundDown (N a) b = NN (If (b L.* L.Div a b ==? a)
                                     (L.Div a b)
                                     (L.Div a b L.+ 1))
@@ -423,8 +400,8 @@ type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
 -- * Logarithm of negative number doesn't type-check.
 type Log2 (a :: Integer) = Log2_ (Normalize a) :: Integer
 type family Log2_ (a :: Integer) :: Integer where
-  Log2_ (P 0) = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of zero")
-  Log2_ (P a) = P (L.Log2 a)
+  Log2_ Z = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of zero")
+  Log2_ (P a) = PP (L.Log2 a)
   Log2_ (N a) = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of negative number")
 
 -- | Greatest Common Divisor of type-level 'Integer' numbers @a@ and @b@.
@@ -453,12 +430,15 @@ type CmpInteger (a :: Integer) (b :: Integer) =
   CmpInteger_ (Normalize a) (Normalize b) :: Ordering
 type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
   CmpInteger_ a a = 'EQ
-  CmpInteger_ (P a) (P b) = Compare a b
   CmpInteger_ (N a) (N b) = Compare b a
+  CmpInteger_ (N a) Z     = 'LT
   CmpInteger_ (N _) (P _) = 'LT
+  CmpInteger_ Z     (N _) = 'GT
+  CmpInteger_ Z     (P _) = 'LT
   CmpInteger_ (P _) (N _) = 'GT
+  CmpInteger_ (P _) Z     = 'GT
+  CmpInteger_ (P a) (P b) = Compare a b
 
--- | "Data.Type.Ord" support for type-level 'Integer's.
 type instance Compare (a :: Integer) (b :: Integer) =
   CmpInteger a b :: Ordering
 
@@ -472,7 +452,7 @@ sameInteger
   => proxy1 a
   -> proxy2 b
   -> Maybe (a :~: b)
-sameInteger _ _ = testEquality (integerSing @a) (integerSing @b)
+sameInteger _ _ = testEquality (sing @a) (sing @b)
 
 -- | Like 'sameInteger', but if the type-level 'Integer's aren't equal, this
 -- additionally provides proof of 'LT' or 'GT'.
@@ -482,7 +462,7 @@ cmpInteger
   => proxy1 a
   -> proxy2 b
   -> OrderingI a b
-cmpInteger x y = case compare (integerVal x) (integerVal y) of
+cmpInteger _ _ = case compare (demote @a) (demote @b) of
   EQ -> case unsafeCoerce Refl :: CmpInteger a b :~: 'EQ of
     Refl -> case unsafeCoerce Refl :: a :~: b of
       Refl -> EQI
@@ -494,7 +474,7 @@ cmpInteger x y = case compare (integerVal x) (integerVal y) of
 --------------------------------------------------------------------------------
 
 -- | Singleton type for a type-level 'Integer' @i@.
-newtype SInteger (i :: Integer) = UnsafeSInteger Integer
+newtype SInteger (i :: Integer) = UnsafeSInteger P.Integer
 type role SInteger representational
 
 -- | A explicitly bidirectional pattern synonym relating an 'SInteger' to a
@@ -528,81 +508,93 @@ data KnownIntegerInstance (i :: Integer) where
 knownIntegerInstance :: SInteger i -> KnownIntegerInstance i
 knownIntegerInstance si = withKnownInteger si KnownIntegerInstance
 
-instance Show (SInteger i) where
-  showsPrec p (UnsafeSInteger i) = showParen (p > appPrec) $
-    showString "SInteger @" . showsPrec appPrec1 i
+instance Eq (SInteger i) where
+  _ == _ = True
 
--- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
--- are not equal types, even if they are treated equally elsewhere in
--- "KindInteger".
+instance Ord (SInteger i) where
+  compare _ _ = P.EQ
+
+instance Show (SInteger i) where
+  showsPrec p (UnsafeSInteger i) =
+    showParen (p >= appPrec1) $
+      showString "SInteger @" .
+      showsPrecTypeLit appPrec1 i
+
+instance forall i. KnownInteger i => Read (SInteger i) where
+  readPrec = ReadPrec.lift $ do
+    let si = integerSing @i
+    _ <- ReadP.string "SInteger" >> pSkipSpaces1
+    _ <- ReadP.char '@'
+    _ <- ReadP.string (showsPrecTypeLit appPrec1 (fromSInteger si) "")
+    pure si
+
 instance TestEquality SInteger where
   testEquality = decideEquality
   {-# INLINE testEquality #-}
 
--- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
--- are not equal types, even if they are treated equally elsewhere in
--- "KindInteger".
 instance TestCoercion SInteger where
   testCoercion = decideCoercion
   {-# INLINE testCoercion #-}
 
--- | Return the term-level "Prelude" 'P.Integer' number corresponding to @i@
--- in a @'SInteger' i@ value.
+-- | Return the term-level "Prelude".'P.Integer' number corresponding to @i@.
 fromSInteger :: SInteger i -> P.Integer
-fromSInteger = toPrelude . fromSIntegerK
+fromSInteger (UnsafeSInteger i) = i
 {-# INLINE fromSInteger #-}
 
-fromSIntegerK :: SInteger i -> Integer
-fromSIntegerK (UnsafeSInteger i) = i
-{-# INLINE fromSIntegerK #-}
+withKnownInteger_
+  :: forall i rep (x :: TYPE rep)
+  .  SInteger i
+  -> (KnownInteger_ i => x)
+  -> x
+withKnownInteger_ = withDict @(KnownInteger_ i)
 
 -- | Convert an explicit @'SInteger' i@ value into an implicit
 -- @'KnownInteger' i@ constraint.
 withKnownInteger
-  :: forall i rep (r :: TYPE rep). SInteger i -> (KnownInteger i => r) -> r
-withKnownInteger = withDict @(KnownInteger i)
-{-# INLINE withKnownInteger #-}
+  :: forall i rep (x :: TYPE rep)
+  .  SInteger i
+  -> (KnownInteger i => x)
+  -> x
+withKnownInteger si x
+  | i <- fromSInteger si
+  , a :: Natural <- fromInteger (abs i)
+  , L.SomeNat @a _ <- L.someNatVal a
+    -- Safe because this module doesn't offer any tool for constructing
+    -- non-normalized SIntegers. Very unsafe otherwise.
+  , Refl <- unsafeCoerce Refl :: Normalize i :~: i
+  , Refl <- unsafeCoerce Refl :: Abs i :~: a
+  = withKnownInteger_ si x
 
--- | Convert a "Prelude" 'P.Integer' number into an @'SInteger' n@ value,
+-- | Convert a "Prelude".'P.Integer' number into an @'SInteger' n@ value,
 -- where @n@ is a fresh type-level 'Integer'.
 withSomeSInteger
-  :: forall rep (r :: TYPE rep). P.Integer -> (forall n. SInteger n -> r) -> r
-withSomeSInteger n k = k (UnsafeSInteger (fromPrelude n))
+  :: forall rep (x :: TYPE rep). P.Integer -> (forall i. SInteger i -> x) -> x
+withSomeSInteger i k = k (UnsafeSInteger i)
 -- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
 {-# NOINLINE withSomeSInteger #-}
-
-withSomeSIntegerK
-  :: forall rep (r :: TYPE rep). Integer -> (forall n. SInteger n -> r) -> r
-withSomeSIntegerK n k = k (UnsafeSInteger n)
--- It's very important to keep this NOINLINE! See the docs at "GHC.TypeNats"
-{-# NOINLINE withSomeSIntegerK #-}
 
 --------------------------------------------------------------------------------
 
 type instance Sing = SInteger
 
-instance KnownInteger i => SingI (i :: Integer) where
+instance (KnownInteger i) => SingI (i :: Integer) where
   sing = integerSing
   {-# INLINE sing #-}
 
--- | 'Demote' refers to "KindInteger"'s 'Integer' rather than "Prelude"'s
--- 'Integer' so that the 'SInteger''s internal representation is preserved.
--- Use 'toPrelude' and 'fromPrelude' as necessary.
 instance SingKind Integer where
-  type Demote Integer = Integer
-  fromSing = fromSIntegerK
+  type Demote Integer = P.Integer
+  fromSing = fromSInteger
   {-# INLINE fromSing #-}
-  toSing i = withSomeSIntegerK i SomeSing
+  toSing i = withSomeSInteger i SomeSing
   {-# INLINE toSing #-}
 
--- | Note that this checks for type equality. That is, @'P' 0@ and @'N' 0@
--- are not equal types, even if they are treated equally elsewhere in
--- "KindInteger".
 instance SDecide Integer where
   UnsafeSInteger l %~ UnsafeSInteger r =
+    -- This is safe because this library doesn't expose any tool to construct
+    -- non-normalized SInteger . Otherwise, very unsafe.
     case l P.== r of
       True  -> Proved (unsafeCoerce Refl)
-      False -> Disproved (\Refl -> error "SDecide.Integer")
+      False -> Disproved (\Refl -> error "KindInteger.Integer: SDecide")
 
 --------------------------------------------------------------------------------
 
@@ -743,8 +735,9 @@ type family R (n :: Integer) (d :: Natural) :: Rat where
 type family RatNormalize (r :: Rat) :: Rat where
   RatNormalize ('Rat _ 0) =
     L.TypeError ('L.Text "KindInteger: Denominator is 0")
-  RatNormalize ('Rat (P 0) _) = 'Rat (P 0) 1
-  RatNormalize ('Rat (N 0) _) = 'Rat (P 0) 1
+  RatNormalize ('Rat Z _) = 'Rat Z 1
+  RatNormalize ('Rat (P 0) _) = 'Rat Z 1
+  RatNormalize ('Rat (N 0) _) = 'Rat Z 1
   RatNormalize ('Rat (P n) d) = 'Rat (P (L.Div n (NatGCD n d)))
                                      (L.Div d (NatGCD n d))
   RatNormalize ('Rat (N n) d) = 'Rat (N (L.Div n (NatGCD n d)))
@@ -778,3 +771,5 @@ errDiv0 :: P.Integer -> P.Integer
 errDiv0 0 = Ex.throw Ex.DivideByZero
 errDiv0 i = i
 
+pSkipSpaces1 :: ReadP.ReadP ()
+pSkipSpaces1 = void $ ReadP.munch1 Char.isSpace
