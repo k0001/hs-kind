@@ -61,6 +61,8 @@ module KindRational {--}
   , terminates
   , termination
   , Terminating
+  , pattern SRationalTerminates
+  , pattern SRationalTerminatesNot
 
     -- * Comparisons
   , CmpRational
@@ -448,6 +450,20 @@ terminates = \(UnsafeNormalizedRational _ d) -> go (toInteger d)
         | (q, 0) <- P.divMod n 2 -> go q
       _ -> False
 
+{-# COMPLETE SRationalTerminates, SRationalTerminatesNot #-}
+
+-- | Matches a 'SRational' that 'Terminates'.
+pattern SRationalTerminates
+  :: forall r. () => (Terminates r ~ 'True) => SRational r
+pattern SRationalTerminates <-
+  (termination Nothing (Just Dict) -> Just (Dict :: Dict (Terminates r ~ 'True)))
+
+-- | Matches a 'SRational' that does not 'Terminates'.
+pattern SRationalTerminatesNot
+  :: forall r. () => (Terminates r ~ 'False) => SRational r
+pattern SRationalTerminatesNot <-
+  (termination (Just Dict) Nothing -> Just (Dict :: Dict (Terminates r ~ 'False)))
+
 --------------------------------------------------------------------------------
 
 -- | Comparison of type-level 'Rational's, as a function.
@@ -505,6 +521,7 @@ rationalVal _ = case rationalSing :: SRational r of UnsafeSRational x -> x
 
 -- | This type represents unknown type-level 'Rational'.
 data SomeRational = forall n. KnownRational n => SomeRational (Proxy n)
+
 
 -- | Convert a term-level "Prelude".'P.Rational' into an
 -- extistentialized 'KnownRational' wrapped in 'SomeRational'.
@@ -587,7 +604,7 @@ type role SRational nominal
 -- @
 pattern SRational :: forall r. () => KnownRational r => SRational r
 pattern SRational <- (knownRationalInstance -> KnownRationalInstance)
-  where SRational = rationalSing
+  where SRational = rationalSing_
 
 -- | An internal data type that is only used for defining the 'SRational' pattern
 -- synonym.
@@ -684,3 +701,5 @@ type GCD (a :: Natural) (b :: Natural) = I.GCD (PP a) (PP b) :: Natural
 type family Fst (ab :: (a, b)) :: a where Fst '(a, b) = a
 type family Snd (ab :: (a, b)) :: b where Snd '(a, b) = b
 
+data Dict (c :: Constraint) where
+  Dict :: c => Dict c
