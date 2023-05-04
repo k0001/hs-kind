@@ -16,10 +16,12 @@ import GHC.Exts (Constraint)
 import GHC.TypeLits qualified as L
 import Prelude hiding (Integer)
 import Prelude qualified as P
+import Prelude.Singletons qualified as P
 import System.Exit
 import Text.Read
 
-import KindInteger (P, N, Z)
+import KindInteger (P, N, Z, pattern SP, pattern SN, pattern SZ,
+  SInteger, pattern SInteger)
 import KindInteger qualified as K
 
 --------------------------------------------------------------------------------
@@ -66,114 +68,114 @@ _testCmp :: Dict
 
 _testAdd  = Dict
 _testAdd :: Dict
-  ( Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
+  ( Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
 
-  , P 1 ~ P 1 K.+ Z
-  , N 1 ~ N 1 K.+ Z
-  , P 1 ~ P 1 K.+ Z
-  , N 1 ~ N 1 K.+ Z
+  , P 1 ~ P 1 P.+ Z
+  , N 1 ~ N 1 P.+ Z
+  , P 1 ~ P 1 P.+ Z
+  , N 1 ~ N 1 P.+ Z
 
-  , P 1 ~ Z K.+ P 1
-  , N 1 ~ Z K.+ N 1
-  , N 1 ~ Z K.+ N 1
-  , P 1 ~ Z K.+ P 1
+  , P 1 ~ Z P.+ P 1
+  , N 1 ~ Z P.+ N 1
+  , N 1 ~ Z P.+ N 1
+  , P 1 ~ Z P.+ P 1
 
-  , P 2 ~ P 1 K.+ P 1
-  , N 2 ~ N 1 K.+ N 1
-  , Z ~ P 1 K.+ N 1
-  , Z ~ N 1 K.+ P 1
+  , P 2 ~ P 1 P.+ P 1
+  , N 2 ~ N 1 P.+ N 1
+  , Z ~ P 1 P.+ N 1
+  , Z ~ N 1 P.+ P 1
   )
 
 _testMul  = Dict
 _testMul :: Dict
-  ( Z ~ Z K.* Z
-  , Z ~ Z K.* Z
-  , Z ~ Z K.* Z
-  , Z ~ Z K.* Z
+  ( Z ~ Z P.* Z
+  , Z ~ Z P.* Z
+  , Z ~ Z P.* Z
+  , Z ~ Z P.* Z
 
-  , Z ~ P 1 K.* Z
-  , Z ~ N 1 K.* Z
-  , Z ~ P 1 K.* Z
-  , Z ~ N 1 K.* Z
+  , Z ~ P 1 P.* Z
+  , Z ~ N 1 P.* Z
+  , Z ~ P 1 P.* Z
+  , Z ~ N 1 P.* Z
 
-  , Z ~ Z K.* P 1
-  , Z ~ Z K.* N 1
-  , Z ~ Z K.* N 1
-  , Z ~ Z K.* P 1
+  , Z ~ Z P.* P 1
+  , Z ~ Z P.* N 1
+  , Z ~ Z P.* N 1
+  , Z ~ Z P.* P 1
 
-  , P 1 ~ P 1 K.* P 1
-  , P 1 ~ N 1 K.* N 1
-  , N 1 ~ P 1 K.* N 1
-  , N 1 ~ N 1 K.* P 1
+  , P 1 ~ P 1 P.* P 1
+  , P 1 ~ N 1 P.* N 1
+  , N 1 ~ P 1 P.* N 1
+  , N 1 ~ N 1 P.* P 1
 
-  , P 2 ~ P 2 K.* P 1
-  , P 2 ~ N 2 K.* N 1
-  , N 2 ~ P 2 K.* N 1
-  , N 2 ~ N 2 K.* P 1
+  , P 2 ~ P 2 P.* P 1
+  , P 2 ~ N 2 P.* N 1
+  , N 2 ~ P 2 P.* N 1
+  , N 2 ~ N 2 P.* P 1
 
-  , P 6 ~ P 2 K.* P 3
-  , P 6 ~ N 2 K.* N 3
-  , N 6 ~ P 2 K.* N 3
-  , N 6 ~ N 2 K.* P 3
+  , P 6 ~ P 2 P.* P 3
+  , P 6 ~ N 2 P.* N 3
+  , N 6 ~ P 2 P.* N 3
+  , N 6 ~ N 2 P.* P 3
   )
 
 _testLog2 =  Dict
 _testLog2 :: Dict
-  ( Z ~ K.Log2 (P 1)
-  , P 1 ~ K.Log2 (P 2)
-  , P 1 ~ K.Log2 (P 3)
-  , P 2 ~ K.Log2 (P 4)
-  , P 2 ~ K.Log2 (P 5)
-  , P 2 ~ K.Log2 (P 6)
-  , P 2 ~ K.Log2 (P 7)
-  , P 3 ~ K.Log2 (P 8)
-  , P 3 ~ K.Log2 (P 9)
-  , P 3 ~ K.Log2 (P 10)
-  , P 3 ~ K.Log2 (P 11)
-  , P 3 ~ K.Log2 (P 12)
-  , P 3 ~ K.Log2 (P 13)
-  , P 3 ~ K.Log2 (P 14)
-  , P 3 ~ K.Log2 (P 15)
-  , P 4 ~ K.Log2 (P 16)
-  , P 4 ~ K.Log2 (P 17)
-  , P 4 ~ K.Log2 (P 18)
-  , P 4 ~ K.Log2 (P 19)
-  , P 4 ~ K.Log2 (P 20)
-  , P 4 ~ K.Log2 (P 21)
-  , P 4 ~ K.Log2 (P 22)
-  , P 4 ~ K.Log2 (P 23)
-  , P 4 ~ K.Log2 (P 24)
-  , P 4 ~ K.Log2 (P 25)
-  , P 4 ~ K.Log2 (P 26)
-  , P 4 ~ K.Log2 (P 27)
-  , P 4 ~ K.Log2 (P 28)
-  , P 4 ~ K.Log2 (P 29)
-  , P 4 ~ K.Log2 (P 30)
-  , P 4 ~ K.Log2 (P 31)
-  , P 5 ~ K.Log2 (P 32)
+  ( 0 ~ K.Log2 (P 1)
+  , 1 ~ K.Log2 (P 2)
+  , 1 ~ K.Log2 (P 3)
+  , 2 ~ K.Log2 (P 4)
+  , 2 ~ K.Log2 (P 5)
+  , 2 ~ K.Log2 (P 6)
+  , 2 ~ K.Log2 (P 7)
+  , 3 ~ K.Log2 (P 8)
+  , 3 ~ K.Log2 (P 9)
+  , 3 ~ K.Log2 (P 10)
+  , 3 ~ K.Log2 (P 11)
+  , 3 ~ K.Log2 (P 12)
+  , 3 ~ K.Log2 (P 13)
+  , 3 ~ K.Log2 (P 14)
+  , 3 ~ K.Log2 (P 15)
+  , 4 ~ K.Log2 (P 16)
+  , 4 ~ K.Log2 (P 17)
+  , 4 ~ K.Log2 (P 18)
+  , 4 ~ K.Log2 (P 19)
+  , 4 ~ K.Log2 (P 20)
+  , 4 ~ K.Log2 (P 21)
+  , 4 ~ K.Log2 (P 22)
+  , 4 ~ K.Log2 (P 23)
+  , 4 ~ K.Log2 (P 24)
+  , 4 ~ K.Log2 (P 25)
+  , 4 ~ K.Log2 (P 26)
+  , 4 ~ K.Log2 (P 27)
+  , 4 ~ K.Log2 (P 28)
+  , 4 ~ K.Log2 (P 29)
+  , 4 ~ K.Log2 (P 30)
+  , 4 ~ K.Log2 (P 31)
+  , 5 ~ K.Log2 (P 32)
   )
 
 _testNegate =  Dict
 _testNegate :: Dict
-  ( Z ~ K.Negate Z
-  , Z ~ K.Negate Z
-  , N 1 ~ K.Negate (P 1)
-  , P 1 ~ K.Negate (N 1)
-  , N 2 ~ K.Negate (P 2)
-  , P 2 ~ K.Negate (N 2)
+  ( Z ~ P.Negate Z
+  , Z ~ P.Negate Z
+  , N 1 ~ P.Negate (P 1)
+  , P 1 ~ P.Negate (N 1)
+  , N 2 ~ P.Negate (P 2)
+  , P 2 ~ P.Negate (N 2)
   )
 
 _testSign =  Dict
 _testSign :: Dict
-  ( Z ~ K.Sign Z
-  , Z ~ K.Sign Z
-  , P 1 ~ K.Sign (P 1)
-  , N 1 ~ K.Sign (N 1)
-  , P 1 ~ K.Sign (P 2)
-  , N 1 ~ K.Sign (N 2)
+  ( Z ~ P.Signum Z
+  , Z ~ P.Signum Z
+  , P 1 ~ P.Signum (P 1)
+  , N 1 ~ P.Signum (N 1)
+  , P 1 ~ P.Signum (P 2)
+  , N 1 ~ P.Signum (N 2)
   )
 
 _testAbs =  Dict
@@ -364,43 +366,156 @@ main = testsMain $
         , readMaybe "1" == Just sp1 ]
 
   , assert "TestEquality 0 0" $
-     isJust (testEquality (K.SInteger @Z) (K.SInteger @Z))
+     isJust (testEquality (SInteger @Z) (SInteger @Z))
   , assert "TestEquality 0 +1" $
-     isNothing (testEquality (K.SInteger @Z) (K.SInteger @(P 1)))
+     isNothing (testEquality (SInteger @Z) (SInteger @(P 1)))
   , assert "TestEquality 0 -1" $
-     isNothing (testEquality (K.SInteger @Z) (K.SInteger @(N 1)))
+     isNothing (testEquality (SInteger @Z) (SInteger @(N 1)))
   , assert "TestEquality +1 0" $
-     isNothing (testEquality (K.SInteger @(P 1)) (K.SInteger @Z))
+     isNothing (testEquality (SInteger @(P 1)) (SInteger @Z))
   , assert "TestEquality -1 0" $
-     isNothing (testEquality (K.SInteger @(N 1)) (K.SInteger @Z))
+     isNothing (testEquality (SInteger @(N 1)) (SInteger @Z))
 
   , assert "Show Integer 0" $
-     "0" == show (K.fromSInteger (K.SInteger @Z))
+     "0" == show (K.fromSInteger (SInteger @Z))
   , assert "Show Integer +1" $
-     "1" == show (K.fromSInteger (K.SInteger @(P 1)))
+     "1" == show (K.fromSInteger (SInteger @(P 1)))
   , assert "Show Integer -1" $
-     "-1" == show (K.fromSInteger (K.SInteger @(N 1)))
+     "-1" == show (K.fromSInteger (SInteger @(N 1)))
 
   , assert "Show SInteger 0" $
-     "SInteger @Z" == show (K.SInteger @Z)
+     "SInteger @Z" == show (SInteger @Z)
   , assert "Show SInteger +1" $
-     "SInteger @(P 1)" == show (K.SInteger @(P 1))
+     "SInteger @(P 1)" == show (SInteger @(P 1))
   , assert "Show SInteger -1" $
-     "SInteger @(N 1)" == show (K.SInteger @(N 1))
+     "SInteger @(N 1)" == show (SInteger @(N 1))
 
   , assert "Read SInteger 0" $
-     readMaybe @(K.SInteger Z) "SInteger @Z" == Just (K.SInteger @Z)
+     readMaybe @(SInteger Z) "SInteger @Z" == Just (SInteger @Z)
   , assert "Read SInteger +1" $
-     readMaybe @(K.SInteger (P 1)) "SInteger @(P 1)" == Just (K.SInteger @(P 1))
+     readMaybe @(SInteger (P 1)) "SInteger @(P 1)" == Just (SInteger @(P 1))
   , assert "Read SInteger -1" $
-     readMaybe @(K.SInteger (N 1)) "SInteger @(N 1)" == Just (K.SInteger @(N 1))
+     readMaybe @(SInteger (N 1)) "SInteger @(N 1)" == Just (SInteger @(N 1))
+
+  , assert "SZ == SInteger @Z" $
+    case SInteger @Z of
+      SZ -> SZ == SInteger @Z
+
+  , assert "SN (sing @1) == SInteger @(N 1)" $
+    case SInteger @(N 1) of
+      SN s1 -> (fromSing @L.Natural s1 == 1) &&
+               (SN s1 == SInteger @(N 1))
+
+  , assert "SP (sing @1) == SInteger @(P 1)" $
+    case SInteger @(P 1) of
+      SP s1 -> (fromSing @L.Natural s1 == 1) &&
+               (SP s1 == SInteger @(P 1))
 
   , assert "KnownInteger i ==> KnownNat (Abs i)" $
-    let fabs :: forall i. K.SInteger i -> P.Integer
+    let fabs :: forall i. SInteger i -> P.Integer
         fabs si = K.withKnownInteger si (L.natVal (Proxy @(K.Abs i)))
-    in and [ 1 == fabs (K.SInteger @(P 1))
-           , 0 == fabs (K.SInteger @Z)
-           , 1 == fabs (K.SInteger @(N 1)) ]
+    in and [ 1 == fabs (sing @(N 1))
+           , 0 == fabs (sing @Z)
+           , 1 == fabs (sing @(P 1)) ]
+
+  , assert "sNegate" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      negate a == withSomeSing a (fromSing . P.sNegate)
+
+  , assert "%+" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a + b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%+ sb)
+
+  , assert "%-" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a - b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%- sb)
+
+  , assert "%*" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a * b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%* sb)
+
+  , assert "%^" $
+    flip all (liftA2 (,) [-5 .. 5] [0 .. 5])$ \(a, b) ->
+      a ^ b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa K.%^ sb)
+
+  , assert "sOdd" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      odd a == withSomeSing a (fromSing . K.sOdd)
+
+  , assert "sEven" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      even a == withSomeSing a (fromSing . K.sEven)
+
+  , assert "sAbs" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      fromInteger @L.Natural (abs a)
+        == withSomeSing a (fromSing . K.sAbs)
+
+  , assert "sSignum" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      signum a == withSomeSing a (fromSing . P.sSignum)
+
+  , assert "sGCD" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      fromInteger @L.Natural (gcd a b)
+        == (withSomeSing (a :: P.Integer) $ \sa ->
+            withSomeSing (b :: P.Integer) $ \sb ->
+            fromSing $ K.sGCD sa sb)
+
+  , assert "sLCM" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      fromInteger @L.Natural (lcm a b)
+        == (withSomeSing (a :: P.Integer) $ \sa ->
+            withSomeSing (b :: P.Integer) $ \sb ->
+            fromSing $ K.sLCM sa sb)
+
+  , assert "sSign" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      signum a == withSomeSing a (fromSing . P.sSignum)
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sDivRem ", show r, " ", show a, " ", show b]) $
+       K.divRem r a b == (withSomeSing r $ \sr ->
+                          withSomeSing a $ \sa ->
+                          withSomeSing b $ \sb ->
+                          let (q, m) = K.sDivRem sr sa sb
+                           in (fromSing q, fromSing m))
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sDiv ", show r, " ", show a, " ", show b]) $
+       K.div r a b == (withSomeSing r $ \sr ->
+                       withSomeSing a $ \sa ->
+                       withSomeSing b $ \sb ->
+                       fromSing (K.sDiv sr sa sb))
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sRem ", show r, " ", show a, " ", show b]) $
+       K.rem r a b == (withSomeSing r $ \sr ->
+                       withSomeSing a $ \sa ->
+                       withSomeSing b $ \sb ->
+                       fromSing (K.sRem sr sa sb))
+
+  , fmap and $ sequence $ do
+      n :: L.Natural <- [0..5]
+      pure $ assert (mconcat ["sFromNatural ", show n]) $
+        toInteger n == withSomeSing n (fromSing . K.sFromNatural)
 
   ] <> testsDivRem
 

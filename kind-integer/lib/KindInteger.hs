@@ -1,4 +1,5 @@
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | This module provides a type-level representation for term-level
@@ -9,55 +10,89 @@
 -- import "KindInteger" qualified as KI
 -- @
 --
--- The implementation details are the same as the ones for type-level 'Natural's
--- in "GHC.TypeNats" as of @base-4.18@, and it will continue to evolve together
--- with @base@, trying to follow its API as much as possible until the day
--- @base@ provides its own type-level integer, making this module redundant.
+-- The implementation details are similar to the ones for type-level 'Natural's
+-- as of @base-4.18@ and @singletons-base-3.1.1@, and they will continue to
+-- evolve together with @base@ and @singletons-base@, trying to more or less
+-- follow their API.
 module KindInteger {--}
   ( -- * Integer kind
     Integer
-  , type Z
-  , type N
-  , type P
-  , Normalize
-  , showsPrecTypeLit
-  , readPrecTypeLit
-
-    -- * Types ⇔ Terms
+  , type Z, pattern SZ
+  , type N, pattern SN
+  , type P, pattern SP
+  , FromNatural, sFromNatural, sFromNaturalAbsRefl
   , KnownInteger
   , integerSing
   , integerVal
+  , withKnownInteger
   , SomeInteger(..)
   , someIntegerVal
-  , sameInteger
-
-    -- * Singletons
   , SInteger
   , pattern SInteger
   , fromSInteger
   , withSomeSInteger
-  , withKnownInteger
+    -- ** Normalization
+  , Normalize
+  , normalize
+  , sNormalizeRefl
+    -- ** Show, Read
+  , ShowLit, sShowLit
+  , ShowsLit, sShowsLit
+  , ShowsPrecLit, sShowsPrecLit
+  , readPrecLit
 
     -- * Arithmethic
-  , type (+), type (*), type (^), type (-)
-  , Odd, Even, Abs, Sign, Negate, GCD, LCM, Log2
-
-    -- ** Division
-  , Div
-  , Rem
-  , DivRem
+    --
+    -- | Note that additional arithmetic operations are provided
+    -- through the 'P.PNum' and 'P.SNum' instances.
+  , type (^), (%^)
+  , Odd, sOdd
+  , Even, sEven
+  , Abs, sAbs
+  , GCD, sGCD
+  , LCM, sLCM
+  , Log2, sLog2
+  , Div, sDiv, div
+  , Rem, sRem, rem
+  , DivRem, sDivRem, divRem
+    -- ** Rounding
   , Round(..)
-    -- *** Term-level
-  , div
-  , rem
-  , divRem
+  , SRound(..)
 
     -- * Comparisons
   , CmpInteger
   , cmpInteger
+  , sameInteger
 
-    -- * Extra
-  , type (==?), type (==), type (/=?), type (/=)
+    -- * Defunctionalization
+  , ZSym0
+  , NSym0, NSym1
+  , PSym0, PSym1
+  , FromNaturalSym0, FromNaturalSym1
+  , KnownIntegerSym0, KnownIntegerSym1
+  , NormalizeSym0, NormalizeSym1
+  , type (^@#@$), type (^@#@$$), type (^@#@$$$)
+  , OddSym0, OddSym1
+  , EvenSym0, EvenSym1
+  , AbsSym0, AbsSym1
+  , GCDSym0, GCDSym1
+  , LCMSym0, LCMSym1
+  , Log2Sym0, Log2Sym1
+  , DivSym0, DivSym1, DivSym2, DivSym3
+  , RemSym0, RemSym1, RemSym2, RemSym3
+  , DivRemSym0, DivRemSym1, DivRemSym2, DivRemSym3
+  -- , type (==@#@$), type (==@#@$$), type (==@#@$$$)
+  -- , type (/=@#@$), type (/=@#@$$), type (/=@#@$$$)
+  , RoundUpSym0
+  , RoundDownSym0
+  , RoundZeroSym0
+  , RoundAwaySym0
+  , RoundHalfUpSym0
+  , RoundHalfDownSym0
+  , RoundHalfZeroSym0
+  , RoundHalfAwaySym0
+  , RoundHalfEvenSym0
+  , RoundHalfOddSym0
   ) --}
   where
 
@@ -65,37 +100,48 @@ import Control.Applicative
 import Control.Exception qualified as Ex
 import Control.Monad
 import Data.Bits
+import Data.Bool.Singletons (SBool(..))
 import Data.Char qualified as Char
+import Data.Eq.Singletons qualified as EqS
+import Data.Maybe
+import Data.Ord.Singletons qualified as OrdS
 import Data.Proxy
 import Data.Singletons
 import Data.Singletons.Decide
+import Data.Singletons.TH
+import Data.String
 import Data.Type.Bool (If)
 import Data.Type.Coercion
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord
 import GHC.Base (WithDict(..))
-import GHC.Exts (TYPE, Constraint)
+import GHC.Exts (TYPE)
+import GHC.Num.Integer (integerLog2)
 import GHC.Real qualified as P
 import GHC.Show (appPrec1)
 import GHC.TypeLits qualified as L hiding (someNatVal)
+import GHC.TypeLits.Singletons qualified as L (SNat)
 import GHC.TypeNats qualified as L (someNatVal)
 import Numeric.Natural (Natural)
-import Prelude hiding (Integer, (==), (/=), div, rem)
+import Prelude hiding (Show, Integer, (==), (/=), div, rem)
 import Prelude qualified as P
+import Prelude.Singletons qualified as P
 import Text.ParserCombinators.ReadP qualified as ReadP
 import Text.ParserCombinators.ReadPrec qualified as ReadPrec
 import Text.Read qualified as Read
 import Unsafe.Coerce (unsafeCoerce)
 
+import KindInteger.Round
+
 --------------------------------------------------------------------------------
 
--- | Type-level version of 'P.Integer', used as a /kind/ for 'Z', 'N' and 'P'.
+-- | Type-level version of 'P.Integer', only used as a /kind/.
 --
--- * Zero is represented as 'Z'.
+-- * Zero is represented as t'Z'.
 --
--- * A positive number /+x/ is represented as @'P' x@.
+-- * A positive number /+x/ is represented as @t'P' x@.
 --
--- * A negative number /-x/ is represented as @'N' x@.
+-- * A negative number /-x/ is represented as @t'N' x@.
 
 -- Note: We could use a better internal representation that guarantees that
 -- Negative and Positive don't contain zero. However, this one looks better
@@ -107,25 +153,119 @@ data Integer
   | N Natural -- ^ Never 0.
   | P Natural -- ^ Never 0.
 
--- | Zero is represented as 'Z'.
+-- | Zero is represented as t'Z'.
 type Z = 'Z :: Integer
--- | A negative number /-x/ is represented as @'N' x@.
+-- | A negative number /-x/ is represented as @t'N' x@.
 type N (x :: Natural) = 'N x :: Integer
--- | A positive number /+x/ is represented as @'P' x@.
+-- | A positive number /+x/ is represented as @t'P' x@.
 type P (x :: Natural) = 'P x :: Integer
 
--- | Displays the "Prelude".'P.Integer' as it would appear
--- literally in the types (@\"Z\"@, @\"P 1\"@, @\"N 1\"@, etc.)
--- as a type of kind "KindInteger".'Integer'.
-showsPrecTypeLit :: Int -> P.Integer -> ShowS
-showsPrecTypeLit p = \case
+-- | @'SZ' == 'sing' \@Z@
+pattern SZ :: SInteger Z
+pattern SZ <- UnsafeSInteger _
+  where SZ = UnsafeSInteger 0
+{-# COMPLETE SZ #-}
+
+-- | @'SP' ('sing' @1) == 'sing' \@(P 1)@
+pattern SP :: (0 < x) => (L.KnownNat x) => L.SNat x -> SInteger (P x)
+pattern SP x <- ((\ !i@SInteger -> SomeKnownNat (sAbs i)) -> SomeKnownNat x)
+  where SP = UnsafeSInteger . toInteger . fromSing
+{-# COMPLETE SP #-}
+
+-- | @'SN' ('sing' @1) == 'sing' \@(N 1)@
+pattern SN :: (0 < x) => (L.KnownNat x) => L.SNat x -> SInteger (N x)
+pattern SN x <- ((\ !i@SInteger -> SomeKnownNat (sAbs i)) -> SomeKnownNat x)
+  where SN = UnsafeSInteger . negate . toInteger . fromSing
+{-# COMPLETE SN #-}
+
+-- | Only used to implement 'SP' and 'SN'.
+data SomeKnownNat n = (L.KnownNat n) => SomeKnownNat (L.SNat n)
+
+--------------------------------------------------------------------------------
+
+type ShowsPrec (p :: L.Natural) (i :: Integer) (s :: L.Symbol)
+  = ShowsPrec_ p (Normalize i) s :: L.Symbol
+type family ShowsPrec_ (p :: L.Natural) (i :: Integer) (s :: L.Symbol) :: L.Symbol where
+  ShowsPrec_ p (N n) s = (P.ShowStringSym1 "N " P..@#@$$$ P.ShowsSym1 n) @@ s
+  ShowsPrec_ _ (P n) s = P.Shows n s
+  ShowsPrec_ _ Z     s = P.Shows 0 s
+
+-- | Displays @i@ as it would show literally as a term.
+--
+-- @
+-- 'P.Show_' ( t'N' 1) ~ \"-1\"
+-- 'P.Show_'   t'Z'    ~  \"0\"
+-- 'P.Show_' ( t'P' 1) ~  \"1\"
+-- @
+instance P.PShow Integer where
+  type ShowsPrec p i s = ShowsPrec p i s
+
+-- | Displays @i@ as it would show literally as a term.
+--
+-- @
+-- 'fromSing' \@('P.sShow_' ('SN' ('sing' \@1))) == \"-1\"
+-- 'fromSing' \@('P.sShow_' 'SZ')             ==  \"0\"
+-- 'fromSing' \@('P.sShow_' ('SP' ('sing' \@1))) ==  \"1\"
+-- @
+instance P.SShow Integer where
+  sShowsPrec _ si ss =
+    withSomeSing (fromString (show (fromSing si)) <> fromSing ss) unsafeCoerce
+
+--------------------------------------------------------------------------------
+
+-- | Displays @i@ as it would show literally as a type.
+--
+-- @
+-- 'P.ShowLit' ( t'N' 1) ~ \"N 1\"
+-- 'P.ShowLit'   t'Z'    ~ \"Z\"
+-- 'P.ShowLit' ( t'P' 1) ~ \"P 1\"
+-- @
+type ShowLit (i :: Integer) = ShowsLit i "" :: L.Symbol
+-- | Displays @i@ as it would show literally as a type. Behaves like 'P.Shows'.
+type ShowsLit (i :: Integer) (s :: L.Symbol) = ShowsPrecLit 0 i s :: L.Symbol
+-- | Displays @i@ as it would show literally as a type. Behaves like 'P.ShowsPrec'.
+type ShowsPrecLit (p :: L.Natural) (i :: Integer) (s :: L.Symbol)
+  = ShowsPrecLit_ p (Normalize i) s :: L.Symbol
+type family ShowsPrecLit_ (p :: L.Natural) (i :: Integer) (s :: L.Symbol) :: L.Symbol where
+  ShowsPrecLit_ p (N n) s =
+    P.ShowParen (p P.>= 11) (P.ShowStringSym1 "N " P..@#@$$$ P.ShowsSym1 n) s
+  ShowsPrecLit_ p (P n) s =
+    P.ShowParen (p P.>= 11) (P.ShowStringSym1 "P " P..@#@$$$ P.ShowsSym1 n) s
+  ShowsPrecLit_ _ Z s = P.ShowString "Z" s
+
+-- | Singleton version of 'ShowLit'.
+--
+-- @
+-- 'fromSing' \@('sShowLit' ('SN' ('sing' \@1))) == \"N 1\"
+-- 'fromSing' \@('sShowLit' 'SZ')             == \"Z"
+-- 'fromSing' \@('sShowLit' ('SP' ('sing' \@1))) == \"P 1\"
+-- @
+sShowLit :: SInteger i -> Sing (ShowLit i)
+sShowLit si = sShowsLit si (sing @"")
+
+-- | Singleton version of 'ShowsLit'.
+sShowsLit :: SInteger i -> Sing (s :: P.Symbol) -> Sing (ShowsLit i s)
+sShowsLit = sShowsPrecLit (sing @0)
+
+-- | Singleton version of 'ShowsPrecLit'.
+sShowsPrecLit :: L.SNat p -> SInteger i -> Sing (s :: P.Symbol) -> Sing (ShowsPrecLit p i s)
+sShowsPrecLit (fromSing -> p) (fromSing -> i) (fromSing -> s) =
+    withSomeSing (fromString (f "") <> s) unsafeCoerce
+  where
+    f :: ShowS
+    f | i  < 0    = showParen (p >= 11) (showString "N " . shows (abs i))
+      | i  > 0    = showParen (p >= 11) (showString "P " . shows i)
+      | otherwise = showChar 'Z'
+
+showsPrecLit :: Int -> P.Integer -> ShowS
+showsPrecLit p = \case
   0         -> showChar 'Z'
   i | i > 0 -> showParen (p >= appPrec1) (showString "P " . shows i)
   i         -> showParen (p >= appPrec1) (showString "N " . shows (abs i))
 
--- | Inverse of 'showsPrecTypeLit'.
-readPrecTypeLit :: ReadPrec.ReadPrec P.Integer
-readPrecTypeLit = Read.parens $ asum
+-- | Inverse of 'showsPrecLit'.
+readPrecLit :: ReadPrec.ReadPrec P.Integer
+readPrecLit = Read.parens $ asum
     [ 0 <$ ReadPrec.lift (ReadP.char 'Z')
     , do ReadPrec.lift $ ReadP.char 'N' >> pSkipSpaces1
          fmap (negate . fromIntegral) $ Read.parens (ReadPrec.lift pNatural)
@@ -197,7 +337,7 @@ instance Ord SomeInteger where
   {-# INLINE compare #-}
 
 -- | As for "Prelude".'P.Integer'.
-instance Show SomeInteger where
+instance P.Show SomeInteger where
   showsPrec p (SomeInteger i) = showsPrec p (integerVal i)
 
 -- | As for "Prelude".'P.Integer'.
@@ -206,7 +346,17 @@ instance Read SomeInteger where
 
 --------------------------------------------------------------------------------
 
--- | Make sure /zero/ is represented as @'P' 0@, not as @'N' 0@
+-- | Construct a type-level 'Integer' from a type-level 'Natural'.
+type FromNatural (x :: Natural) = Normalize (P x) :: Integer
+
+-- | Singleton version of 'FromNatural'.
+sFromNatural :: L.SNat x -> SInteger (FromNatural x)
+sFromNatural sx = withSomeSing (toInteger (fromSing sx)) unsafeCoerce
+
+sFromNaturalAbsRefl :: SInteger i -> (i :~: FromNatural (Abs i))
+sFromNaturalAbsRefl !_ = unsafeCoerce Refl
+
+-- | Make sure /zero/ is represented as @t'P' 0@, not as @t'N' 0@
 --
 -- Notice that all type-families in the "KindInteger" module can readily handle
 -- non-'Normalize'd inputs. You may need to use 'Normalize' when dealing with
@@ -216,12 +366,27 @@ type family Normalize (i :: Integer) :: Integer where
   Normalize (P 0) = Z
   Normalize i     = i
 
--- | Construct a 'Normalize'd 'N'egative type-level 'Integer'.
+-- -- | Singleton version of 'Normalize'.
+-- -- This function is just identity, since 'SInteger's are always normalized.
+-- sNormalize :: SInteger r -> SInteger (Normalize r)
+-- sNormalize !sr | Refl <- sNormalizeRefl sr = sr
+
+-- | Demoted version of 'Normalize'. This function is just 'id'entity,
+-- since "Prelude".'P.Integer's are always 'Normalize'd.
+normalize :: P.Integer -> P.Integer
+normalize = id
+{-# INLINE normalize #-}
+
+-- | 'SInteger's always contain a 'Normalize'd 'Integer'.
+sNormalizeRefl :: SInteger r -> (r :~: Normalize r)
+sNormalizeRefl !_ = unsafeCoerce Refl
+
+-- | Construct a 'Normalize'd t'N'egative type-level 'Integer'.
 --
 -- | To be used for producing all negative outputs in this module.
 type NN (a :: Natural) = Normalize (N a) :: Integer
 
--- | Construct a 'Normalize'd 'P'ositive type-level 'Integer'.
+-- | Construct a 'Normalize'd t'P'ositive type-level 'Integer'.
 --
 -- To be used for producing all positive outputs in this module.
 type PP (a :: Natural) = Normalize (P a) :: Integer
@@ -233,10 +398,20 @@ infixl 7 *, `Div`, `Rem`
 infixr 8 ^
 
 -- | Whether a type-level 'Natural' is odd. /Zero/ is not considered odd.
-type Odd (x :: Integer) = L.Mod (Abs x) 2 ==? 1 :: Bool
+type Odd (x :: Integer) = L.Mod (Abs x) 2 P.== 1 :: Bool
+
+-- | Singleton version of 'Odd'.
+sOdd :: SInteger i -> SBool (Odd i)
+sOdd si | odd (fromSing si) = unsafeCoerce STrue
+        | otherwise         = unsafeCoerce SFalse
 
 -- | Whether a type-level 'Natural' is even. /Zero/ is considered even.
-type Even (x :: Integer) = L.Mod (Abs x) 2 ==? 0 :: Bool
+type Even (x :: Integer) = L.Mod (Abs x) 2 P.== 0 :: Bool
+
+-- | Singleton version of 'Even'.
+sEven :: SInteger i -> SBool (Even i)
+sEven si | even (fromSing si) = unsafeCoerce STrue
+         | otherwise          = unsafeCoerce SFalse
 
 -- | Negation of type-level 'Integer's.
 type Negate (x :: Integer) = Negate_ (Normalize x) :: Integer
@@ -245,18 +420,35 @@ type family Negate_ (x :: Integer) :: Integer where
   Negate_ (P x) = N x
   Negate_ (N x) = P x
 
+-- | Singleton version of 'Negate'.
+sNegate :: SInteger i -> SInteger (Negate i)
+sNegate si = UnsafeSInteger (negate (fromSing si))
+
 -- | Sign of type-level 'Integer's.
 --
--- * 'Z' if zero.
+-- * t'Z' if zero.
 --
--- * @'P' 1@ if positive.
+-- * @t'P' 1@ if positive.
 --
--- * @'N' 1@ if negative.
-type Sign (x :: Integer) = Sign_ (Normalize x) :: Integer
-type family Sign_ (x :: Integer) :: Integer where
-  Sign_  Z    = Z
-  Sign_ (P _) = P 1
-  Sign_ (N _) = N 1
+-- * @t'N' 1@ if negative.
+type Signum (x :: Integer) = Signum_ (Normalize x) :: Integer
+type family Signum_ (x :: Integer) :: Integer where
+  Signum_  Z    = Z
+  Signum_ (P _) = P 1
+  Signum_ (N _) = N 1
+
+-- | Singleton version of 'Sign'.
+sSignum :: SInteger i -> SInteger (Signum i)
+sSignum si = case compare (fromSing si) 0 of
+             LT -> UnsafeSInteger (-1)
+             EQ -> UnsafeSInteger 0
+             GT -> UnsafeSInteger 1
+
+-- | Absolute value of a type-level 'Integer', as a type-level 'Integer'.
+--type Abs (x :: Integer) = PP (Abs_ (Normalize x)) :: Integer
+--
+--sAbs :: SInteger i -> SInteger (Abs i)
+--sAbs si = withSomeSing (abs (fromSing si)) unsafeCoerce
 
 -- | Absolute value of a type-level 'Integer', as a type-level 'Natural'.
 type Abs (x :: Integer) = Abs_ (Normalize x) :: Natural
@@ -264,6 +456,17 @@ type family Abs_ (x :: Integer) :: Natural where
   Abs_  Z    = 0
   Abs_ (P x) = x
   Abs_ (N x) = x
+
+-- | Singleton version of 'Abs'.
+sAbs :: SInteger i -> L.SNat (Abs i)
+sAbs si = withSomeSing
+            (fromInteger (abs (fromSing si)) :: Natural)
+            unsafeCoerce
+
+infixl 6 %+
+-- | Singleton version of '+'.
+(%+) :: SInteger a -> SInteger b -> SInteger (a + b)
+(%+) sa sb = UnsafeSInteger (fromSing sa + fromSing sb)
 
 -- | Addition of type-level 'Integer's.
 type (a :: Integer) + (b :: Integer) = Add_ (Normalize a) (Normalize b) :: Integer
@@ -275,6 +478,11 @@ type family Add_ (a :: Integer) (b :: Integer) :: Integer where
   Add_ (P a) (N b) = If (b <=? a) (PP (a L.- b)) (NN (b L.- a))
   Add_ (N a) (P b) = Add_ (P b) (N a)
 
+infixl 7 %*
+-- | Singleton version of '*'.
+(%*) :: SInteger a -> SInteger b -> SInteger (a * b)
+(%*) sa sb = UnsafeSInteger (fromSing sa * fromSing sb)
+
 -- | Multiplication of type-level 'Integer's.
 type (a :: Integer) * (b :: Integer) = Mul_ (Normalize a) (Normalize b) :: Integer
 type family Mul_ (a :: Integer) (b :: Integer) :: Integer where
@@ -285,19 +493,29 @@ type family Mul_ (a :: Integer) (b :: Integer) :: Integer where
   Mul_ (P a) (N b) = NN (a L.* b)
   Mul_ (N a) (P b) = Mul_ (P a) (N b)
 
+infixr 8 %^
+-- | Singleton version of '^'.
+(%^) :: SInteger a -> SInteger b -> SInteger (a ^ b)
+(%^) sa sb = UnsafeSInteger (fromSing sa ^ fromSing sb)
+
 -- | Exponentiation of type-level 'Integer's.
 --
--- * Exponentiation by negative 'Integer' doesn't type-check.
+-- * @t'Z' '^' t'Z'@ doesn't type-check.
 --
--- * @'Z' '^' 'Z'@ doesn't type-check.
+-- * @_ '^' t'N' _@ doesn't type-check.
 type (a :: Integer) ^ (b :: Integer) = Pow_ (Normalize a) (Normalize b) :: Integer
 type family Pow_ (a :: Integer) (b :: Integer) :: Integer where
-  Pow_ Z      Z    = L.TypeError ('L.Text "KindInteger.(^): 0^0 is undefined")
-  Pow_ Z     (P _) = Z
-  Pow_ _      Z    = P 1
-  Pow_ (P a) (P b) = PP (a L.^ b)
-  Pow_ (N a) (P b) = NN (a L.^ b)
   Pow_ _     (N _) = L.TypeError ('L.Text "KindInteger.(^): Negative exponent")
+  Pow_ Z      Z    = L.TypeError ('L.Text "KindInteger.(^): (Z ^ Z) is undefined")
+  Pow_ Z      _    = Z
+  Pow_ _      Z    = P 1
+  Pow_ (P a) (P b) = P (a L.^ b)
+  Pow_ (N a) (P b) = N (a L.^ b)
+
+infixl 6 %-
+-- | Singleton version of '-'.
+(%-) :: SInteger a -> SInteger b -> SInteger (a - b)
+(%-) sa sb = UnsafeSInteger (fromSing sa - fromSing sb)
 
 -- | Subtraction of type-level 'Integer's.
 type (a :: Integer) - (b :: Integer) = a + Negate b :: Integer
@@ -347,7 +565,7 @@ type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
   Div__ _ Z _ = Z
 
   Div__ 'RoundDown (P a) b = PP (L.Div a b)
-  Div__ 'RoundDown (N a) b = NN (If (b L.* L.Div a b ==? a)
+  Div__ 'RoundDown (N a) b = NN (If (b L.* L.Div a b P.== a)
                                     (L.Div a b)
                                     (L.Div a b L.+ 1))
 
@@ -392,17 +610,30 @@ type family Div__ (r :: Round) (a :: Integer) (b :: Natural) :: Integer where
   Div__ 'RoundHalfAway (P a) b = Div__ 'RoundHalfUp   (P a) b
   Div__ 'RoundHalfAway (N a) b = Div__ 'RoundHalfDown (N a) b
 
+-- | Singleton version of 'Log2'.
+sLog2 :: SInteger i -> L.SNat (Log2 i)
+sLog2 si = withSomeSing
+             (fromIntegral (integerLog2 (fromSing si)) :: Natural)
+             unsafeCoerce
 
 -- | Log base 2 ('floor'ed) of type-level 'Integer's.
 --
 -- * Logarithm of /zero/ doesn't type-check.
 --
 -- * Logarithm of negative number doesn't type-check.
-type Log2 (a :: Integer) = Log2_ (Normalize a) :: Integer
-type family Log2_ (a :: Integer) :: Integer where
+type Log2 (a :: Integer) = Log2_ (Normalize a) :: Natural
+type family Log2_ (a :: Integer) :: Natural where
   Log2_ Z = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of zero")
-  Log2_ (P a) = PP (L.Log2 a)
-  Log2_ (N a) = L.TypeError ('L.Text "KindInteger.Log2: Logarithm of negative number")
+  Log2_ (P a) = L.Log2 a
+  Log2_ (N a) = L.TypeError
+    ('L.Text "KindInteger.Log2: Logarithm of negative number")
+
+
+-- | Singleton version of 'GCD'.
+sGCD :: SInteger a -> SInteger b -> L.SNat (GCD a b)
+sGCD sa sb = withSomeSing
+               (fromInteger (gcd (fromSing sa) (fromSing sb)) :: Natural)
+               unsafeCoerce
 
 -- | Greatest Common Divisor of type-level 'Integer' numbers @a@ and @b@.
 --
@@ -414,6 +645,12 @@ type family NatGCD (a :: Natural) (b :: Natural) :: Natural where
   NatGCD a 0 = a
   NatGCD a b = NatGCD b (L.Mod a b)
 
+-- | Singleton version of 'LCM'.
+sLCM :: SInteger a -> SInteger b -> L.SNat (LCM a b)
+sLCM sa sb = withSomeSing
+               (fromInteger (lcm (fromSing sa) (fromSing sb)) :: Natural)
+               unsafeCoerce
+
 -- | Least Common Multiple of type-level 'Integer' numbers @a@ and @b@.
 --
 -- Returns a 'Natural', since the Least Common Multiple is always positive.
@@ -422,6 +659,24 @@ type LCM (a :: Integer) (b :: Integer) = NatLCM (Abs a) (Abs b) :: Natural
 -- | Least Common Multiple of type-level 'Natural's @a@ and @b@.
 type NatLCM (a :: Natural) (b :: Natural) =
   L.Div a (NatGCD a b) L.* b :: Natural
+
+instance P.PNum Integer where
+  type a + b = a + b
+  type a - b = a - b
+  type a * b = a * b
+  type Negate a = Negate_ (Normalize a)
+  type Abs a = Normalize (P (Abs a))
+  type Signum a = Signum_ (Normalize a)
+  type FromInteger a = Normalize (P a)
+
+instance P.SNum Integer where
+  (%+) = (%+)
+  (%-) = (%-)
+  (%*) = (%*)
+  sNegate = sNegate
+  sAbs = sFromNatural . sAbs
+  sSignum = sSignum
+  sFromInteger = sFromNatural
 
 --------------------------------------------------------------------------------
 
@@ -442,7 +697,22 @@ type family CmpInteger_ (a :: Integer) (b :: Integer) :: Ordering where
 type instance Compare (a :: Integer) (b :: Integer) =
   CmpInteger a b :: Ordering
 
---------------------------------------------------------------------------------
+instance OrdS.POrd Integer where
+  type Compare a b = CmpInteger a b
+
+instance OrdS.SOrd Integer where
+  sCompare sa sb = case compare (fromSing sa) (fromSing sb) of
+    LT -> unsafeCoerce OrdS.SLT
+    EQ -> unsafeCoerce OrdS.SEQ
+    GT -> unsafeCoerce OrdS.SGT
+
+instance EqS.PEq Integer where
+  type a == b = OrdCond (Compare a b) 'False 'True 'False
+
+instance EqS.SEq Integer where
+  sa %== sb
+    | fromSing sa P.== fromSing sb = unsafeCoerce STrue
+    | otherwise                    = unsafeCoerce SFalse
 
 -- | We either get evidence that this function was instantiated with the
 -- same type-level 'Integer's, or 'Nothing'.
@@ -463,18 +733,19 @@ cmpInteger
   -> proxy2 b
   -> OrderingI a b
 cmpInteger _ _ = case compare (demote @a) (demote @b) of
-  EQ -> case unsafeCoerce Refl :: CmpInteger a b :~: 'EQ of
-    Refl -> case unsafeCoerce Refl :: a :~: b of
-      Refl -> EQI
-  LT -> case unsafeCoerce Refl :: (CmpInteger a b :~: 'LT) of
-    Refl -> LTI
-  GT -> case unsafeCoerce Refl :: (CmpInteger a b :~: 'GT) of
-    Refl -> GTI
+  EQ | Refl <- (unsafeCoerce Refl :: a :~: b)
+     , Refl <- (unsafeCoerce Refl :: CmpInteger a b :~: 'EQ) -> EQI
+  LT | Refl <- (unsafeCoerce Refl :: CmpInteger a b :~: 'LT) -> LTI
+  GT | Refl <- (unsafeCoerce Refl :: CmpInteger a b :~: 'GT) -> GTI
 
 --------------------------------------------------------------------------------
 
 -- | Singleton type for a type-level 'Integer' @i@.
-newtype SInteger (i :: Integer) = UnsafeSInteger P.Integer
+newtype SInteger (i :: Integer)
+  = UnsafeSInteger P.Integer
+    -- ^ Note that we could use SZ, SN and SP as constructor to make 'SInteger'
+    -- internals type safe. We don't do it because this is more performant.
+    -- The 'KnownRational' constraint in 'integerSing' makes everything safe.
 type role SInteger representational
 
 -- | A explicitly bidirectional pattern synonym relating an 'SInteger' to a
@@ -492,11 +763,12 @@ type role SInteger representational
 --
 -- @
 -- f :: 'SInteger' i -> ..
--- f SInteger = {- SInteger i in scope -}
+-- f si\@'SInteger' = /... both (si :: 'SInteger' i) and ('KnownInteger' i) in scope .../
 -- @
 pattern SInteger :: forall i. () => KnownInteger i => SInteger i
 pattern SInteger <- (knownIntegerInstance -> KnownIntegerInstance)
   where SInteger = integerSing
+{-# COMPLETE SInteger #-}
 
 -- | An internal data type that is only used for defining the 'SInteger' pattern
 -- synonym.
@@ -514,18 +786,18 @@ instance Eq (SInteger i) where
 instance Ord (SInteger i) where
   compare _ _ = P.EQ
 
-instance Show (SInteger i) where
-  showsPrec p (UnsafeSInteger i) =
+instance P.Show (SInteger i) where
+  showsPrec p i =
     showParen (p >= appPrec1) $
       showString "SInteger @" .
-      showsPrecTypeLit appPrec1 i
+      showsPrecLit appPrec1 (fromSing i)
 
 instance forall i. KnownInteger i => Read (SInteger i) where
   readPrec = ReadPrec.lift $ do
     let si = integerSing @i
     _ <- ReadP.string "SInteger" >> pSkipSpaces1
     _ <- ReadP.char '@'
-    _ <- ReadP.string (showsPrecTypeLit appPrec1 (fromSInteger si) "")
+    _ <- ReadP.string (showsPrecLit appPrec1 (fromSing si) "")
     pure si
 
 instance TestEquality SInteger where
@@ -556,12 +828,8 @@ withKnownInteger
   -> (KnownInteger i => x)
   -> x
 withKnownInteger si x
-  | i <- fromSInteger si
-  , a :: Natural <- fromInteger (abs i)
-  , L.SomeNat @a _ <- L.someNatVal a
-    -- Safe because this module doesn't offer any tool for constructing
-    -- non-normalized SIntegers. Very unsafe otherwise.
-  , Refl <- unsafeCoerce Refl :: Normalize i :~: i
+  | Refl <- sNormalizeRefl si
+  , L.SomeNat @a _ <- L.someNatVal (fromSing (sAbs si))
   , Refl <- unsafeCoerce Refl :: Abs i :~: a
   = withKnownInteger_ si x
 
@@ -589,48 +857,14 @@ instance SingKind Integer where
   {-# INLINE toSing #-}
 
 instance SDecide Integer where
-  UnsafeSInteger l %~ UnsafeSInteger r =
+  l %~ r =
     -- This is safe because this library doesn't expose any tool to construct
     -- non-normalized SInteger . Otherwise, very unsafe.
-    case l P.== r of
+    case fromSing l P.== fromSing r of
       True  -> Proved (unsafeCoerce Refl)
       False -> Disproved (\Refl -> error "KindInteger.Integer: SDecide")
 
 --------------------------------------------------------------------------------
-
-data Round
-  = RoundUp
-  -- ^ Round __up__ towards positive infinity.
-  | RoundDown
-  -- ^ Round __down__ towards negative infinity.  Also known as "Prelude"'s
-  -- 'P.floor'. This is the type of rounding used by "Prelude"'s 'P.div',
-  -- 'P.mod', 'P.divMod', 'L.Div', 'L.Mod'.
-  | RoundZero
-  -- ^ Round towards __zero__.  Also known as "Prelude"'s 'P.truncate'. This is
-  -- the type of rounding used by "Prelude"'s 'P.quot', 'P.rem', 'P.quotRem'.
-  | RoundAway
-  -- ^ Round __away__ from zero.
-  | RoundHalfUp
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round __up__ towards positive infinity.
-  | RoundHalfDown
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round __down__ towards negative infinity.
-  | RoundHalfZero
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round towards __zero__.
-  | RoundHalfAway
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round __away__ from zero.
-  | RoundHalfEven
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round towards the closest __even__ integer. Also known as "Prelude"'s
-  -- 'P.round'.
-  | RoundHalfOdd
-  -- ^ Round towards the closest integer. If __half__way between two integers,
-  -- round towards the closest __odd__ integer.
-  deriving (Eq, Ord, Show, Read, Enum, Bounded)
-
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
 -- Return the quotient @q@. See 'divRem'.
@@ -640,6 +874,9 @@ div :: Round
     -> P.Integer  -- ^ Quotient @q@.
 div r a b = fst (divRem r a b)
 
+sDiv :: SRound r -> SInteger a -> SInteger b -> SInteger (Div r a b)
+sDiv sr sa sb = fst (sDivRem sr sa sb)
+
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
 -- Return the remainder @m@. See 'divRem'.
 rem :: Round
@@ -647,6 +884,10 @@ rem :: Round
     -> P.Integer  -- ^ Divisor @b@.
     -> P.Integer  -- ^ Remainder @m@.
 rem r a b = snd (divRem r a b)
+
+-- | Singleton version of 'Rem'.
+sRem :: SRound r -> SInteger a -> SInteger b -> SInteger (Rem r a b)
+sRem sr sa sb = snd (sDivRem sr sa sb)
 
 -- | Divide @a@ by @a@ using the specified 'Round'ing.
 -- Return the quotient @q@ and the remainder @m@.
@@ -706,22 +947,14 @@ _divRemHalf f = \a (errDiv0 -> b) ->
         EQ -> f neg down up
 {-# INLINE _divRemHalf #-}
 
---------------------------------------------------------------------------------
--- Extras
-
-infixr 4 /=, /=?, ==, ==?
-
--- | This should be exported by "Data.Type.Ord".
-type (a :: k) ==? (b :: k) = OrdCond (Compare a b) 'False 'True 'False :: Bool
-
--- | This should be exported by "Data.Type.Ord".
-type (a :: k) == (b :: k) = (a ==? b) ~ 'True :: Constraint
-
--- | This should be exported by "Data.Type.Ord".
-type (a :: k) /=? (b :: k) = OrdCond (Compare a b) 'True 'False 'True :: Bool
-
--- | This should be exported by "Data.Type.Ord".
-type (a :: k) /= (b :: k) = (a /=? b) ~ 'True :: Constraint
+-- | Singleton version of 'DivRem'.
+sDivRem :: SRound r -> SInteger a -> SInteger b
+        -> (SInteger (Div r a b), SInteger (Rem r a b))
+sDivRem sr sa sb =
+  let (q, m) = divRem (fromSing sr) (fromSing sa) (fromSing sb)
+  in withSomeSing q $ \sq ->
+     withSomeSInteger m $ \sm ->
+     (unsafeCoerce sq, unsafeCoerce sm)
 
 --------------------------------------------------------------------------------
 -- Rational tools
@@ -729,18 +962,17 @@ type (a :: k) /= (b :: k) = (a /=? b) ~ 'True :: Constraint
 data Rat = Rat Integer Natural
 
 type family R (n :: Integer) (d :: Natural) :: Rat where
-  R (P n) d = RatNormalize ('Rat (P n) d)
-  R (N n) d = RatNormalize ('Rat (N n) d)
+  R (P n) d = RatNormalize ('Rat (PP n) d)
+  R (N n) d = RatNormalize ('Rat (NN n) d)
 
 type family RatNormalize (r :: Rat) :: Rat where
-  RatNormalize ('Rat _ 0) =
-    L.TypeError ('L.Text "KindInteger: Denominator is 0")
+  RatNormalize ('Rat _ 0) = L.TypeError ('L.Text "Denominator is 0")
   RatNormalize ('Rat Z _) = 'Rat Z 1
   RatNormalize ('Rat (P 0) _) = 'Rat Z 1
   RatNormalize ('Rat (N 0) _) = 'Rat Z 1
-  RatNormalize ('Rat (P n) d) = 'Rat (P (L.Div n (NatGCD n d)))
+  RatNormalize ('Rat (P n) d) = 'Rat (PP (L.Div n (NatGCD n d)))
                                      (L.Div d (NatGCD n d))
-  RatNormalize ('Rat (N n) d) = 'Rat (N (L.Div n (NatGCD n d)))
+  RatNormalize ('Rat (N n) d) = 'Rat (NN (L.Div n (NatGCD n d)))
                                      (L.Div d (NatGCD n d))
 
 type family RatAbs (a :: Rat) :: Rat where
@@ -773,3 +1005,10 @@ errDiv0 i = i
 
 pSkipSpaces1 :: ReadP.ReadP ()
 pSkipSpaces1 = void $ ReadP.munch1 Char.isSpace
+
+--------------------------------------------------------------------------------
+$(genDefunSymbols
+   [ ''Z, ''N, ''P, ''KnownInteger, ''Normalize, ''FromNatural
+   , ''Odd , ''Even , ''Abs , ''Signum , ''Negate , ''GCD , ''LCM , ''Log2
+   , ''Div, ''Rem, ''DivRem, ''(+) , ''(*), ''(^) , ''(-)
+   ])

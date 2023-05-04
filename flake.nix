@@ -12,15 +12,28 @@
       flake.overlays.default = final: prev: {
         haskell = prev.haskell // {
           packageOverrides = prev.lib.composeExtensions
-            (prev.haskell.packageOverrides or (_: _: { })) (hself: hsuper: {
-              kind-integer = hself.callPackage ./kind-integer { };
-              kind-rational = hself.callPackage ./kind-rational { };
-              # dependencies
-              #chell = prev.haskell.lib.doJailbreak hsuper.chell;
-              singletons = hself.callHackage "singletons" "3.0.2" { };
-              #singletons-base = hself.callHackage "singletons-base" "3.1.1" { };
-              #singletons-th = hself.callHackage "singletons-th" "3.1.1" { };
-            });
+            (prev.haskell.packageOverrides or (_: _: { })) (hself: hsuper:
+              {
+                kind-integer = hself.callPackage ./kind-integer { };
+                kind-rational = hself.callPackage ./kind-rational { };
+                chell = prev.haskell.lib.doJailbreak hsuper.chell;
+                singletons = hself.callHackage "singletons" "3.0.2" { };
+              } // prev.lib.optionalAttrs
+              (prev.lib.versionAtLeast hsuper.ghc.version "9.4") {
+                singletons-base =
+                  hself.callHackage "singletons-base" "3.1.1" { };
+                singletons-th = hself.callHackage "singletons-th" "3.1.1" { };
+                th-desugar = hself.callHackage "th-desugar" "1.14" { };
+                th-abstraction =
+                  hself.callHackage "th-abstraction" "0.4.5.0" { };
+              } // prev.lib.optionalAttrs
+              (prev.lib.versionAtLeast hsuper.ghc.version "9.6") {
+                singletons-base = hself.callHackage "singletons-base" "3.2" { };
+                singletons-th = hself.callHackage "singletons-th" "3.2" { };
+                th-abstraction =
+                  hself.callHackage "th-abstraction" "0.5.0.0" { };
+                th-desugar = hself.callHackage "th-desugar" "1.15" { };
+              });
         };
       };
       systems = [ "x86_64-linux" "i686-linux" "aarch64-linux" ];
