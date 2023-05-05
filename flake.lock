@@ -55,7 +55,25 @@
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "singletons_3_2": "singletons_3_2"
+      }
+    },
+    "singletons_3_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1678643624,
+        "narHash": "sha256-LfhcxM5+dRd9cb+kC4WqlgbR1anWvVwZoGsBZQ9MrpE=",
+        "owner": "goldfirere",
+        "repo": "singletons",
+        "rev": "f8a0708bf15289cc92a04c9902c3c2dc620a0b5e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "goldfirere",
+        "ref": "singletons-th-base-3.2",
+        "repo": "singletons",
+        "type": "github"
       }
     }
   },

@@ -12,6 +12,7 @@ import Data.Ratio as P
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=))
 import Data.Singletons
+import Data.String
 import GHC.Exts (Constraint)
 import GHC.TypeLits qualified as L
 import Prelude hiding (Integer)
@@ -19,6 +20,9 @@ import Prelude qualified as P
 import Prelude.Singletons qualified as P
 import System.Exit
 import Text.Read
+import Text.ParserCombinators.ReadP qualified as ReadP
+import Text.ParserCombinators.ReadPrec qualified as ReadPrec
+import Text.Show.Singletons
 
 import KindInteger (P, N, Z, pattern SP, pattern SN, pattern SZ,
   SInteger, pattern SInteger)
@@ -29,26 +33,32 @@ import KindInteger qualified as K
 data Dict (c :: Constraint) where
   Dict :: c => Dict c
 
+readPrecMaybe :: ReadPrec a -> String -> Maybe a
+readPrecMaybe p s =
+  case readPrec_to_S (p <* ReadPrec.lift ReadP.skipSpaces) 0 s of
+    [(x, "")] -> Just x
+    _         -> Nothing
+
 --------------------------------------------------------------------------------
 
 _testEq =  Dict
 _testEq :: Dict
-  ( Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
+  ( 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
 
-  , Z K./= P 1,   'True ~ (Z K./=? P 1)
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
+  , 'True ~ (Z P./= P 1)
+  , 'True ~ (Z P./= N 1)
 
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
+  , 'True ~ (Z P./= N 1)
+  , 'True ~ (Z P./= N 1)
 
-  , P 1 K./= Z,   'True ~ (P 1 K./=? Z)
-  , P 1 K./= Z,   'True ~ (P 1 K./=? Z)
+  , 'True ~ (P 1 P./= Z)
+  , 'True ~ (P 1 P./= Z)
 
-  , N 1 K./= Z,   'True ~ (N 1 K./=? Z)
-  , N 1 K./= Z,   'True ~ (N 1 K./=? Z)
+  , 'True ~ (N 1 P./= Z)
+  , 'True ~ (N 1 P./= Z)
   )
 
 _testCmp =  Dict
@@ -376,19 +386,63 @@ main = testsMain $
   , assert "TestEquality -1 0" $
      isNothing (testEquality (SInteger @(N 1)) (SInteger @Z))
 
-  , assert "Show Integer 0" $
-     "0" == show (K.fromSInteger (SInteger @Z))
-  , assert "Show Integer +1" $
-     "1" == show (K.fromSInteger (SInteger @(P 1)))
-  , assert "Show Integer -1" $
-     "-1" == show (K.fromSInteger (SInteger @(N 1)))
-
-  , assert "Show SInteger 0" $
+  , assert "show SInteger 0" $
      "SInteger @Z" == show (SInteger @Z)
-  , assert "Show SInteger +1" $
+  , assert "show SInteger +1" $
      "SInteger @(P 1)" == show (SInteger @(P 1))
-  , assert "Show SInteger -1" $
+  , assert "show SInteger -1" $
      "SInteger @(N 1)" == show (SInteger @(N 1))
+
+  , assert "sShow SInteger 0" $
+     fromString "0" == fromSing (P.sShow_ (SInteger @Z))
+  , assert "sShow SInteger +1" $
+     fromString "1" == fromSing (P.sShow_ (SInteger @(P 1)))
+  , assert "sShow SInteger -1" $
+     fromString "-1" == fromSing (P.sShow_ (SInteger @(N 1)))
+
+  , assert "sShowsPrec appPrec SInteger 0" $
+     fromString "0y" == fromSing (P.sShowsPrec sAppPrec (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrec appPrec SInteger +1" $
+     fromString "1y" == fromSing (P.sShowsPrec sAppPrec (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec SInteger -1" $
+     fromString "-1y" == fromSing (P.sShowsPrec sAppPrec (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowsPrec appPrec1 SInteger 0" $
+     fromString "0y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrec appPrec1 SInteger +1" $
+     fromString "1y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec1 SInteger -1" $
+     fromString "-1y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowLit SInteger 0" $
+     fromString "Z" == fromSing (K.sShowLit (SInteger @Z))
+  , assert "sShowLit SInteger +1" $
+     fromString "P 1" == fromSing (K.sShowLit (SInteger @(P 1)))
+  , assert "sShowLit SInteger -1" $
+     fromString "N 1" == fromSing (K.sShowLit (SInteger @(N 1)))
+
+  , assert "sShowsPrecLit appPrec SInteger 0" $
+     fromString "Zy" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrecLit appPrec SInteger +1" $
+     fromString "P 1y" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec SInteger -1" $
+     fromString "N 1y" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowsPrecLit appPrec1 SInteger 0" $
+     fromString "Zy" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrecLit appPrec1 SInteger +1" $
+     fromString "(P 1)y" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec1 SInteger -1" $
+     fromString "(N 1)y" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @(N 1)) (sing @"y"))
+
+  , assert "readPrecLit Z" $
+     readPrecMaybe K.readPrecLit "Z" == Just 0
+  , assert "readPrecLit P" $
+     readPrecMaybe K.readPrecLit "P 0" == Nothing &&
+     readPrecMaybe K.readPrecLit "P 1" == Just 1
+  , assert "readPrecLit N" $
+     readPrecMaybe K.readPrecLit "N 0" == Nothing &&
+     readPrecMaybe K.readPrecLit "N 1" == Just (-1)
 
   , assert "Read SInteger 0" $
      readMaybe @(SInteger Z) "SInteger @Z" == Just (SInteger @Z)
@@ -3302,3 +3356,32 @@ _test_Div_RoundZero_P4_P4 :: Dict (K.Div 'K.RoundZero (P 4) (P 4) ~ P 1)
 _test_Div_RoundZero_P4_P4 =  Dict
 _test_Rem_RoundZero_P4_P4 :: Dict (K.Rem 'K.RoundZero (P 4) (P 4) ~ Z)
 _test_Rem_RoundZero_P4_P4 =  Dict
+
+_test_ShowsPrec_AppPrec_Z :: Dict (P.ShowsPrec AppPrec Z "y" ~ "0y")
+_test_ShowsPrec_AppPrec_Z =  Dict
+_test_ShowsPrec_AppPrec_P1 :: Dict (P.ShowsPrec AppPrec (P 1) "y" ~ "1y")
+_test_ShowsPrec_AppPrec_P1 =  Dict
+_test_ShowsPrec_AppPrec_N1 :: Dict (P.ShowsPrec AppPrec (N 1) "y" ~ "-1y")
+_test_ShowsPrec_AppPrec_N1 =  Dict
+
+_test_ShowsPrec_AppPrec1_Z :: Dict (P.ShowsPrec AppPrec1 Z "y" ~ "0y")
+_test_ShowsPrec_AppPrec1_Z =  Dict
+_test_ShowsPrec_AppPrec1_P1 :: Dict (P.ShowsPrec AppPrec1 (P 1) "y" ~ "1y")
+_test_ShowsPrec_AppPrec1_P1 =  Dict
+_test_ShowsPrec_AppPrec1_N1 :: Dict (P.ShowsPrec AppPrec1 (N 1) "y" ~ "-1y")
+_test_ShowsPrec_AppPrec1_N1 =  Dict
+
+_test_ShowsPrecLit_AppPrec_Z :: Dict (K.ShowsPrecLit AppPrec Z "y" ~ "Zy")
+_test_ShowsPrecLit_AppPrec_Z =  Dict
+_test_ShowsPrecLit_AppPrec_P1 :: Dict (K.ShowsPrecLit AppPrec (P 1) "y" ~ "P 1y")
+_test_ShowsPrecLit_AppPrec_P1 =  Dict
+_test_ShowsPrecLit_AppPrec_N1 :: Dict (K.ShowsPrecLit AppPrec (N 1) "y" ~ "N 1y")
+_test_ShowsPrecLit_AppPrec_N1 =  Dict
+
+_test_ShowsPrecLit_AppPrec1_Z :: Dict (K.ShowsPrecLit AppPrec1 Z "y" ~ "Zy")
+_test_ShowsPrecLit_AppPrec1_Z =  Dict
+_test_ShowsPrecLit_AppPrec1_P1 :: Dict (K.ShowsPrecLit AppPrec1 (P 1) "y" ~ "(P 1)y")
+_test_ShowsPrecLit_AppPrec1_P1 =  Dict
+_test_ShowsPrecLit_AppPrec1_N1 :: Dict (K.ShowsPrecLit AppPrec1 (N 1) "y" ~ "(N 1)y")
+_test_ShowsPrecLit_AppPrec1_N1 =  Dict
+

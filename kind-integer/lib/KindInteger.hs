@@ -20,7 +20,7 @@ module KindInteger {--}
   , type Z, pattern SZ
   , type N, pattern SN
   , type P, pattern SP
-  , FromNatural, sFromNatural, sFromNaturalAbsRefl
+  , FromNatural, fromNatural, sFromNatural
   , KnownInteger
   , integerSing
   , integerVal
@@ -31,24 +31,29 @@ module KindInteger {--}
   , pattern SInteger
   , fromSInteger
   , withSomeSInteger
-    -- ** Normalization
-  , Normalize
-  , normalize
+    -- * Normalization
+  , Normalize, normalize, sNormalize
   , sNormalizeRefl
-    -- ** Show, Read
-  , ShowLit, sShowLit
-  , ShowsLit, sShowsLit
-  , ShowsPrecLit, sShowsPrecLit
+
+    -- * Show
+    --
+    -- | Besides the following /\*Lit/ tools, 'P.PShow' and 'P.SShow' can
+    -- be used to display as "Prelude".'P.Integer' does.
+  , ShowLit, showLit, sShowLit
+  , ShowsLit, showsLit, sShowsLit
+  , ShowsPrecLit, showsPrecLit, sShowsPrecLit
   , readPrecLit
 
     -- * Arithmethic
     --
-    -- | Note that additional arithmetic operations are provided
-    -- through the 'P.PNum' and 'P.SNum' instances.
+    -- | Additional arithmetic operations are provided through the 'P.PNum'
+    -- and 'P.SNum' instances. Notably 'P.Abs', 'P.sAbs', 'P.Negate',
+    -- 'P.sNegate', 'P.Signum', 'P.sSignum', 'P.+', 'P.-', 'P.*', 'P.%+',
+    -- 'P.%-', 'P.%*'.
   , type (^), (%^)
   , Odd, sOdd
   , Even, sEven
-  , Abs, sAbs
+  , Abs, sAbs, sAbsRefl
   , GCD, sGCD
   , LCM, sLCM
   , Log2, sLog2
@@ -60,6 +65,10 @@ module KindInteger {--}
   , SRound(..)
 
     -- * Comparisons
+    --
+    -- | Additional comparison tools are available at 'SDdecide',
+    -- 'TestEquality', 'TestCoercion', 'P.PEq', 'P.SEq', 'P.POrd', 'P.SOrd'
+    -- and 'Compare'.
   , CmpInteger
   , cmpInteger
   , sameInteger
@@ -81,8 +90,6 @@ module KindInteger {--}
   , DivSym0, DivSym1, DivSym2, DivSym3
   , RemSym0, RemSym1, RemSym2, RemSym3
   , DivRemSym0, DivRemSym1, DivRemSym2, DivRemSym3
-  -- , type (==@#@$), type (==@#@$$), type (==@#@$$$)
-  -- , type (/=@#@$), type (/=@#@$$), type (/=@#@$$$)
   , RoundUpSym0
   , RoundDownSym0
   , RoundZeroSym0
@@ -186,7 +193,7 @@ data SomeKnownNat n = (L.KnownNat n) => SomeKnownNat (L.SNat n)
 type ShowsPrec (p :: L.Natural) (i :: Integer) (s :: L.Symbol)
   = ShowsPrec_ p (Normalize i) s :: L.Symbol
 type family ShowsPrec_ (p :: L.Natural) (i :: Integer) (s :: L.Symbol) :: L.Symbol where
-  ShowsPrec_ p (N n) s = (P.ShowStringSym1 "N " P..@#@$$$ P.ShowsSym1 n) @@ s
+  ShowsPrec_ p (N n) s = (P.ShowCharSym1 '-' P..@#@$$$ P.ShowsSym1 n) @@ s
   ShowsPrec_ _ (P n) s = P.Shows n s
   ShowsPrec_ _ Z     s = P.Shows 0 s
 
@@ -243,21 +250,30 @@ type family ShowsPrecLit_ (p :: L.Natural) (i :: Integer) (s :: L.Symbol) :: L.S
 sShowLit :: SInteger i -> Sing (ShowLit i)
 sShowLit si = sShowsLit si (sing @"")
 
+-- | Demoted version of 'ShowLit'.
+showLit :: P.Integer -> String
+showLit i = showsLit i ""
+
 -- | Singleton version of 'ShowsLit'.
 sShowsLit :: SInteger i -> Sing (s :: P.Symbol) -> Sing (ShowsLit i s)
 sShowsLit = sShowsPrecLit (sing @0)
 
--- | Singleton version of 'ShowsPrecLit'.
-sShowsPrecLit :: L.SNat p -> SInteger i -> Sing (s :: P.Symbol) -> Sing (ShowsPrecLit p i s)
-sShowsPrecLit (fromSing -> p) (fromSing -> i) (fromSing -> s) =
-    withSomeSing (fromString (f "") <> s) unsafeCoerce
-  where
-    f :: ShowS
-    f | i  < 0    = showParen (p >= 11) (showString "N " . shows (abs i))
-      | i  > 0    = showParen (p >= 11) (showString "P " . shows i)
-      | otherwise = showChar 'Z'
+-- | Demoted version of 'ShowsLit'.
+showsLit :: P.Integer -> ShowS
+showsLit = showsPrecLit 0
 
+-- | Singleton version of 'ShowsPrecLit'.
+sShowsPrecLit
+  :: L.SNat p -> SInteger i -> Sing (s :: P.Symbol) -> Sing (ShowsPrecLit p i s)
+sShowsPrecLit sp si ss =
+  let p = fromMaybe (error "sShowsPrecLit: invalid precedence")
+                    (toIntegralSized (fromSing sp))
+      t = fromString (showsPrecLit p (fromSing si) "")
+  in withSomeSing (t <> fromSing ss) unsafeCoerce
+
+-- | Demoted version of 'ShowsPrecLit'.
 showsPrecLit :: Int -> P.Integer -> ShowS
+showsPrecLit p | p < 0 = error "showsPrecLit: negative precedence"
 showsPrecLit p = \case
   0         -> showChar 'Z'
   i | i > 0 -> showParen (p >= appPrec1) (showString "P " . shows i)
@@ -268,9 +284,13 @@ readPrecLit :: ReadPrec.ReadPrec P.Integer
 readPrecLit = Read.parens $ asum
     [ 0 <$ ReadPrec.lift (ReadP.char 'Z')
     , do ReadPrec.lift $ ReadP.char 'N' >> pSkipSpaces1
-         fmap (negate . fromIntegral) $ Read.parens (ReadPrec.lift pNatural)
+         n <- Read.parens (ReadPrec.lift pNatural)
+         guard (n P./= 0)
+         pure $ negate $ fromIntegral n
     , do ReadPrec.lift $ ReadP.char 'P' >> pSkipSpaces1
-         fmap toInteger $ Read.parens (ReadPrec.lift pNatural)
+         n <- Read.parens (ReadPrec.lift pNatural)
+         guard (n P./= 0)
+         pure $ fromIntegral n
     ]
   where
     pNatural :: ReadP.ReadP Natural
@@ -353,8 +373,9 @@ type FromNatural (x :: Natural) = Normalize (P x) :: Integer
 sFromNatural :: L.SNat x -> SInteger (FromNatural x)
 sFromNatural sx = withSomeSing (toInteger (fromSing sx)) unsafeCoerce
 
-sFromNaturalAbsRefl :: SInteger i -> (i :~: FromNatural (Abs i))
-sFromNaturalAbsRefl !_ = unsafeCoerce Refl
+-- | Demoted version of 'FromNatural'.
+fromNatural :: L.Natural -> P.Integer
+fromNatural = fromIntegral
 
 -- | Make sure /zero/ is represented as @t'P' 0@, not as @t'N' 0@
 --
@@ -366,10 +387,11 @@ type family Normalize (i :: Integer) :: Integer where
   Normalize (P 0) = Z
   Normalize i     = i
 
--- -- | Singleton version of 'Normalize'.
--- -- This function is just identity, since 'SInteger's are always normalized.
--- sNormalize :: SInteger r -> SInteger (Normalize r)
--- sNormalize !sr | Refl <- sNormalizeRefl sr = sr
+-- | Singleton version of 'Normalize'.
+--
+-- This function is just 'id'entity, since 'SInteger's are always normalized.
+sNormalize :: SInteger r -> SInteger (Normalize r)
+sNormalize !sr | Refl <- sNormalizeRefl sr = sr
 
 -- | Demoted version of 'Normalize'. This function is just 'id'entity,
 -- since "Prelude".'P.Integer's are always 'Normalize'd.
@@ -444,11 +466,6 @@ sSignum si = case compare (fromSing si) 0 of
              EQ -> UnsafeSInteger 0
              GT -> UnsafeSInteger 1
 
--- | Absolute value of a type-level 'Integer', as a type-level 'Integer'.
---type Abs (x :: Integer) = PP (Abs_ (Normalize x)) :: Integer
---
---sAbs :: SInteger i -> SInteger (Abs i)
---sAbs si = withSomeSing (abs (fromSing si)) unsafeCoerce
 
 -- | Absolute value of a type-level 'Integer', as a type-level 'Natural'.
 type Abs (x :: Integer) = Abs_ (Normalize x) :: Natural
@@ -462,6 +479,12 @@ sAbs :: SInteger i -> L.SNat (Abs i)
 sAbs si = withSomeSing
             (fromInteger (abs (fromSing si)) :: Natural)
             unsafeCoerce
+
+-- | Relationship between a type-level 'Integer' and its
+-- 'Abs'olute 'Natural' amount.
+sAbsRefl :: SInteger i -> (i :~: FromNatural (Abs i))
+sAbsRefl !_ = unsafeCoerce Refl
+
 
 infixl 6 %+
 -- | Singleton version of '+'.
@@ -866,19 +889,25 @@ instance SDecide Integer where
 
 --------------------------------------------------------------------------------
 
--- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the quotient @q@. See 'divRem'.
+-- | Demoted version of 'Div'.
+--
+-- Throws 'Ex.DivdeByZero' where 'Div' would fail to type-check.
 div :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
     -> P.Integer  -- ^ Quotient @q@.
 div r a b = fst (divRem r a b)
 
-sDiv :: SRound r -> SInteger a -> SInteger b -> SInteger (Div r a b)
+-- | Singleton version of 'Div'.
+sDiv :: SRound r
+     -> SInteger a  -- ^ Dividend.
+     -> SInteger b  -- ^ Divisor.
+     -> SInteger (Div r a b)
 sDiv sr sa sb = fst (sDivRem sr sa sb)
 
--- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the remainder @m@. See 'divRem'.
+-- | Demoted version of 'Rem'.
+--
+-- Throws 'Ex.DivdeByZero' where 'Div' would fail to type-check.
 rem :: Round
     -> P.Integer  -- ^ Dividend @a@.
     -> P.Integer  -- ^ Divisor @b@.
@@ -886,18 +915,15 @@ rem :: Round
 rem r a b = snd (divRem r a b)
 
 -- | Singleton version of 'Rem'.
-sRem :: SRound r -> SInteger a -> SInteger b -> SInteger (Rem r a b)
+sRem :: SRound r
+     -> SInteger a  -- ^ Dividend.
+     -> SInteger b  -- ^ Divisor.
+     -> SInteger (Rem r a b)
 sRem sr sa sb = snd (sDivRem sr sa sb)
 
--- | Divide @a@ by @a@ using the specified 'Round'ing.
--- Return the quotient @q@ and the remainder @m@.
+-- | Demoted version of 'DivRem'.
 --
--- @
--- forall (r :: 'Round') (a :: 'P.Integer') (b :: 'P.Integer').
---   (b 'P./=' 0) =>
---     case 'divRem' r a b of
---       (q, m) -> m 'P.==' a 'P.-' b 'P.*' q
--- @
+-- Throws 'Ex.DivdeByZero' where 'Div' would fail to type-check.
 divRem
   :: Round
   -> P.Integer  -- ^ Dividend @a@.
@@ -933,7 +959,7 @@ _divRemHalf
       (P.Integer, P.Integer) ->
       (P.Integer, P.Integer) ->
       (P.Integer, P.Integer))
-  -- ^ Negative -> divRem RoundDown -> divRem RoundDown -> Result
+  -- ^ Negative -> divRem RoundDown -> divRem RoundUp -> Result
   -> P.Integer  -- ^ Dividend
   -> P.Integer  -- ^ Divisor
   -> (P.Integer, P.Integer)
@@ -948,7 +974,9 @@ _divRemHalf f = \a (errDiv0 -> b) ->
 {-# INLINE _divRemHalf #-}
 
 -- | Singleton version of 'DivRem'.
-sDivRem :: SRound r -> SInteger a -> SInteger b
+sDivRem :: SRound r
+        -> SInteger a   -- ^ Dividend.
+        -> SInteger b   -- ^ Divisor.
         -> (SInteger (Div r a b), SInteger (Rem r a b))
 sDivRem sr sa sb =
   let (q, m) = divRem (fromSing sr) (fromSing sa) (fromSing sb)
@@ -957,23 +985,24 @@ sDivRem sr sa sb =
      (unsafeCoerce sq, unsafeCoerce sm)
 
 --------------------------------------------------------------------------------
--- Rational tools
+-- Rational tools necessary to support 'HalfLT'
 
 data Rat = Rat Integer Natural
 
 type family R (n :: Integer) (d :: Natural) :: Rat where
+  R Z     d = RatNormalize ('Rat Z      d)
   R (P n) d = RatNormalize ('Rat (PP n) d)
   R (N n) d = RatNormalize ('Rat (NN n) d)
 
 type family RatNormalize (r :: Rat) :: Rat where
-  RatNormalize ('Rat _ 0) = L.TypeError ('L.Text "Denominator is 0")
-  RatNormalize ('Rat Z _) = 'Rat Z 1
-  RatNormalize ('Rat (P 0) _) = 'Rat Z 1
-  RatNormalize ('Rat (N 0) _) = 'Rat Z 1
-  RatNormalize ('Rat (P n) d) = 'Rat (PP (L.Div n (NatGCD n d)))
-                                     (L.Div d (NatGCD n d))
-  RatNormalize ('Rat (N n) d) = 'Rat (NN (L.Div n (NatGCD n d)))
-                                     (L.Div d (NatGCD n d))
+  RatNormalize ('Rat n d) = RatNormalize_ ('Rat (Normalize n) d)
+type family RatNormalize_ (r :: Rat) :: Rat where
+  RatNormalize_ ('Rat _ 0) = L.TypeError ('L.Text "Denominator is 0")
+  RatNormalize_ ('Rat Z _) = 'Rat Z 1
+  RatNormalize_ ('Rat (P n) d) = 'Rat (PP (L.Div n (NatGCD n d)))
+                                      (L.Div d (NatGCD n d))
+  RatNormalize_ ('Rat (N n) d) = 'Rat (NN (L.Div n (NatGCD n d)))
+                                      (L.Div d (NatGCD n d))
 
 type family RatAbs (a :: Rat) :: Rat where
   RatAbs ('Rat n d) = RatNormalize ('Rat (P (Abs n)) d)
@@ -999,6 +1028,8 @@ type family RatCmp_ (a :: Rat) (b :: Rat) :: Ordering where
 type HalfLT (a :: Rat) (b :: Integer) =
   (RatAbs (RatMinus a ('Rat b 1))) <? ('Rat (P 1) 2) :: Bool
 
+--------------------------------------------------------------------------------
+
 errDiv0 :: P.Integer -> P.Integer
 errDiv0 0 = Ex.throw Ex.DivideByZero
 errDiv0 i = i
@@ -1007,8 +1038,8 @@ pSkipSpaces1 :: ReadP.ReadP ()
 pSkipSpaces1 = void $ ReadP.munch1 Char.isSpace
 
 --------------------------------------------------------------------------------
+
 $(genDefunSymbols
-   [ ''Z, ''N, ''P, ''KnownInteger, ''Normalize, ''FromNatural
-   , ''Odd , ''Even , ''Abs , ''Signum , ''Negate , ''GCD , ''LCM , ''Log2
-   , ''Div, ''Rem, ''DivRem, ''(+) , ''(*), ''(^) , ''(-)
+   [ ''Z, ''N, ''P, ''KnownInteger, ''Normalize, ''FromNatural, ''(^)
+   , ''Odd , ''Even , ''Abs, ''GCD , ''LCM , ''Log2 , ''Div, ''Rem, ''DivRem
    ])
