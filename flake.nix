@@ -50,47 +50,47 @@
           default = pkgs.releaseTools.aggregate {
             name = "every output from this flake";
             constituents = [
-              config.packages.kind-integer__ghc94
-              config.packages.kind-rational__ghc94
-              config.packages.kind-integer__ghc94.doc
-              config.packages.kind-rational__ghc94.doc
-              config.packages.kind-integer__ghc94__sdist
-              config.packages.kind-rational__ghc94__sdist
-              config.packages.kind-integer__ghc94__sdistDoc
-              config.packages.kind-rational__ghc94__sdistDoc
               config.devShells.ghc94
+              config.packages.kind-integer__ghc94
+              config.packages.kind-integer__ghc94.doc
+              config.packages.kind-integer__ghc94__sdist
+              config.packages.kind-integer__ghc94__sdistDoc
+              config.packages.kind-rational__ghc94
+              config.packages.kind-rational__ghc94.doc
+              config.packages.kind-rational__ghc94__sdist
+              config.packages.kind-rational__ghc94__sdistDoc
 
-              config.packages.kind-integer__ghc96
-              config.packages.kind-rational__ghc96
-              config.packages.kind-integer__ghc96.doc
-              config.packages.kind-rational__ghc96.doc
-              config.packages.kind-integer__ghc96__sdist
-              config.packages.kind-rational__ghc96__sdist
-              config.packages.kind-integer__ghc96__sdistDoc
-              config.packages.kind-rational__ghc96__sdistDoc
               config.devShells.ghc96
+              config.packages.kind-integer__ghc96
+              config.packages.kind-integer__ghc96.doc
+              config.packages.kind-integer__ghc96__sdist
+              config.packages.kind-integer__ghc96__sdistDoc
+              config.packages.kind-rational__ghc96
+              config.packages.kind-rational__ghc96.doc
+              config.packages.kind-rational__ghc96__sdist
+              config.packages.kind-rational__ghc96__sdistDoc
             ];
           };
 
           kind-integer__ghc94 = pkgs.haskell.packages.ghc94.kind-integer;
-          kind-rational__ghc94 = pkgs.haskell.packages.ghc94.kind-rational;
           kind-integer__ghc94__sdist =
             pkgs.haskell.packages.ghc94.cabalSdist { src = ./kind-integer; };
-          kind-rational__ghc94__sdist =
-            pkgs.haskell.packages.ghc94.cabalSdist { src = ./kind-rational; };
           kind-integer__ghc94__sdistDoc = pkgs.haskell.lib.documentationTarball
             config.packages.kind-integer__ghc94;
+          kind-rational__ghc94 = pkgs.haskell.packages.ghc94.kind-rational;
+          kind-rational__ghc94__sdist =
+            pkgs.haskell.packages.ghc94.cabalSdist { src = ./kind-rational; };
           kind-rational__ghc94__sdistDoc = pkgs.haskell.lib.documentationTarball
             config.packages.kind-rational__ghc94;
 
           kind-integer__ghc96 = pkgs.haskell.packages.ghc96.kind-integer;
-          kind-rational__ghc96 = pkgs.haskell.packages.ghc96.kind-rational;
           kind-integer__ghc96__sdist =
             pkgs.haskell.packages.ghc96.cabalSdist { src = ./kind-integer; };
-          kind-rational__ghc96__sdist =
-            pkgs.haskell.packages.ghc96.cabalSdist { src = ./kind-rational; };
           kind-integer__ghc96__sdistDoc = pkgs.haskell.lib.documentationTarball
             config.packages.kind-integer__ghc96;
+          kind-rational__ghc96 = pkgs.haskell.packages.ghc96.kind-rational;
+          kind-rational__ghc96__sdist =
+            pkgs.haskell.packages.ghc96.cabalSdist { src = ./kind-rational; };
           kind-rational__ghc96__sdistDoc = pkgs.haskell.lib.documentationTarball
             config.packages.kind-rational__ghc96;
         };
@@ -103,7 +103,7 @@
                 [ pkgs.cabal-install pkgs.cabal2nix pkgs.ghcid ];
             };
         in {
-          default = config.devShells.ghc94;
+          default = config.devShells.ghc96;
           ghc94 = mkShellFor pkgs.haskell.packages.ghc94;
           ghc96 = mkShellFor pkgs.haskell.packages.ghc96;
         };

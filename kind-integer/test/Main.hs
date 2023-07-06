@@ -497,7 +497,7 @@ main = testsMain $
   , assert "%^" $
     flip all (liftA2 (,) [-5 .. 5] [0 .. 5])$ \(a, b) ->
       a ^ b == (withSomeSing (a :: P.Integer) $ \sa ->
-                withSomeSing (b :: P.Integer) $ \sb ->
+                withSomeSing (b :: L.Natural) $ \sb ->
                 fromSing $ sa K.%^ sb)
 
   , assert "sOdd" $
@@ -3368,7 +3368,7 @@ _test_ShowsPrec_AppPrec1_Z :: Dict (P.ShowsPrec AppPrec1 Z "y" ~ "0y")
 _test_ShowsPrec_AppPrec1_Z =  Dict
 _test_ShowsPrec_AppPrec1_P1 :: Dict (P.ShowsPrec AppPrec1 (P 1) "y" ~ "1y")
 _test_ShowsPrec_AppPrec1_P1 =  Dict
-_test_ShowsPrec_AppPrec1_N1 :: Dict (P.ShowsPrec AppPrec1 (N 1) "y" ~ "-1y")
+_test_ShowsPrec_AppPrec1_N1 :: Dict (P.ShowsPrec AppPrec1 (N 1) "y" ~ "(-1)y")
 _test_ShowsPrec_AppPrec1_N1 =  Dict
 
 _test_ShowsPrecLit_AppPrec_Z :: Dict (K.ShowsPrecLit AppPrec Z "y" ~ "Zy")
@@ -3385,3 +3385,253 @@ _test_ShowsPrecLit_AppPrec1_P1 =  Dict
 _test_ShowsPrecLit_AppPrec1_N1 :: Dict (K.ShowsPrecLit AppPrec1 (N 1) "y" ~ "(N 1)y")
 _test_ShowsPrecLit_AppPrec1_N1 =  Dict
 
+_test_Add_Z_Z :: Dict (Z P.+ Z ~ Z)
+_test_Add_Z_Z =  Dict
+_test_Add_Z_N1 :: Dict (Z P.+ N 1 ~ N 1)
+_test_Add_Z_N1 =  Dict
+_test_Add_Z_P1 :: Dict (Z P.+ P 1 ~ P 1)
+_test_Add_Z_P1 =  Dict
+_test_Add_Z_N2 :: Dict (Z P.+ N 2 ~ N 2)
+_test_Add_Z_N2 =  Dict
+_test_Add_Z_P2 :: Dict (Z P.+ P 2 ~ P 2)
+_test_Add_Z_P2 =  Dict
+
+_test_Add_N1_Z :: Dict (N 1 P.+ Z ~ N 1)
+_test_Add_N1_Z =  Dict
+_test_Add_N1_N1 :: Dict (N 1 P.+ N 1 ~ N 2)
+_test_Add_N1_N1 =  Dict
+_test_Add_N1_P1 :: Dict (N 1 P.+ P 1 ~ Z)
+_test_Add_N1_P1 =  Dict
+_test_Add_N1_N2 :: Dict (N 1 P.+ N 2 ~ N 3)
+_test_Add_N1_N2 =  Dict
+_test_Add_N1_P2 :: Dict (N 1 P.+ P 2 ~ P 1)
+_test_Add_N1_P2 =  Dict
+
+_test_Add_P1_Z :: Dict (P 1 P.+ Z ~ P 1)
+_test_Add_P1_Z =  Dict
+_test_Add_P1_N1 :: Dict (P 1 P.+ N 1 ~ Z)
+_test_Add_P1_N1 =  Dict
+_test_Add_P1_P1 :: Dict (P 1 P.+ P 1 ~ P 2)
+_test_Add_P1_P1 =  Dict
+_test_Add_P1_N2 :: Dict (P 1 P.+ N 2 ~ N 1)
+_test_Add_P1_N2 =  Dict
+_test_Add_P1_P2 :: Dict (P 1 P.+ P 2 ~ P 3)
+_test_Add_P1_P2 =  Dict
+
+_test_Add_N2_Z :: Dict (N 2 P.+ Z ~ N 2)
+_test_Add_N2_Z =  Dict
+_test_Add_N2_N1 :: Dict (N 2 P.+ N 1 ~ N 3)
+_test_Add_N2_N1 =  Dict
+_test_Add_N2_P1 :: Dict (N 2 P.+ P 1 ~ N 1)
+_test_Add_N2_P1 =  Dict
+_test_Add_N2_N2 :: Dict (N 2 P.+ N 2 ~ N 4)
+_test_Add_N2_N2 =  Dict
+_test_Add_N2_P2 :: Dict (N 2 P.+ P 2 ~ Z)
+_test_Add_N2_P2 =  Dict
+
+_test_Add_P2_Z :: Dict (P 2 P.+ Z ~ P 2)
+_test_Add_P2_Z =  Dict
+_test_Add_P2_N1 :: Dict (P 2 P.+ N 1 ~ P 1)
+_test_Add_P2_N1 =  Dict
+_test_Add_P2_P1 :: Dict (P 2 P.+ P 1 ~ P 3)
+_test_Add_P2_P1 =  Dict
+_test_Add_P2_N2 :: Dict (P 2 P.+ N 2 ~ Z)
+_test_Add_P2_N2 =  Dict
+_test_Add_P2_P2 :: Dict (P 2 P.+ P 2 ~ P 4)
+_test_Add_P2_P2 =  Dict
+
+_test_Sub_Z_Z :: Dict (Z P.- Z ~ Z)
+_test_Sub_Z_Z =  Dict
+_test_Sub_Z_N1 :: Dict (Z P.- N 1 ~ P 1)
+_test_Sub_Z_N1 =  Dict
+_test_Sub_Z_P1 :: Dict (Z P.- P 1 ~ N 1)
+_test_Sub_Z_P1 =  Dict
+_test_Sub_Z_N2 :: Dict (Z P.- N 2 ~ P 2)
+_test_Sub_Z_N2 =  Dict
+_test_Sub_Z_P2 :: Dict (Z P.- P 2 ~ N 2)
+_test_Sub_Z_P2 =  Dict
+
+_test_Sub_N1_Z :: Dict (N 1 P.- Z ~ N 1)
+_test_Sub_N1_Z =  Dict
+_test_Sub_N1_N1 :: Dict (N 1 P.- N 1 ~ Z)
+_test_Sub_N1_N1 =  Dict
+_test_Sub_N1_P1 :: Dict (N 1 P.- P 1 ~ N 2)
+_test_Sub_N1_P1 =  Dict
+_test_Sub_N1_N2 :: Dict (N 1 P.- N 2 ~ P 1)
+_test_Sub_N1_N2 =  Dict
+_test_Sub_N1_P2 :: Dict (N 1 P.- P 2 ~ N 3)
+_test_Sub_N1_P2 =  Dict
+
+_test_Sub_P1_Z :: Dict (P 1 P.- Z ~ P 1)
+_test_Sub_P1_Z =  Dict
+_test_Sub_P1_N1 :: Dict (P 1 P.- N 1 ~ P 2)
+_test_Sub_P1_N1 =  Dict
+_test_Sub_P1_P1 :: Dict (P 1 P.- P 1 ~ Z)
+_test_Sub_P1_P1 =  Dict
+_test_Sub_P1_N2 :: Dict (P 1 P.- N 2 ~ P 3)
+_test_Sub_P1_N2 =  Dict
+_test_Sub_P1_P2 :: Dict (P 1 P.- P 2 ~ N 1)
+_test_Sub_P1_P2 =  Dict
+
+_test_Sub_N2_Z :: Dict (N 2 P.- Z ~ N 2)
+_test_Sub_N2_Z =  Dict
+_test_Sub_N2_N1 :: Dict (N 2 P.- N 1 ~ N 1)
+_test_Sub_N2_N1 =  Dict
+_test_Sub_N2_P1 :: Dict (N 2 P.- P 1 ~ N 3)
+_test_Sub_N2_P1 =  Dict
+_test_Sub_N2_N2 :: Dict (N 2 P.- N 2 ~ Z)
+_test_Sub_N2_N2 =  Dict
+_test_Sub_N2_P2 :: Dict (N 2 P.- P 2 ~ N 4)
+_test_Sub_N2_P2 =  Dict
+
+_test_Sub_P2_Z :: Dict (P 2 P.- Z ~ P 2)
+_test_Sub_P2_Z =  Dict
+_test_Sub_P2_N1 :: Dict (P 2 P.- N 1 ~ P 3)
+_test_Sub_P2_N1 =  Dict
+_test_Sub_P2_P1 :: Dict (P 2 P.- P 1 ~ P 1)
+_test_Sub_P2_P1 =  Dict
+_test_Sub_P2_N2 :: Dict (P 2 P.- N 2 ~ P 4)
+_test_Sub_P2_N2 =  Dict
+_test_Sub_P2_P2 :: Dict (P 2 P.- P 2 ~ Z)
+_test_Sub_P2_P2 =  Dict
+
+_test_Mul_Z_Z :: Dict (Z P.* Z ~ Z)
+_test_Mul_Z_Z =  Dict
+_test_Mul_Z_N1 :: Dict (Z P.* N 1 ~ Z)
+_test_Mul_Z_N1 =  Dict
+_test_Mul_Z_P1 :: Dict (Z P.* P 1 ~ Z)
+_test_Mul_Z_P1 =  Dict
+_test_Mul_Z_N2 :: Dict (Z P.* N 2 ~ Z)
+_test_Mul_Z_N2 =  Dict
+_test_Mul_Z_P2 :: Dict (Z P.* P 2 ~ Z)
+_test_Mul_Z_P2 =  Dict
+
+_test_Mul_N1_Z :: Dict (N 1 P.* Z ~ Z)
+_test_Mul_N1_Z =  Dict
+_test_Mul_N1_N1 :: Dict (N 1 P.* N 1 ~ P 1)
+_test_Mul_N1_N1 =  Dict
+_test_Mul_N1_P1 :: Dict (N 1 P.* P 1 ~ N 1)
+_test_Mul_N1_P1 =  Dict
+_test_Mul_N1_N2 :: Dict (N 1 P.* N 2 ~ P 2)
+_test_Mul_N1_N2 =  Dict
+_test_Mul_N1_P2 :: Dict (N 1 P.* P 2 ~ N 2)
+_test_Mul_N1_P2 =  Dict
+
+_test_Mul_P1_Z :: Dict (P 1 P.* Z ~ Z)
+_test_Mul_P1_Z =  Dict
+_test_Mul_P1_N1 :: Dict (P 1 P.* N 1 ~ N 1)
+_test_Mul_P1_N1 =  Dict
+_test_Mul_P1_P1 :: Dict (P 1 P.* P 1 ~ P 1)
+_test_Mul_P1_P1 =  Dict
+_test_Mul_P1_N2 :: Dict (P 1 P.* N 2 ~ N 2)
+_test_Mul_P1_N2 =  Dict
+_test_Mul_P1_P2 :: Dict (P 1 P.* P 2 ~ P 2)
+_test_Mul_P1_P2 =  Dict
+
+_test_Mul_N2_Z :: Dict (N 2 P.* Z ~ Z)
+_test_Mul_N2_Z =  Dict
+_test_Mul_N2_N1 :: Dict (N 2 P.* N 1 ~ P 2)
+_test_Mul_N2_N1 =  Dict
+_test_Mul_N2_P1 :: Dict (N 2 P.* P 1 ~ N 2)
+_test_Mul_N2_P1 =  Dict
+_test_Mul_N2_N2 :: Dict (N 2 P.* N 2 ~ P 4)
+_test_Mul_N2_N2 =  Dict
+_test_Mul_N2_P2 :: Dict (N 2 P.* P 2 ~ N 4)
+_test_Mul_N2_P2 =  Dict
+
+_test_Mul_P2_Z :: Dict (P 2 P.* Z ~ Z)
+_test_Mul_P2_Z =  Dict
+_test_Mul_P2_N1 :: Dict (P 2 P.* N 1 ~ N 2)
+_test_Mul_P2_N1 =  Dict
+_test_Mul_P2_P1 :: Dict (P 2 P.* P 1 ~ P 2)
+_test_Mul_P2_P1 =  Dict
+_test_Mul_P2_N2 :: Dict (P 2 P.* N 2 ~ N 4)
+_test_Mul_P2_N2 =  Dict
+_test_Mul_P2_P2 :: Dict (P 2 P.* P 2 ~ P 4)
+_test_Mul_P2_P2 =  Dict
+
+_test_Pow_Z_Z :: Dict (Z K.^ 0 ~ P 1)
+_test_Pow_Z_Z =  Dict
+_test_Pow_Z_1 :: Dict (Z K.^ 1 ~ Z)
+_test_Pow_Z_1 =  Dict
+_test_Pow_Z_2 :: Dict (Z K.^ 2 ~ Z)
+_test_Pow_Z_2 =  Dict
+
+_test_Pow_N1_0 :: Dict (N 1 K.^ 0 ~ P 1)
+_test_Pow_N1_0 =  Dict
+_test_Pow_N1_1 :: Dict (N 1 K.^ 1 ~ N 1)
+_test_Pow_N1_1 =  Dict
+_test_Pow_N1_2 :: Dict (N 1 K.^ 2 ~ P 1)
+_test_Pow_N1_2 =  Dict
+
+_test_Pow_P1_Z :: Dict (P 1 K.^ 0 ~ P 1)
+_test_Pow_P1_Z =  Dict
+_test_Pow_P1_P1 :: Dict (P 1 K.^ 1 ~ P 1)
+_test_Pow_P1_P1 =  Dict
+_test_Pow_P1_P2 :: Dict (P 1 K.^ 2 ~ P 1)
+_test_Pow_P1_P2 =  Dict
+
+_test_Pow_N2_0 :: Dict (N 2 K.^ 0 ~ P 1)
+_test_Pow_N2_0 =  Dict
+_test_Pow_N2_1 :: Dict (N 2 K.^ 1 ~ N 2)
+_test_Pow_N2_1 =  Dict
+_test_Pow_N2_2 :: Dict (N 2 K.^ 2 ~ P 4)
+_test_Pow_N2_2 =  Dict
+
+_test_Pow_P2_0 :: Dict (P 2 K.^ 0 ~ P 1)
+_test_Pow_P2_0 =  Dict
+_test_Pow_P2_1 :: Dict (P 2 K.^ 1 ~ P 2)
+_test_Pow_P2_1 =  Dict
+_test_Pow_P2_2 :: Dict (P 2 K.^ 2 ~ P 4)
+_test_Pow_P2_2 =  Dict
+
+_test_ZigZag_Z :: Dict (K.ZigZag Z ~ 0)
+_test_ZigZag_Z =  Dict
+_test_ZigZag_N1 :: Dict (K.ZigZag (N 1) ~ 1)
+_test_ZigZag_N1 =  Dict
+_test_ZigZag_P1 :: Dict (K.ZigZag (P 1) ~ 2)
+_test_ZigZag_P1 =  Dict
+_test_ZigZag_N2 :: Dict (K.ZigZag (N 2) ~ 3)
+_test_ZigZag_N2 =  Dict
+_test_ZigZag_P2 :: Dict (K.ZigZag (P 2) ~ 4)
+_test_ZigZag_P2 =  Dict
+
+_test_ZagZig_Z :: Dict (K.ZagZig 0 ~ Z)
+_test_ZagZig_Z =  Dict
+_test_ZagZig_N1 :: Dict (K.ZagZig 1 ~ N 1)
+_test_ZagZig_N1 =  Dict
+_test_ZagZig_P1 :: Dict (K.ZagZig 2 ~ P 1)
+_test_ZagZig_P1 =  Dict
+_test_ZagZig_N2 :: Dict (K.ZagZig 3 ~ N 2)
+_test_ZagZig_N2 =  Dict
+_test_ZagZig_P2 :: Dict (K.ZagZig 4 ~ P 2)
+_test_ZagZig_P2 =  Dict
+
+_test_FromNatural_0 :: Dict (K.FromNatural 0 ~ Z)
+_test_FromNatural_0 =  Dict
+_test_FromNatural_1 :: Dict (K.FromNatural 1 ~ P 1)
+_test_FromNatural_1 =  Dict
+_test_FromNatural_2 :: Dict (K.FromNatural 2 ~ P 2)
+_test_FromNatural_2 =  Dict
+
+_test_Normalized_Z :: Dict (K.Normalized Z ~ Z)
+_test_Normalized_Z =  Dict
+_test_Normalized_N1 :: Dict (K.Normalized (N 1) ~ N 1)
+_test_Normalized_N1 =  Dict
+_test_Normalized_N2 :: Dict (K.Normalized (N 2) ~ N 2)
+_test_Normalized_N2 =  Dict
+_test_Normalized_P1 :: Dict (K.Normalized (P 1) ~ P 1)
+_test_Normalized_P1 =  Dict
+_test_Normalized_P2 :: Dict (K.Normalized (P 2) ~ P 2)
+_test_Normalized_P2 =  Dict
+
+_test_KnownInteger_Z :: Dict (K.KnownInteger Z)
+_test_KnownInteger_Z =  Dict
+_test_KnownInteger_N1 :: Dict (K.KnownInteger (N 1))
+_test_KnownInteger_N1 =  Dict
+_test_KnownInteger_N2 :: Dict (K.KnownInteger (N 2))
+_test_KnownInteger_N2 =  Dict
+_test_KnownInteger_P1 :: Dict (K.KnownInteger (P 1))
+_test_KnownInteger_P1 =  Dict
+_test_KnownInteger_P2 :: Dict (K.KnownInteger (P 2))
+_test_KnownInteger_P2 =  Dict

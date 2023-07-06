@@ -4,7 +4,7 @@
   is now only ever used as a kind. So, all term-level functions in
   the `KindRational` consume and produce `Prelude.Rational`s. Term-level
   functions crash will `error` if they are supplied `Rational`s that
-  are not `Normalize`d as input.
+  are not `Reduced` as input.
 
 * COMPILER ASSISTED BREAKING CHANGE: Removed `Eq`, `Ord`, `Show` and
   `Read` instances for `KindRational.Rational`.
@@ -12,18 +12,25 @@
 * COMPILER ASSISTED BREAKING CHANGE: Removed `withTerminating` in favor of
   `termination`.
 
-* COMPILER ASSISTED BREAKING CHANGE: `Terminating` doesn't imply
-  `KnownRational` anymore.
-
-* COMPILER ASSISTED BREAKING CHANGE: `Rational`s that are not `Nomalized`
+* COMPILER ASSISTED BREAKING CHANGE: `Rational`s that are not `Reduced`
   are not `KnownRational`s anymore.
 
 * COMPILER ASSISTED BREAKING CHANGE: `KnownRational` is now a type-synonym
   that implies `Normalize r ~ r`, `KnownInteger (Num r)` and
   `KnownNat (Den r)` as well.
 
+* Added `singletons-base` support for `Rational`, including `PNum`, `SNum`,
+  `PEq`, `SEq`, `POrd`, `SOrd`, `PShow` and `SShow`. Most arithmetic
+  functions are now exported through `PNum` and `SNum`, rather than standalone.
+
 * Added `readPrecTypeLit`, `SRationalTerminates`, `SRationalTerminatesNot`,
-  `normalize`, `rationalLit`.
+  `normalize`, `rationalLit`, `NonTerminating`, `%`, `%%`, `ToRational`,
+  `mkRational`, `sMkRational`, `sRecip'`.
+
+* Added `ShowLit`, `ShowsLit`, `ShowsPrecLit` and its singletons and
+  promoted versions.
+
+* Added defunctionalization symbols.
 
 
 # Version 0.4
