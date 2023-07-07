@@ -23,9 +23,13 @@ source-repository head
 common basic
   default-language: GHC2021
   ghc-options: -O2 -Wall -Werror=incomplete-patterns
-  build-depends: base ==4.*, singletons
+  build-depends:
+    base ==4.*,
+    singletons,
+    singletons-base,
   default-extensions:
     DataKinds
+    DerivingStrategies
     LambdaCase
     MultiWayIf
     NoStarIsType
@@ -39,6 +43,7 @@ library
   import: basic
   hs-source-dirs: lib
   exposed-modules: KindInteger
+  other-modules: KindInteger.Round
 
 test-suite test
   import: basic

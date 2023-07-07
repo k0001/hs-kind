@@ -14,9 +14,24 @@
   `KnownInteger`s anymore.
 
 * COMPILER ASSISTED BREAKING CHANGE: `KnownInteger` is now a type-synonym
-  that implies `Normalize i ~ i` and `KnownNat (Abs i)` as well.
+  that implies `Normalized i ~ i` and `KnownNat (Abs i)` as well.
 
 * Added `readPrecTypeLit`.
+
+* Added `Normalized`.
+
+* Added `singletons-base` support for `Integer`, including `PNum`, `SNum`,
+  `PEq`, `SEq`, `POrd`, `SOrd`, `PShow` and `SShow`. Most arithmetic
+  functions are now exported through `PNum` and `SNum`, rather than standalone.
+
+* Added `ShowLit`, `ShowsLit`, `ShowsPrecLit` and its singletons and
+  promoted versions.
+
+* Added `Fold` and `sFold`.
+
+* Added defunctionalization symbols.
+
+* Added ZigZag encoding and decoding tools.
 
 
 # Version 0.5

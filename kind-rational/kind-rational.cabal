@@ -27,6 +27,7 @@ common basic
     base ==4.*,
     kind-integer >=0.6,
     singletons,
+    singletons-base,
   default-extensions:
     DataKinds
     NoStarIsType

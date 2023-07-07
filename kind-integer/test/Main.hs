@@ -12,14 +12,20 @@ import Data.Ratio as P
 import Data.Type.Equality (TestEquality(..))
 import Data.Type.Ord (type (<=))
 import Data.Singletons
+import Data.String
 import GHC.Exts (Constraint)
 import GHC.TypeLits qualified as L
 import Prelude hiding (Integer)
 import Prelude qualified as P
+import Prelude.Singletons qualified as P
 import System.Exit
 import Text.Read
+import Text.ParserCombinators.ReadP qualified as ReadP
+import Text.ParserCombinators.ReadPrec qualified as ReadPrec
+import Text.Show.Singletons
 
-import KindInteger (P, N, Z)
+import KindInteger (P, N, Z, pattern SP, pattern SN, pattern SZ,
+  SInteger, pattern SInteger)
 import KindInteger qualified as K
 
 --------------------------------------------------------------------------------
@@ -27,26 +33,52 @@ import KindInteger qualified as K
 data Dict (c :: Constraint) where
   Dict :: c => Dict c
 
+readPrecMaybe :: ReadPrec a -> String -> Maybe a
+readPrecMaybe p s =
+  case readPrec_to_S (p <* ReadPrec.lift ReadP.skipSpaces) 0 s of
+    [(x, "")] -> Just x
+    _         -> Nothing
+
 --------------------------------------------------------------------------------
+
+_testShow =  Dict
+_testShow :: Dict
+  ( P.Show_ Z ~ "0"
+  , P.Show_ (P 1) ~ "1"
+  , P.Show_ (N 2) ~ "-2"
+  , P.ShowsPrec AppPrec (N 2) "x" ~ "-2x"
+  , P.ShowsPrec AppPrec1 (N 2) "x" ~ "(-2)x"
+  , P.ShowsPrec AppPrec1 (P 2) "x" ~ "2x"
+  )
+
+_testShowLit =  Dict
+_testShowLit :: Dict
+  ( K.ShowLit Z ~ "Z"
+  , K.ShowLit (P 1) ~ "P 1"
+  , K.ShowLit (N 2) ~ "N 2"
+  , K.ShowsPrecLit AppPrec (N 2) "x" ~ "N 2x"
+  , K.ShowsPrecLit AppPrec1 (N 2) "x" ~ "(N 2)x"
+  , K.ShowsPrecLit AppPrec1 (P 2) "x" ~ "(P 2)x"
+  )
 
 _testEq =  Dict
 _testEq :: Dict
-  ( Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
-  , Z K.== Z,   'True ~ (Z K.==? Z)
+  ( 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
+  , 'True ~ (Z P.== Z)
 
-  , Z K./= P 1,   'True ~ (Z K./=? P 1)
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
+  , 'True ~ (Z P./= P 1)
+  , 'True ~ (Z P./= N 1)
 
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
-  , Z K./= N 1,   'True ~ (Z K./=? N 1)
+  , 'True ~ (Z P./= N 1)
+  , 'True ~ (Z P./= N 1)
 
-  , P 1 K./= Z,   'True ~ (P 1 K./=? Z)
-  , P 1 K./= Z,   'True ~ (P 1 K./=? Z)
+  , 'True ~ (P 1 P./= Z)
+  , 'True ~ (P 1 P./= Z)
 
-  , N 1 K./= Z,   'True ~ (N 1 K./=? Z)
-  , N 1 K./= Z,   'True ~ (N 1 K./=? Z)
+  , 'True ~ (N 1 P./= Z)
+  , 'True ~ (N 1 P./= Z)
   )
 
 _testCmp =  Dict
@@ -66,114 +98,114 @@ _testCmp :: Dict
 
 _testAdd  = Dict
 _testAdd :: Dict
-  ( Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
-  , Z ~ Z K.+ Z
+  ( Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
+  , Z ~ Z P.+ Z
 
-  , P 1 ~ P 1 K.+ Z
-  , N 1 ~ N 1 K.+ Z
-  , P 1 ~ P 1 K.+ Z
-  , N 1 ~ N 1 K.+ Z
+  , P 1 ~ P 1 P.+ Z
+  , N 1 ~ N 1 P.+ Z
+  , P 1 ~ P 1 P.+ Z
+  , N 1 ~ N 1 P.+ Z
 
-  , P 1 ~ Z K.+ P 1
-  , N 1 ~ Z K.+ N 1
-  , N 1 ~ Z K.+ N 1
-  , P 1 ~ Z K.+ P 1
+  , P 1 ~ Z P.+ P 1
+  , N 1 ~ Z P.+ N 1
+  , N 1 ~ Z P.+ N 1
+  , P 1 ~ Z P.+ P 1
 
-  , P 2 ~ P 1 K.+ P 1
-  , N 2 ~ N 1 K.+ N 1
-  , Z ~ P 1 K.+ N 1
-  , Z ~ N 1 K.+ P 1
+  , P 2 ~ P 1 P.+ P 1
+  , N 2 ~ N 1 P.+ N 1
+  , Z ~ P 1 P.+ N 1
+  , Z ~ N 1 P.+ P 1
   )
 
 _testMul  = Dict
 _testMul :: Dict
-  ( Z ~ Z K.* Z
-  , Z ~ Z K.* Z
-  , Z ~ Z K.* Z
-  , Z ~ Z K.* Z
+  ( Z ~ Z P.* Z
+  , Z ~ Z P.* Z
+  , Z ~ Z P.* Z
+  , Z ~ Z P.* Z
 
-  , Z ~ P 1 K.* Z
-  , Z ~ N 1 K.* Z
-  , Z ~ P 1 K.* Z
-  , Z ~ N 1 K.* Z
+  , Z ~ P 1 P.* Z
+  , Z ~ N 1 P.* Z
+  , Z ~ P 1 P.* Z
+  , Z ~ N 1 P.* Z
 
-  , Z ~ Z K.* P 1
-  , Z ~ Z K.* N 1
-  , Z ~ Z K.* N 1
-  , Z ~ Z K.* P 1
+  , Z ~ Z P.* P 1
+  , Z ~ Z P.* N 1
+  , Z ~ Z P.* N 1
+  , Z ~ Z P.* P 1
 
-  , P 1 ~ P 1 K.* P 1
-  , P 1 ~ N 1 K.* N 1
-  , N 1 ~ P 1 K.* N 1
-  , N 1 ~ N 1 K.* P 1
+  , P 1 ~ P 1 P.* P 1
+  , P 1 ~ N 1 P.* N 1
+  , N 1 ~ P 1 P.* N 1
+  , N 1 ~ N 1 P.* P 1
 
-  , P 2 ~ P 2 K.* P 1
-  , P 2 ~ N 2 K.* N 1
-  , N 2 ~ P 2 K.* N 1
-  , N 2 ~ N 2 K.* P 1
+  , P 2 ~ P 2 P.* P 1
+  , P 2 ~ N 2 P.* N 1
+  , N 2 ~ P 2 P.* N 1
+  , N 2 ~ N 2 P.* P 1
 
-  , P 6 ~ P 2 K.* P 3
-  , P 6 ~ N 2 K.* N 3
-  , N 6 ~ P 2 K.* N 3
-  , N 6 ~ N 2 K.* P 3
+  , P 6 ~ P 2 P.* P 3
+  , P 6 ~ N 2 P.* N 3
+  , N 6 ~ P 2 P.* N 3
+  , N 6 ~ N 2 P.* P 3
   )
 
 _testLog2 =  Dict
 _testLog2 :: Dict
-  ( Z ~ K.Log2 (P 1)
-  , P 1 ~ K.Log2 (P 2)
-  , P 1 ~ K.Log2 (P 3)
-  , P 2 ~ K.Log2 (P 4)
-  , P 2 ~ K.Log2 (P 5)
-  , P 2 ~ K.Log2 (P 6)
-  , P 2 ~ K.Log2 (P 7)
-  , P 3 ~ K.Log2 (P 8)
-  , P 3 ~ K.Log2 (P 9)
-  , P 3 ~ K.Log2 (P 10)
-  , P 3 ~ K.Log2 (P 11)
-  , P 3 ~ K.Log2 (P 12)
-  , P 3 ~ K.Log2 (P 13)
-  , P 3 ~ K.Log2 (P 14)
-  , P 3 ~ K.Log2 (P 15)
-  , P 4 ~ K.Log2 (P 16)
-  , P 4 ~ K.Log2 (P 17)
-  , P 4 ~ K.Log2 (P 18)
-  , P 4 ~ K.Log2 (P 19)
-  , P 4 ~ K.Log2 (P 20)
-  , P 4 ~ K.Log2 (P 21)
-  , P 4 ~ K.Log2 (P 22)
-  , P 4 ~ K.Log2 (P 23)
-  , P 4 ~ K.Log2 (P 24)
-  , P 4 ~ K.Log2 (P 25)
-  , P 4 ~ K.Log2 (P 26)
-  , P 4 ~ K.Log2 (P 27)
-  , P 4 ~ K.Log2 (P 28)
-  , P 4 ~ K.Log2 (P 29)
-  , P 4 ~ K.Log2 (P 30)
-  , P 4 ~ K.Log2 (P 31)
-  , P 5 ~ K.Log2 (P 32)
+  ( 0 ~ K.Log2 (P 1)
+  , 1 ~ K.Log2 (P 2)
+  , 1 ~ K.Log2 (P 3)
+  , 2 ~ K.Log2 (P 4)
+  , 2 ~ K.Log2 (P 5)
+  , 2 ~ K.Log2 (P 6)
+  , 2 ~ K.Log2 (P 7)
+  , 3 ~ K.Log2 (P 8)
+  , 3 ~ K.Log2 (P 9)
+  , 3 ~ K.Log2 (P 10)
+  , 3 ~ K.Log2 (P 11)
+  , 3 ~ K.Log2 (P 12)
+  , 3 ~ K.Log2 (P 13)
+  , 3 ~ K.Log2 (P 14)
+  , 3 ~ K.Log2 (P 15)
+  , 4 ~ K.Log2 (P 16)
+  , 4 ~ K.Log2 (P 17)
+  , 4 ~ K.Log2 (P 18)
+  , 4 ~ K.Log2 (P 19)
+  , 4 ~ K.Log2 (P 20)
+  , 4 ~ K.Log2 (P 21)
+  , 4 ~ K.Log2 (P 22)
+  , 4 ~ K.Log2 (P 23)
+  , 4 ~ K.Log2 (P 24)
+  , 4 ~ K.Log2 (P 25)
+  , 4 ~ K.Log2 (P 26)
+  , 4 ~ K.Log2 (P 27)
+  , 4 ~ K.Log2 (P 28)
+  , 4 ~ K.Log2 (P 29)
+  , 4 ~ K.Log2 (P 30)
+  , 4 ~ K.Log2 (P 31)
+  , 5 ~ K.Log2 (P 32)
   )
 
 _testNegate =  Dict
 _testNegate :: Dict
-  ( Z ~ K.Negate Z
-  , Z ~ K.Negate Z
-  , N 1 ~ K.Negate (P 1)
-  , P 1 ~ K.Negate (N 1)
-  , N 2 ~ K.Negate (P 2)
-  , P 2 ~ K.Negate (N 2)
+  ( Z ~ P.Negate Z
+  , Z ~ P.Negate Z
+  , N 1 ~ P.Negate (P 1)
+  , P 1 ~ P.Negate (N 1)
+  , N 2 ~ P.Negate (P 2)
+  , P 2 ~ P.Negate (N 2)
   )
 
 _testSign =  Dict
 _testSign :: Dict
-  ( Z ~ K.Sign Z
-  , Z ~ K.Sign Z
-  , P 1 ~ K.Sign (P 1)
-  , N 1 ~ K.Sign (N 1)
-  , P 1 ~ K.Sign (P 2)
-  , N 1 ~ K.Sign (N 2)
+  ( Z ~ P.Signum Z
+  , Z ~ P.Signum Z
+  , P 1 ~ P.Signum (P 1)
+  , N 1 ~ P.Signum (N 1)
+  , P 1 ~ P.Signum (P 2)
+  , N 1 ~ P.Signum (N 2)
   )
 
 _testAbs =  Dict
@@ -364,43 +396,200 @@ main = testsMain $
         , readMaybe "1" == Just sp1 ]
 
   , assert "TestEquality 0 0" $
-     isJust (testEquality (K.SInteger @Z) (K.SInteger @Z))
+     isJust (testEquality (SInteger @Z) (SInteger @Z))
   , assert "TestEquality 0 +1" $
-     isNothing (testEquality (K.SInteger @Z) (K.SInteger @(P 1)))
+     isNothing (testEquality (SInteger @Z) (SInteger @(P 1)))
   , assert "TestEquality 0 -1" $
-     isNothing (testEquality (K.SInteger @Z) (K.SInteger @(N 1)))
+     isNothing (testEquality (SInteger @Z) (SInteger @(N 1)))
   , assert "TestEquality +1 0" $
-     isNothing (testEquality (K.SInteger @(P 1)) (K.SInteger @Z))
+     isNothing (testEquality (SInteger @(P 1)) (SInteger @Z))
   , assert "TestEquality -1 0" $
-     isNothing (testEquality (K.SInteger @(N 1)) (K.SInteger @Z))
+     isNothing (testEquality (SInteger @(N 1)) (SInteger @Z))
 
-  , assert "Show Integer 0" $
-     "0" == show (K.fromSInteger (K.SInteger @Z))
-  , assert "Show Integer +1" $
-     "1" == show (K.fromSInteger (K.SInteger @(P 1)))
-  , assert "Show Integer -1" $
-     "-1" == show (K.fromSInteger (K.SInteger @(N 1)))
+  , assert "show SInteger 0" $
+     "SInteger @Z" == show (SInteger @Z)
+  , assert "show SInteger +1" $
+     "SInteger @(P 1)" == show (SInteger @(P 1))
+  , assert "show SInteger -1" $
+     "SInteger @(N 1)" == show (SInteger @(N 1))
 
-  , assert "Show SInteger 0" $
-     "SInteger @Z" == show (K.SInteger @Z)
-  , assert "Show SInteger +1" $
-     "SInteger @(P 1)" == show (K.SInteger @(P 1))
-  , assert "Show SInteger -1" $
-     "SInteger @(N 1)" == show (K.SInteger @(N 1))
+  , assert "sShow SInteger 0" $
+     fromString "0" == fromSing (P.sShow_ (SInteger @Z))
+  , assert "sShow SInteger +1" $
+     fromString "1" == fromSing (P.sShow_ (SInteger @(P 1)))
+  , assert "sShow SInteger -1" $
+     fromString "-1" == fromSing (P.sShow_ (SInteger @(N 1)))
+
+  , assert "sShowsPrec appPrec SInteger 0" $
+     fromString "0y" == fromSing (P.sShowsPrec sAppPrec (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrec appPrec SInteger +1" $
+     fromString "1y" == fromSing (P.sShowsPrec sAppPrec (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec SInteger -1" $
+     fromString "-1y" == fromSing (P.sShowsPrec sAppPrec (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowsPrec appPrec1 SInteger 0" $
+     fromString "0y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrec appPrec1 SInteger +1" $
+     fromString "1y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec1 SInteger -1" $
+     fromString "-1y" == fromSing (P.sShowsPrec sAppPrec1 (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowLit SInteger 0" $
+     fromString "Z" == fromSing (K.sShowLit (SInteger @Z))
+  , assert "sShowLit SInteger +1" $
+     fromString "P 1" == fromSing (K.sShowLit (SInteger @(P 1)))
+  , assert "sShowLit SInteger -1" $
+     fromString "N 1" == fromSing (K.sShowLit (SInteger @(N 1)))
+
+  , assert "sShowsPrecLit appPrec SInteger 0" $
+     fromString "Zy" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrecLit appPrec SInteger +1" $
+     fromString "P 1y" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec SInteger -1" $
+     fromString "N 1y" == fromSing (K.sShowsPrecLit sAppPrec (SInteger @(N 1)) (sing @"y"))
+
+  , assert "sShowsPrecLit appPrec1 SInteger 0" $
+     fromString "Zy" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @Z) (sing @"y"))
+  , assert "sShowsPrecLit appPrec1 SInteger +1" $
+     fromString "(P 1)y" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @(P 1)) (sing @"y"))
+  , assert "sShowPrec appPrec1 SInteger -1" $
+     fromString "(N 1)y" == fromSing (K.sShowsPrecLit sAppPrec1 (SInteger @(N 1)) (sing @"y"))
+
+  , assert "readPrecLit Z" $
+     readPrecMaybe K.readPrecLit "Z" == Just 0
+  , assert "readPrecLit P" $
+     readPrecMaybe K.readPrecLit "P 0" == Nothing &&
+     readPrecMaybe K.readPrecLit "P 1" == Just 1
+  , assert "readPrecLit N" $
+     readPrecMaybe K.readPrecLit "N 0" == Nothing &&
+     readPrecMaybe K.readPrecLit "N 1" == Just (-1)
 
   , assert "Read SInteger 0" $
-     readMaybe @(K.SInteger Z) "SInteger @Z" == Just (K.SInteger @Z)
+     readMaybe @(SInteger Z) "SInteger @Z" == Just (SInteger @Z)
   , assert "Read SInteger +1" $
-     readMaybe @(K.SInteger (P 1)) "SInteger @(P 1)" == Just (K.SInteger @(P 1))
+     readMaybe @(SInteger (P 1)) "SInteger @(P 1)" == Just (SInteger @(P 1))
   , assert "Read SInteger -1" $
-     readMaybe @(K.SInteger (N 1)) "SInteger @(N 1)" == Just (K.SInteger @(N 1))
+     readMaybe @(SInteger (N 1)) "SInteger @(N 1)" == Just (SInteger @(N 1))
+
+  , assert "SZ == SInteger @Z" $
+    case SInteger @Z of
+      SZ -> SZ == SInteger @Z
+
+  , assert "SN (sing @1) == SInteger @(N 1)" $
+    case SInteger @(N 1) of
+      SN s1 -> (fromSing @L.Natural s1 == 1) &&
+               (SN s1 == SInteger @(N 1))
+
+  , assert "SP (sing @1) == SInteger @(P 1)" $
+    case SInteger @(P 1) of
+      SP s1 -> (fromSing @L.Natural s1 == 1) &&
+               (SP s1 == SInteger @(P 1))
 
   , assert "KnownInteger i ==> KnownNat (Abs i)" $
-    let fabs :: forall i. K.SInteger i -> P.Integer
+    let fabs :: forall i. SInteger i -> P.Integer
         fabs si = K.withKnownInteger si (L.natVal (Proxy @(K.Abs i)))
-    in and [ 1 == fabs (K.SInteger @(P 1))
-           , 0 == fabs (K.SInteger @Z)
-           , 1 == fabs (K.SInteger @(N 1)) ]
+    in and [ 1 == fabs (sing @(N 1))
+           , 0 == fabs (sing @Z)
+           , 1 == fabs (sing @(P 1)) ]
+
+  , assert "sNegate" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      negate a == withSomeSing a (fromSing . P.sNegate)
+
+  , assert "%+" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a + b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%+ sb)
+
+  , assert "%-" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a - b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%- sb)
+
+  , assert "%*" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      a * b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: P.Integer) $ \sb ->
+                fromSing $ sa P.%* sb)
+
+  , assert "%^" $
+    flip all (liftA2 (,) [-5 .. 5] [0 .. 5])$ \(a, b) ->
+      a ^ b == (withSomeSing (a :: P.Integer) $ \sa ->
+                withSomeSing (b :: L.Natural) $ \sb ->
+                fromSing $ sa K.%^ sb)
+
+  , assert "sOdd" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      odd a == withSomeSing a (fromSing . K.sOdd)
+
+  , assert "sEven" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      even a == withSomeSing a (fromSing . K.sEven)
+
+  , assert "sAbs" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      fromInteger @L.Natural (abs a)
+        == withSomeSing a (fromSing . K.sAbs)
+
+  , assert "sSignum" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      signum a == withSomeSing a (fromSing . P.sSignum)
+
+  , assert "sGCD" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      fromInteger @L.Natural (gcd a b)
+        == (withSomeSing (a :: P.Integer) $ \sa ->
+            withSomeSing (b :: P.Integer) $ \sb ->
+            fromSing $ K.sGCD sa sb)
+
+  , assert "sLCM" $
+    flip all (liftA2 (,) [-5 .. 5] [-5 .. 5])$ \(a, b) ->
+      fromInteger @L.Natural (lcm a b)
+        == (withSomeSing (a :: P.Integer) $ \sa ->
+            withSomeSing (b :: P.Integer) $ \sb ->
+            fromSing $ K.sLCM sa sb)
+
+  , assert "sSign" $
+    flip all [-5 .. 5] $ \(a :: P.Integer) ->
+      signum a == withSomeSing a (fromSing . P.sSignum)
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sDivRem ", show r, " ", show a, " ", show b]) $
+       K.divRem r a b == (withSomeSing r $ \sr ->
+                          withSomeSing a $ \sa ->
+                          withSomeSing b $ \sb ->
+                          let (q, m) = K.sDivRem sr sa sb
+                           in (fromSing q, fromSing m))
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sDiv ", show r, " ", show a, " ", show b]) $
+       K.div r a b == (withSomeSing r $ \sr ->
+                       withSomeSing a $ \sa ->
+                       withSomeSing b $ \sb ->
+                       fromSing (K.sDiv sr sa sb))
+
+  , fmap and $ sequence $ do
+     r :: K.Round <- [minBound .. maxBound]
+     a :: P.Integer <- [-5 .. 5]
+     b :: P.Integer <- filter (/= 0) [-5 .. 5]
+     pure $ assert (mconcat ["sRem ", show r, " ", show a, " ", show b]) $
+       K.rem r a b == (withSomeSing r $ \sr ->
+                       withSomeSing a $ \sa ->
+                       withSomeSing b $ \sb ->
+                       fromSing (K.sRem sr sa sb))
+
+  , fmap and $ sequence $ do
+      n :: L.Natural <- [0..5]
+      pure $ assert (mconcat ["sFromNatural ", show n]) $
+        toInteger n == withSomeSing n (fromSing . K.sFromNatural)
 
   ] <> testsDivRem
 
@@ -3187,3 +3376,282 @@ _test_Div_RoundZero_P4_P4 :: Dict (K.Div 'K.RoundZero (P 4) (P 4) ~ P 1)
 _test_Div_RoundZero_P4_P4 =  Dict
 _test_Rem_RoundZero_P4_P4 :: Dict (K.Rem 'K.RoundZero (P 4) (P 4) ~ Z)
 _test_Rem_RoundZero_P4_P4 =  Dict
+
+_test_ShowsPrec_AppPrec_Z :: Dict (P.ShowsPrec AppPrec Z "y" ~ "0y")
+_test_ShowsPrec_AppPrec_Z =  Dict
+_test_ShowsPrec_AppPrec_P1 :: Dict (P.ShowsPrec AppPrec (P 1) "y" ~ "1y")
+_test_ShowsPrec_AppPrec_P1 =  Dict
+_test_ShowsPrec_AppPrec_N1 :: Dict (P.ShowsPrec AppPrec (N 1) "y" ~ "-1y")
+_test_ShowsPrec_AppPrec_N1 =  Dict
+
+_test_ShowsPrec_AppPrec1_Z :: Dict (P.ShowsPrec AppPrec1 Z "y" ~ "0y")
+_test_ShowsPrec_AppPrec1_Z =  Dict
+_test_ShowsPrec_AppPrec1_P1 :: Dict (P.ShowsPrec AppPrec1 (P 1) "y" ~ "1y")
+_test_ShowsPrec_AppPrec1_P1 =  Dict
+_test_ShowsPrec_AppPrec1_N1 :: Dict (P.ShowsPrec AppPrec1 (N 1) "y" ~ "(-1)y")
+_test_ShowsPrec_AppPrec1_N1 =  Dict
+
+_test_ShowsPrecLit_AppPrec_Z :: Dict (K.ShowsPrecLit AppPrec Z "y" ~ "Zy")
+_test_ShowsPrecLit_AppPrec_Z =  Dict
+_test_ShowsPrecLit_AppPrec_P1 :: Dict (K.ShowsPrecLit AppPrec (P 1) "y" ~ "P 1y")
+_test_ShowsPrecLit_AppPrec_P1 =  Dict
+_test_ShowsPrecLit_AppPrec_N1 :: Dict (K.ShowsPrecLit AppPrec (N 1) "y" ~ "N 1y")
+_test_ShowsPrecLit_AppPrec_N1 =  Dict
+
+_test_ShowsPrecLit_AppPrec1_Z :: Dict (K.ShowsPrecLit AppPrec1 Z "y" ~ "Zy")
+_test_ShowsPrecLit_AppPrec1_Z =  Dict
+_test_ShowsPrecLit_AppPrec1_P1 :: Dict (K.ShowsPrecLit AppPrec1 (P 1) "y" ~ "(P 1)y")
+_test_ShowsPrecLit_AppPrec1_P1 =  Dict
+_test_ShowsPrecLit_AppPrec1_N1 :: Dict (K.ShowsPrecLit AppPrec1 (N 1) "y" ~ "(N 1)y")
+_test_ShowsPrecLit_AppPrec1_N1 =  Dict
+
+_test_Add_Z_Z :: Dict (Z P.+ Z ~ Z)
+_test_Add_Z_Z =  Dict
+_test_Add_Z_N1 :: Dict (Z P.+ N 1 ~ N 1)
+_test_Add_Z_N1 =  Dict
+_test_Add_Z_P1 :: Dict (Z P.+ P 1 ~ P 1)
+_test_Add_Z_P1 =  Dict
+_test_Add_Z_N2 :: Dict (Z P.+ N 2 ~ N 2)
+_test_Add_Z_N2 =  Dict
+_test_Add_Z_P2 :: Dict (Z P.+ P 2 ~ P 2)
+_test_Add_Z_P2 =  Dict
+
+_test_Add_N1_Z :: Dict (N 1 P.+ Z ~ N 1)
+_test_Add_N1_Z =  Dict
+_test_Add_N1_N1 :: Dict (N 1 P.+ N 1 ~ N 2)
+_test_Add_N1_N1 =  Dict
+_test_Add_N1_P1 :: Dict (N 1 P.+ P 1 ~ Z)
+_test_Add_N1_P1 =  Dict
+_test_Add_N1_N2 :: Dict (N 1 P.+ N 2 ~ N 3)
+_test_Add_N1_N2 =  Dict
+_test_Add_N1_P2 :: Dict (N 1 P.+ P 2 ~ P 1)
+_test_Add_N1_P2 =  Dict
+
+_test_Add_P1_Z :: Dict (P 1 P.+ Z ~ P 1)
+_test_Add_P1_Z =  Dict
+_test_Add_P1_N1 :: Dict (P 1 P.+ N 1 ~ Z)
+_test_Add_P1_N1 =  Dict
+_test_Add_P1_P1 :: Dict (P 1 P.+ P 1 ~ P 2)
+_test_Add_P1_P1 =  Dict
+_test_Add_P1_N2 :: Dict (P 1 P.+ N 2 ~ N 1)
+_test_Add_P1_N2 =  Dict
+_test_Add_P1_P2 :: Dict (P 1 P.+ P 2 ~ P 3)
+_test_Add_P1_P2 =  Dict
+
+_test_Add_N2_Z :: Dict (N 2 P.+ Z ~ N 2)
+_test_Add_N2_Z =  Dict
+_test_Add_N2_N1 :: Dict (N 2 P.+ N 1 ~ N 3)
+_test_Add_N2_N1 =  Dict
+_test_Add_N2_P1 :: Dict (N 2 P.+ P 1 ~ N 1)
+_test_Add_N2_P1 =  Dict
+_test_Add_N2_N2 :: Dict (N 2 P.+ N 2 ~ N 4)
+_test_Add_N2_N2 =  Dict
+_test_Add_N2_P2 :: Dict (N 2 P.+ P 2 ~ Z)
+_test_Add_N2_P2 =  Dict
+
+_test_Add_P2_Z :: Dict (P 2 P.+ Z ~ P 2)
+_test_Add_P2_Z =  Dict
+_test_Add_P2_N1 :: Dict (P 2 P.+ N 1 ~ P 1)
+_test_Add_P2_N1 =  Dict
+_test_Add_P2_P1 :: Dict (P 2 P.+ P 1 ~ P 3)
+_test_Add_P2_P1 =  Dict
+_test_Add_P2_N2 :: Dict (P 2 P.+ N 2 ~ Z)
+_test_Add_P2_N2 =  Dict
+_test_Add_P2_P2 :: Dict (P 2 P.+ P 2 ~ P 4)
+_test_Add_P2_P2 =  Dict
+
+_test_Sub_Z_Z :: Dict (Z P.- Z ~ Z)
+_test_Sub_Z_Z =  Dict
+_test_Sub_Z_N1 :: Dict (Z P.- N 1 ~ P 1)
+_test_Sub_Z_N1 =  Dict
+_test_Sub_Z_P1 :: Dict (Z P.- P 1 ~ N 1)
+_test_Sub_Z_P1 =  Dict
+_test_Sub_Z_N2 :: Dict (Z P.- N 2 ~ P 2)
+_test_Sub_Z_N2 =  Dict
+_test_Sub_Z_P2 :: Dict (Z P.- P 2 ~ N 2)
+_test_Sub_Z_P2 =  Dict
+
+_test_Sub_N1_Z :: Dict (N 1 P.- Z ~ N 1)
+_test_Sub_N1_Z =  Dict
+_test_Sub_N1_N1 :: Dict (N 1 P.- N 1 ~ Z)
+_test_Sub_N1_N1 =  Dict
+_test_Sub_N1_P1 :: Dict (N 1 P.- P 1 ~ N 2)
+_test_Sub_N1_P1 =  Dict
+_test_Sub_N1_N2 :: Dict (N 1 P.- N 2 ~ P 1)
+_test_Sub_N1_N2 =  Dict
+_test_Sub_N1_P2 :: Dict (N 1 P.- P 2 ~ N 3)
+_test_Sub_N1_P2 =  Dict
+
+_test_Sub_P1_Z :: Dict (P 1 P.- Z ~ P 1)
+_test_Sub_P1_Z =  Dict
+_test_Sub_P1_N1 :: Dict (P 1 P.- N 1 ~ P 2)
+_test_Sub_P1_N1 =  Dict
+_test_Sub_P1_P1 :: Dict (P 1 P.- P 1 ~ Z)
+_test_Sub_P1_P1 =  Dict
+_test_Sub_P1_N2 :: Dict (P 1 P.- N 2 ~ P 3)
+_test_Sub_P1_N2 =  Dict
+_test_Sub_P1_P2 :: Dict (P 1 P.- P 2 ~ N 1)
+_test_Sub_P1_P2 =  Dict
+
+_test_Sub_N2_Z :: Dict (N 2 P.- Z ~ N 2)
+_test_Sub_N2_Z =  Dict
+_test_Sub_N2_N1 :: Dict (N 2 P.- N 1 ~ N 1)
+_test_Sub_N2_N1 =  Dict
+_test_Sub_N2_P1 :: Dict (N 2 P.- P 1 ~ N 3)
+_test_Sub_N2_P1 =  Dict
+_test_Sub_N2_N2 :: Dict (N 2 P.- N 2 ~ Z)
+_test_Sub_N2_N2 =  Dict
+_test_Sub_N2_P2 :: Dict (N 2 P.- P 2 ~ N 4)
+_test_Sub_N2_P2 =  Dict
+
+_test_Sub_P2_Z :: Dict (P 2 P.- Z ~ P 2)
+_test_Sub_P2_Z =  Dict
+_test_Sub_P2_N1 :: Dict (P 2 P.- N 1 ~ P 3)
+_test_Sub_P2_N1 =  Dict
+_test_Sub_P2_P1 :: Dict (P 2 P.- P 1 ~ P 1)
+_test_Sub_P2_P1 =  Dict
+_test_Sub_P2_N2 :: Dict (P 2 P.- N 2 ~ P 4)
+_test_Sub_P2_N2 =  Dict
+_test_Sub_P2_P2 :: Dict (P 2 P.- P 2 ~ Z)
+_test_Sub_P2_P2 =  Dict
+
+_test_Mul_Z_Z :: Dict (Z P.* Z ~ Z)
+_test_Mul_Z_Z =  Dict
+_test_Mul_Z_N1 :: Dict (Z P.* N 1 ~ Z)
+_test_Mul_Z_N1 =  Dict
+_test_Mul_Z_P1 :: Dict (Z P.* P 1 ~ Z)
+_test_Mul_Z_P1 =  Dict
+_test_Mul_Z_N2 :: Dict (Z P.* N 2 ~ Z)
+_test_Mul_Z_N2 =  Dict
+_test_Mul_Z_P2 :: Dict (Z P.* P 2 ~ Z)
+_test_Mul_Z_P2 =  Dict
+
+_test_Mul_N1_Z :: Dict (N 1 P.* Z ~ Z)
+_test_Mul_N1_Z =  Dict
+_test_Mul_N1_N1 :: Dict (N 1 P.* N 1 ~ P 1)
+_test_Mul_N1_N1 =  Dict
+_test_Mul_N1_P1 :: Dict (N 1 P.* P 1 ~ N 1)
+_test_Mul_N1_P1 =  Dict
+_test_Mul_N1_N2 :: Dict (N 1 P.* N 2 ~ P 2)
+_test_Mul_N1_N2 =  Dict
+_test_Mul_N1_P2 :: Dict (N 1 P.* P 2 ~ N 2)
+_test_Mul_N1_P2 =  Dict
+
+_test_Mul_P1_Z :: Dict (P 1 P.* Z ~ Z)
+_test_Mul_P1_Z =  Dict
+_test_Mul_P1_N1 :: Dict (P 1 P.* N 1 ~ N 1)
+_test_Mul_P1_N1 =  Dict
+_test_Mul_P1_P1 :: Dict (P 1 P.* P 1 ~ P 1)
+_test_Mul_P1_P1 =  Dict
+_test_Mul_P1_N2 :: Dict (P 1 P.* N 2 ~ N 2)
+_test_Mul_P1_N2 =  Dict
+_test_Mul_P1_P2 :: Dict (P 1 P.* P 2 ~ P 2)
+_test_Mul_P1_P2 =  Dict
+
+_test_Mul_N2_Z :: Dict (N 2 P.* Z ~ Z)
+_test_Mul_N2_Z =  Dict
+_test_Mul_N2_N1 :: Dict (N 2 P.* N 1 ~ P 2)
+_test_Mul_N2_N1 =  Dict
+_test_Mul_N2_P1 :: Dict (N 2 P.* P 1 ~ N 2)
+_test_Mul_N2_P1 =  Dict
+_test_Mul_N2_N2 :: Dict (N 2 P.* N 2 ~ P 4)
+_test_Mul_N2_N2 =  Dict
+_test_Mul_N2_P2 :: Dict (N 2 P.* P 2 ~ N 4)
+_test_Mul_N2_P2 =  Dict
+
+_test_Mul_P2_Z :: Dict (P 2 P.* Z ~ Z)
+_test_Mul_P2_Z =  Dict
+_test_Mul_P2_N1 :: Dict (P 2 P.* N 1 ~ N 2)
+_test_Mul_P2_N1 =  Dict
+_test_Mul_P2_P1 :: Dict (P 2 P.* P 1 ~ P 2)
+_test_Mul_P2_P1 =  Dict
+_test_Mul_P2_N2 :: Dict (P 2 P.* N 2 ~ N 4)
+_test_Mul_P2_N2 =  Dict
+_test_Mul_P2_P2 :: Dict (P 2 P.* P 2 ~ P 4)
+_test_Mul_P2_P2 =  Dict
+
+_test_Pow_Z_Z :: Dict (Z K.^ 0 ~ P 1)
+_test_Pow_Z_Z =  Dict
+_test_Pow_Z_1 :: Dict (Z K.^ 1 ~ Z)
+_test_Pow_Z_1 =  Dict
+_test_Pow_Z_2 :: Dict (Z K.^ 2 ~ Z)
+_test_Pow_Z_2 =  Dict
+
+_test_Pow_N1_0 :: Dict (N 1 K.^ 0 ~ P 1)
+_test_Pow_N1_0 =  Dict
+_test_Pow_N1_1 :: Dict (N 1 K.^ 1 ~ N 1)
+_test_Pow_N1_1 =  Dict
+_test_Pow_N1_2 :: Dict (N 1 K.^ 2 ~ P 1)
+_test_Pow_N1_2 =  Dict
+
+_test_Pow_P1_Z :: Dict (P 1 K.^ 0 ~ P 1)
+_test_Pow_P1_Z =  Dict
+_test_Pow_P1_P1 :: Dict (P 1 K.^ 1 ~ P 1)
+_test_Pow_P1_P1 =  Dict
+_test_Pow_P1_P2 :: Dict (P 1 K.^ 2 ~ P 1)
+_test_Pow_P1_P2 =  Dict
+
+_test_Pow_N2_0 :: Dict (N 2 K.^ 0 ~ P 1)
+_test_Pow_N2_0 =  Dict
+_test_Pow_N2_1 :: Dict (N 2 K.^ 1 ~ N 2)
+_test_Pow_N2_1 =  Dict
+_test_Pow_N2_2 :: Dict (N 2 K.^ 2 ~ P 4)
+_test_Pow_N2_2 =  Dict
+
+_test_Pow_P2_0 :: Dict (P 2 K.^ 0 ~ P 1)
+_test_Pow_P2_0 =  Dict
+_test_Pow_P2_1 :: Dict (P 2 K.^ 1 ~ P 2)
+_test_Pow_P2_1 =  Dict
+_test_Pow_P2_2 :: Dict (P 2 K.^ 2 ~ P 4)
+_test_Pow_P2_2 =  Dict
+
+_test_ZigZag_Z :: Dict (K.ZigZag Z ~ 0)
+_test_ZigZag_Z =  Dict
+_test_ZigZag_N1 :: Dict (K.ZigZag (N 1) ~ 1)
+_test_ZigZag_N1 =  Dict
+_test_ZigZag_P1 :: Dict (K.ZigZag (P 1) ~ 2)
+_test_ZigZag_P1 =  Dict
+_test_ZigZag_N2 :: Dict (K.ZigZag (N 2) ~ 3)
+_test_ZigZag_N2 =  Dict
+_test_ZigZag_P2 :: Dict (K.ZigZag (P 2) ~ 4)
+_test_ZigZag_P2 =  Dict
+
+_test_ZagZig_Z :: Dict (K.ZagZig 0 ~ Z)
+_test_ZagZig_Z =  Dict
+_test_ZagZig_N1 :: Dict (K.ZagZig 1 ~ N 1)
+_test_ZagZig_N1 =  Dict
+_test_ZagZig_P1 :: Dict (K.ZagZig 2 ~ P 1)
+_test_ZagZig_P1 =  Dict
+_test_ZagZig_N2 :: Dict (K.ZagZig 3 ~ N 2)
+_test_ZagZig_N2 =  Dict
+_test_ZagZig_P2 :: Dict (K.ZagZig 4 ~ P 2)
+_test_ZagZig_P2 =  Dict
+
+_test_FromNatural_0 :: Dict (K.FromNatural 0 ~ Z)
+_test_FromNatural_0 =  Dict
+_test_FromNatural_1 :: Dict (K.FromNatural 1 ~ P 1)
+_test_FromNatural_1 =  Dict
+_test_FromNatural_2 :: Dict (K.FromNatural 2 ~ P 2)
+_test_FromNatural_2 =  Dict
+
+_test_Normalized_Z :: Dict (K.Normalized Z ~ Z)
+_test_Normalized_Z =  Dict
+_test_Normalized_N1 :: Dict (K.Normalized (N 1) ~ N 1)
+_test_Normalized_N1 =  Dict
+_test_Normalized_N2 :: Dict (K.Normalized (N 2) ~ N 2)
+_test_Normalized_N2 =  Dict
+_test_Normalized_P1 :: Dict (K.Normalized (P 1) ~ P 1)
+_test_Normalized_P1 =  Dict
+_test_Normalized_P2 :: Dict (K.Normalized (P 2) ~ P 2)
+_test_Normalized_P2 =  Dict
+
+_test_KnownInteger_Z :: Dict (K.KnownInteger Z)
+_test_KnownInteger_Z =  Dict
+_test_KnownInteger_N1 :: Dict (K.KnownInteger (N 1))
+_test_KnownInteger_N1 =  Dict
+_test_KnownInteger_N2 :: Dict (K.KnownInteger (N 2))
+_test_KnownInteger_N2 =  Dict
+_test_KnownInteger_P1 :: Dict (K.KnownInteger (P 1))
+_test_KnownInteger_P1 =  Dict
+_test_KnownInteger_P2 :: Dict (K.KnownInteger (P 2))
+_test_KnownInteger_P2 =  Dict
