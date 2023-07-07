@@ -41,6 +41,26 @@ readPrecMaybe p s =
 
 --------------------------------------------------------------------------------
 
+_testShow =  Dict
+_testShow :: Dict
+  ( P.Show_ Z ~ "0"
+  , P.Show_ (P 1) ~ "1"
+  , P.Show_ (N 2) ~ "-2"
+  , P.ShowsPrec AppPrec (N 2) "x" ~ "-2x"
+  , P.ShowsPrec AppPrec1 (N 2) "x" ~ "(-2)x"
+  , P.ShowsPrec AppPrec1 (P 2) "x" ~ "2x"
+  )
+
+_testShowLit =  Dict
+_testShowLit :: Dict
+  ( K.ShowLit Z ~ "Z"
+  , K.ShowLit (P 1) ~ "P 1"
+  , K.ShowLit (N 2) ~ "N 2"
+  , K.ShowsPrecLit AppPrec (N 2) "x" ~ "N 2x"
+  , K.ShowsPrecLit AppPrec1 (N 2) "x" ~ "(N 2)x"
+  , K.ShowsPrecLit AppPrec1 (P 2) "x" ~ "(P 2)x"
+  )
+
 _testEq =  Dict
 _testEq :: Dict
   ( 'True ~ (Z P.== Z)
