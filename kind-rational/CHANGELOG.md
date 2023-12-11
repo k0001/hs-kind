@@ -1,3 +1,8 @@
+# Version 0.5.1
+
+* Add missing `COMPLETE` pragma.
+
+
 # Version 0.5.0
 
 * COMPILER ASSISTED BREAKING CHANGE: `KindRational.Rational` is now

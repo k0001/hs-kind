@@ -1030,6 +1030,8 @@ pattern SRational :: forall r. () => KnownRational r => SRational r
 pattern SRational <- (knownRationalInstance -> KnownRationalInstance)
   where SRational = rationalSing_
 
+{-# COMPLETE SRational #-}
+
 -- | An internal data type that is only used for defining the 'SRational' pattern
 -- synonym.
 data KnownRationalInstance (r :: Rational) where

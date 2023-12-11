@@ -1,7 +1,7 @@
 { mkDerivation, base, lib, kind-integer, singletons, singletons-base }:
 mkDerivation {
   pname = "kind-rational";
-  version = "0.5.0";
+  version = "0.5.1";
   src = lib.sources.cleanSource ./.;
   libraryHaskellDepends =
     [ base kind-integer singletons singletons-base ];
