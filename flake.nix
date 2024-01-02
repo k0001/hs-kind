@@ -79,7 +79,7 @@
           mkShellFor = ghc:
             ghc.shellFor {
               packages = p: [ p.kind-integer p.kind-rational ];
-              withHoogle = false;
+              withHoogle = true;
               nativeBuildInputs =
                 [ pkgs.cabal-install pkgs.cabal2nix pkgs.ghcid ];
             };
